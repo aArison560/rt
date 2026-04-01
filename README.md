@@ -106,10 +106,31 @@ rt/
 ├── Makefile              # Build configuration
 ├── README.md
 ├── include/              # Header files (.hpp)
+│   ├── core/             # Vec3, Ray, Matrix4x4, Material, HitRecord
+│   ├── geometry/         # AObject and primitives (Sphere, Plane, ...)
+│   ├── lighting/         # ALight and light types
+│   ├── scene/            # Camera, Scene, SceneParser, Transform
+│   ├── rendering/        # Renderer, ImageBuffer, Texture
+│   └── platform/         # Window, EventHandler (SDL integration)
 ├── src/                  # Implementation files (.cpp)
+│   ├── app/              # main.cpp
+│   ├── core/
+│   ├── geometry/
+│   ├── lighting/
+│   ├── scene/
+│   ├── rendering/
+│   └── platform/
 ├── scenes/              # Scene configuration files (.rt)
 ├── textures/            # Texture assets
 └── tests/              # Unit tests
+```
+
+Headers should be included with their module path, for example:
+
+```cpp
+#include "core/Vec3.hpp"
+#include "scene/Scene.hpp"
+#include "rendering/Renderer.hpp"
 ```
 
 ## Development

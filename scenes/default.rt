@@ -1,0 +1,70 @@
+# Complex demo scene: Planes, Reflections, Transparency
+# File: scenes/complex_demo.rt
+
+# Ambient multipler for fine-tuning
+A 0.4 0.4 0.4
+
+# Multiple light sources for rich shadows
+L 8.0 8.0 8.0 1.0 1.0 0.9 1.0
+L -6.0 5.0 3.0 0.7 0.7 1.0 0.8
+
+# Camera positioned for dramatic view
+c 0.0 3.0 12.0 0.0 0.5 -2.0 0.0 1.0 0.0 40.0
+
+# Background (dark blue-grey for contrast)
+bg 0.12 0.14 0.18
+
+# ===== FLOOR PLANE (reflective white) =====
+pl 0.0 -2.0 0.0 0.0 1.0 0.0
+material 0.95 0.95 0.95 0.9 0.5 0.0 4.0 0.6
+
+# ===== BACK WALL PLANE (dark matte) =====
+pl 0.0 0.0 -8.0 0.0 0.0 1.0
+material 0.3 0.3 0.4 0.8 0.6 0.0 2.0 0.0
+
+# ===== SIDE WALL PLANES =====
+# Left wall (reddish)
+pl -6.0 0.0 0.0 1.0 0.0 0.0
+material 0.6 0.3 0.3 0.7 0.5 0.0 8.0 0.1
+
+# Right wall (bluish)
+pl 6.0 0.0 0.0 -1.0 0.0 0.0
+material 0.3 0.3 0.6 0.7 0.5 0.0 8.0 0.1
+
+# ===== PRIMARY SPHERES =====
+
+# Large mirror-like sphere (center)
+sp 0.0 0.5 -2.0 2.0
+material 0.8 0.8 0.8 0.5 0.3 0.1 128.0 0.95
+
+# Transparent glass sphere (left)
+sp -3.0 0.0 -1.0 1.2
+material 0.9 0.95 1.0 0.1 0.0 0.9 64.0 0.0
+
+# Matte red sphere (right)
+sp 3.0 -0.3 -0.5 1.5
+material 0.9 0.2 0.1 0.8 0.6 0.1 32.0 0.1
+
+# ===== ACCENT OBJECTS =====
+
+# Gold cylinder
+cy 0.0 -1.5 -4.0 0.0 1.0 0.0 0.5 1.5
+material 0.9 0.8 0.2 0.7 0.4 0.2 96.0 0.7
+
+# Emerald green cone
+co 2.5 -1.8 -6.0 0.0 1.0 0.0 25.0 1.8
+material 0.1 0.7 0.3 0.7 0.5 0.2 48.0 0.4
+
+# Purple small sphere (accent light)
+sp -4.5 2.0 -3.0 0.6
+material 0.8 0.3 0.8 0.8 0.7 0.2 96.0 0.5
+
+# ===== SMALL OBJECTS ON FLOOR =====
+
+# Cyan sphere (glossy)
+sp -2.0 -1.5 -5.0 0.6
+material 0.1 0.8 0.9 0.9 0.4 0.15 64.0 0.6
+
+# Yellow sphere (matte)
+sp 1.5 -1.5 -6.5 0.5
+material 0.95 0.9 0.1 0.9 0.8 0.0 8.0 0.0

@@ -9,11 +9,11 @@
 1. **Start with**: Phase 2 in [TASK_BACKLOG.md](TASK_BACKLOG.md)
 2. **Branch**: `feature/dev-a/math-foundations`
 3. **Key files to implement**:
-   - `include/Vec3.hpp` → `src/Vec3.cpp`
-   - `include/Ray.hpp` → `src/Ray.cpp`
-   - `include/Matrix4x4.hpp` → `src/Matrix4x4.cpp`
-   - `include/Transform.hpp` → `src/Transform.cpp`
-   - `include/Camera.hpp` → `src/Camera.cpp`
+    - `include/core/Vec3.hpp` → `src/core/Vec3.cpp`
+    - `include/core/Ray.hpp` → `src/core/Ray.cpp`
+    - `include/core/Matrix4x4.hpp` → `src/core/Matrix4x4.cpp`
+    - `include/scene/Transform.hpp` → `src/scene/Transform.cpp`
+    - `include/scene/Camera.hpp` → `src/scene/Camera.cpp`
 
 4. **Acceptance criteria**:
    - All `make all` compiles without errors
@@ -31,13 +31,13 @@
 1. **Start with**: Phase 4-5 in [TASK_BACKLOG.md](TASK_BACKLOG.md)
 2. **Branch**: `feature/dev-b/geometry-objects`
 3. **Key files to implement**:
-   - `include/HitRecord.hpp` → `src/HitRecord.cpp`
-   - `include/AObject.hpp` → `src/AObject.cpp`
-   - `include/Sphere.hpp` → `src/Sphere.cpp`
-   - `include/Plane.hpp` → `src/Plane.cpp`
-   - `include/Cylinder.hpp` → `src/Cylinder.cpp`
-   - `include/Cone.hpp` → `src/Cone.cpp`
-   - `include/Scene.hpp` → `src/Scene.cpp`
+    - `include/core/HitRecord.hpp` → `src/core/HitRecord.cpp`
+    - `include/geometry/AObject.hpp` → `src/geometry/AObject.cpp`
+    - `include/geometry/Sphere.hpp` → `src/geometry/Sphere.cpp`
+    - `include/geometry/Plane.hpp` → `src/geometry/Plane.cpp`
+    - `include/geometry/Cylinder.hpp` → `src/geometry/Cylinder.cpp`
+    - `include/geometry/Cone.hpp` → `src/geometry/Cone.cpp`
+    - `include/scene/Scene.hpp` → `src/scene/Scene.cpp`
 
 4. **Test your work**:
    - Use scene files in `scenes/` to verify primitives
@@ -57,14 +57,14 @@
 1. **Start with**: Phase 6-12 in [TASK_BACKLOG.md](TASK_BACKLOG.md)
 2. **Branch**: `feature/dev-c/rendering-system`
 3. **Key files to implement**:
-   - `include/Material.hpp` → `src/Material.cpp`
-   - `include/ALight.hpp` → `src/ALight.cpp`, PointLight, DirectionalLight, AmbientLight
-   - `include/Renderer.hpp` → `src/Renderer.cpp` (main algorithm)
-   - `include/ImageBuffer.hpp` → `src/ImageBuffer.cpp`
-   - `include/Window.hpp` → `src/Window.cpp`
-   - `include/EventHandler.hpp` → `src/EventHandler.cpp`
-   - `include/SceneParser.hpp` → `src/SceneParser.cpp`
-   - `src/main.cpp` (integration)
+    - `include/core/Material.hpp` → `src/core/Material.cpp`
+    - `include/lighting/ALight.hpp` → `src/lighting/ALight.cpp`, PointLight, DirectionalLight, AmbientLight
+    - `include/rendering/Renderer.hpp` → `src/rendering/Renderer.cpp` (main algorithm)
+    - `include/rendering/ImageBuffer.hpp` → `src/rendering/ImageBuffer.cpp`
+    - `include/platform/Window.hpp` → `src/platform/Window.cpp`
+    - `include/platform/EventHandler.hpp` → `src/platform/EventHandler.cpp`
+    - `include/scene/SceneParser.hpp` → `src/scene/SceneParser.cpp`
+    - `src/app/main.cpp` (integration)
 
 4. **Test your work**:
    - Begin with Phase 7 (basic raytracing without lighting)
@@ -136,7 +136,7 @@ git checkout -b feature/dev-a/your-feature-here
 
 ### Committing work
 ```bash
-git add src/YourFile.cpp include/YourFile.hpp
+git add src/<module>/YourFile.cpp include/<module>/YourFile.hpp
 git commit -m "Implement YourClass with documentation"
 ```
 

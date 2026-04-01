@@ -91,7 +91,7 @@ git pull origin develop
 git checkout -b feature/dev-a/vec3-implementation
 
 # Work locally
-git add src/Vec3.cpp
+git add src/core/Vec3.cpp include/core/Vec3.hpp
 git commit -m "feat(dev-a): implement Vec3 arithmetic operations
 
 - Add operator+, operator-, operator* implementations
@@ -264,7 +264,7 @@ make test         # Must pass all tests
 valgrind ./rt     # No memory leaks
 
 # Code style
-clang-format -i src/*.cpp include/*.hpp
+find src include -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 clang-format -i
 ```
 
 **Pre-commit hook** (recommended):

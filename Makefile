@@ -18,49 +18,51 @@ TARGET := $(BIN_DIR)/rt
 TARGET_TEST := $(BIN_DIR)/rt_test
 
 # Source files
-SOURCES := $(wildcard $(SRC_DIR)/*.cpp)
+SOURCES := $(shell find $(SRC_DIR) -name '*.cpp' | sort)
 OBJECTS := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SOURCES))
 OBJECTS_TEST := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR_TEST)/%.o, $(SOURCES))
-HEADERS := $(wildcard $(INC_DIR)/*.hpp)
+HEADERS := $(shell find $(INC_DIR) -name '*.hpp' | sort)
 
 # Include path
 CXXFLAGS += -I$(INC_DIR)
 
 # Main targets
-.PHONY: all clean fclean re test
+.PHONY: all clean fclean re test retest
 
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	@mkdir -p $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+	@$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 	@echo "Linked: $@"
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
-	@mkdir -p $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
 	@echo "Compiled: $<"
 
 clean:
-	rm -rf $(OBJ_DIR) $(OBJ_DIR_TEST)
+	@rm -rf $(OBJ_DIR) $(OBJ_DIR_TEST)
 	@echo "Cleaned object files"
 
 fclean: clean
-	rm -f $(TARGET) $(TARGET_TEST)
+	@rm -f $(TARGET) $(TARGET_TEST)
 	@echo "Cleaned all builds"
 
 re: fclean all
+
+retest: fclean test
 
 test: $(TARGET_TEST)
 
 $(TARGET_TEST): $(OBJECTS_TEST)
 	@mkdir -p $(BIN_DIR)
-	$(CXX) $(CXXFLAGS_TEST) -o $@ $^ $(LDFLAGS)
+	@$(CXX) $(CXXFLAGS_TEST) -o $@ $^ $(LDFLAGS)
 	@echo "Linked (test): $@"
 
 $(OBJ_DIR_TEST)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
-	@mkdir -p $(OBJ_DIR_TEST)
-	$(CXX) $(CXXFLAGS_TEST) -I$(INC_DIR) -c $< -o $@
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS_TEST) -I$(INC_DIR) -c $< -o $@
 	@echo "Compiled (test): $<"
 
 # Help target
@@ -71,6 +73,7 @@ help:
 	@echo "Targets:"
 	@echo "  make all        - Build the ray tracer executable"
 	@echo "  make test       - Build without strict warning flags (-Wall -Wextra -Werror)"
+	@echo "  make retest     - Clean rebuild test executable"
 	@echo "  make clean      - Remove object files"
 	@echo "  make fclean     - Remove all build artifacts"
 	@echo "  make re         - Clean rebuild"
