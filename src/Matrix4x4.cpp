@@ -128,7 +128,7 @@ Matrix4x4 Matrix4x4::scale(double sx, double sy, double sz)
 Matrix4x4 Matrix4x4::scale(const Vec3& scale)
 {
     // TODO: Scale from vector
-    return scale(scale.x, scale.y, scale.z);
+    return Matrix4x4::scale(scale.x, scale.y, scale.z);
 }
 
 Matrix4x4 Matrix4x4::perspective(double fov, double aspect, double near, double far)

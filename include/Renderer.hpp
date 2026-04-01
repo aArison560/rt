@@ -191,8 +191,8 @@ private:
      * @param scene The scene
      * @return Ambient color
      */
-    Vec3 calculateAmbient(const std::shared_ptr<Material>& material,
-                         const Scene& scene) const;
+    Vec3 calculateAmbient(const Material* material,
+                          const Scene& scene) const;
 
     /**
      * @brief Calculate diffuse light contribution

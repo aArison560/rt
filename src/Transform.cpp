@@ -73,7 +73,7 @@ Transform& Transform::scale(double sx, double sy, double sz)
 
 Transform& Transform::scale(const Vec3& scale)
 {
-    return scale(scale.x, scale.y, scale.z);
+    return Transform::scale(scale.x, scale.y, scale.z);
 }
 
 Vec3 Transform::transformPoint(const Vec3& point) const

@@ -80,8 +80,8 @@ Vec3 Renderer::calculateLighting(const HitRecord& hitRecord, const Vec3& rayDir,
     return color;
 }
 
-Vec3 Renderer::calculateAmbient(const std::shared_ptr<Material>& material,
-                               const Scene& scene) const
+Vec3 Renderer::calculateAmbient(const Material* material,
+                                const Scene& scene) const
 {
     // TODO: Calculate ambient component
     return Vec3();
