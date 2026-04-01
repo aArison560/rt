@@ -1,0 +1,79 @@
+# Scene demonstrating transformations on all primitive types
+# File: scenes/transformations_demo.rt
+
+# Moderate ambient
+A 0.35 0.35 0.35
+
+# Strong directional light from upper front
+directional 1.0 1.0 0.5 1.0 1.0 0.8 0.95
+
+# Camera positioned to see all objects
+c 0.0 2.5 10.0 0.0 1.0 -1.2 0.0 1.0 0.0 45.0
+
+# Background (light gray for visibility)
+bg 0.3 0.3 0.35
+
+# ===== FLOOR REFERENCE PLANE =====
+pl 0.0 -2.0 0.0 0.0 1.0 0.0
+material 0.8 0.8 0.8 0.85 0.7 0.0 8.0 0.1
+
+# ===== TRANSFORMATION DEMONSTRATION =====
+
+# Sphere 1: No transformation (baseline)
+sp 0.0 0.5 0.0 1.0
+material 0.9 0.2 0.2 0.8 0.5 0.2 32.0 0.4
+
+# Sphere 2: Translated
+sp -4.0 1.0 -2.0 0.8
+material 0.2 0.9 0.2 0.8 0.5 0.2 32.0 0.4
+
+# Plane 1: Tilted plane (45 degrees around Z)
+pl 3.0 0.0 0.0 -0.707 0.0 -0.707
+material 0.2 0.2 0.9 0.8 0.6 0.0 16.0 0.2
+
+# Cylinder 1: Vertical cylinder (baseline) 
+cy 0.0 0.0 -4.0 0.0 1.0 0.0 0.7 2.0
+material 0.9 0.9 0.2 0.8 0.4 0.2 64.0 0.5
+
+# Cylinder 2: Tilted cylinder (rotated around X)
+# Direction vector indicates tilted orientation
+cy -3.0 1.0 -5.0 1.0 1.0 0.0 0.6 2.2
+material 0.9 0.5 0.1 0.8 0.5 0.15 48.0 0.3
+
+# Cone 1: Standard upright cone at center
+co 2.0 0.0 -3.0 0.0 1.0 0.0 35.0 2.5
+material 0.5 0.2 0.9 0.8 0.5 0.2 40.0 0.3
+
+# Cone 2: Translated and scaled cone
+co -2.0 1.5 -7.0 0.0 0.866 0.5 30.0 2.0
+material 0.1 0.8 0.8 0.8 0.4 0.1 32.0 0.5
+
+# ===== SCALING DEMONSTRATIONS =====
+
+# Tall thin cylinder (negative space contrast)
+cy 4.5 0.0 -3.0 0.0 1.0 0.0 0.3 3.0
+material 0.7 0.7 0.7 0.8 0.3 0.0 8.0 0.0
+
+# Wide flat cylinder (disc-like)
+cy -4.5 -1.0 -6.0 0.0 1.0 0.0 1.5 0.4
+material 0.8 0.4 0.4 0.75 0.5 0.1 24.0 0.4
+
+# ===== ACCENT SPHERES FOR VISUAL INTEREST =====
+
+# Small reflective sphere on the right
+sp 5.0 0.0 -5.0 0.5
+material 0.95 0.95 0.95 0.6 0.2 0.1 128.0 0.8
+
+# Translucent colored sphere
+sp -5.0 1.2 -8.0 0.6
+material 0.8 0.9 1.0 0.3 0.1 0.8 32.0 0.05
+
+# ===== VERTICAL REFERENCE STRUCTURES =====
+
+# Thin vertical pillar (left)
+cy -5.5 0.0 0.0 0.0 1.0 0.0 0.25 2.5
+material 0.4 0.4 0.5 0.8 0.6 0.0 4.0 0.0
+
+# Tall cone (right) for scale reference
+co 5.5 0.0 0.0 0.0 1.0 0.0 40.0 2.8
+material 0.9 0.6 0.3 0.8 0.5 0.1 32.0 0.3

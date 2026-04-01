@@ -1,0 +1,38 @@
+# Scene with transformed primitives: cylinders and cones
+# File: scenes/cylinders_and_cones.rt
+
+# Global ambient
+A 0.25 0.25 0.25
+
+# Directional light (like sunlight)
+directional 1.0 1.0 0.8 0.9 0.9 0.8 1.0
+
+# Camera slightly elevated
+c 0.0 2.0 10.0 0.0 1.0 -1.0 0.0 1.0 0.0 45.0
+
+# Background
+bg 0.2 0.2 0.25
+
+# Tall golden cylinder (center stage)
+cy 0.0 0.0 0.0 0.0 1.0 0.0 1.2 3.0
+material 0.9 0.8 0.2 0.7 0.5 0.2 64.0 0.5
+
+# Red cone on left
+co -3.5 0.0 0.0 0.0 1.0 0.0 30.0 2.5
+material 0.9 0.2 0.2 0.8 0.6 0.1 32.0 0.2
+
+# Blue cone on right  
+co 3.5 0.0 0.0 0.0 1.0 0.0 30.0 2.5
+material 0.2 0.2 0.9 0.8 0.6 0.1 32.0 0.2
+
+# Green cylinder (tilted) - demonstrates rotation
+cy 0.0 3.0 -3.0 0.707 0.0 0.707 0.6 2.5
+material 0.2 0.8 0.2 0.8 0.4 0.15 48.0 0.3
+
+# Orange small sphere for comparison
+sp -2.0 1.5 2.0 0.7
+material 0.9 0.5 0.1 0.8 0.5 0.2 24.0 0.4
+
+# Gray diffuse floor 
+pl 0.0 -1.5 0.0 0.0 1.0 0.0
+material 0.7 0.7 0.7 0.8 0.8 0.0 8.0 0.0
