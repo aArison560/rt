@@ -16,17 +16,48 @@ Renderer::~Renderer() {}
 
 bool Renderer::render(const Scene& scene, int width, int height, unsigned char* pixelBuffer)
 {
-    // TODO: Render entire scene to pixel buffer
-    // Generate rays for each pixel and trace through scene
-    return false;
+    cancelled = false;
+    return renderRegion(scene, width, height, 0, 0, width, height, pixelBuffer);
 }
 
 bool Renderer::renderRegion(const Scene& scene, int width, int height,
                            int startX, int startY, int regionWidth, int regionHeight,
                            unsigned char* pixelBuffer)
 {
-    // TODO: Render a specific region of the image
-    return false;
+    if (!pixelBuffer || width <= 0 || height <= 0 || regionWidth <= 0 || regionHeight <= 0)
+        return false;
+
+    const int x0 = std::max(0, startX);
+    const int y0 = std::max(0, startY);
+    const int x1 = std::min(width, startX + regionWidth);
+    const int y1 = std::min(height, startY + regionHeight);
+
+    if (x0 >= x1 || y0 >= y1)
+        return false;
+
+    const Camera& camera = scene.getCamera();
+
+    for (int y = y0; y < y1; ++y) {
+        if (cancelled)
+            return false;
+
+        for (int x = x0; x < x1; ++x) {
+            const Ray ray = camera.generateRay(static_cast<double>(x), static_cast<double>(y),
+                                               width, height);
+            const Vec3 color = trace(ray, scene, 0, 1e-4, 1e30);
+
+            unsigned char r, g, b, a;
+            colorToRGBA(color, r, g, b, a);
+
+            const size_t index = (static_cast<size_t>(y) * width + x) * 4;
+            pixelBuffer[index + 0] = r;
+            pixelBuffer[index + 1] = g;
+            pixelBuffer[index + 2] = b;
+            pixelBuffer[index + 3] = a;
+        }
+    }
+
+    return true;
 }
 
 void Renderer::setMaxRecursionDepth(int depth) { maxRecursionDepth = depth; }
