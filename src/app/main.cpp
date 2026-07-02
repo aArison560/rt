@@ -17,6 +17,7 @@
 #include "rendering/Renderer.hpp"
 #include "platform/Window.hpp"
 #include "platform/EventHandler.hpp"
+#include <SDL2/SDL.h>
 #include "rendering/ImageBuffer.hpp"
 #include "scene/SceneParser.hpp"
 #include "geometry/Sphere.hpp"
@@ -141,7 +142,7 @@ int main(int argc, char* argv[])
 
     ImageBuffer buffer(width, height);
 
-    // TODO: Setup event handler
+    // Setup event handler
     EventHandler eventHandler;
     eventHandler.setupCameraControls(&scene.getCamera(), 0.5, 0.05);
     eventHandler.onExpose([&]() {
@@ -150,9 +151,27 @@ int main(int argc, char* argv[])
 
     std::cout << "Starting render loop...\n";
 
-    // TODO: Main render loop
+    // Main render loop state
     bool running = true;
     bool needsRedraw = true;
+    int screenshotCount = 0;
+
+    eventHandler.onKeyPress([&](int key) {
+        if (key == 's' || key == 'S') {
+            std::string filename = "screenshot_" + std::to_string(screenshotCount++) + ".png";
+            if (buffer.savePNG(filename)) {
+                std::cout << "Saved: " << filename << std::endl;
+            } else {
+                std::cerr << "Failed to save screenshot" << std::endl;
+            }
+        }
+        if (key == 'r' || key == 'R') {
+            needsRedraw = true;
+        }
+    });
+
+    auto oldCamPos = scene.getCamera().getPosition();
+    auto oldCamDir = scene.getCamera().getDirection();
 
     while (running) {
         // Process events
@@ -161,16 +180,24 @@ int main(int argc, char* argv[])
             break;
         }
 
+        // Detect camera movement from WASD/arrows → re-render
+        auto newCamPos = scene.getCamera().getPosition();
+        auto newCamDir = scene.getCamera().getDirection();
+        if ((newCamPos - oldCamPos).magnitudeSquared() > Vec3::EPSILON * Vec3::EPSILON ||
+            (newCamDir - oldCamDir).magnitudeSquared() > Vec3::EPSILON * Vec3::EPSILON) {
+            needsRedraw = true;
+            oldCamPos = newCamPos;
+            oldCamDir = newCamDir;
+        }
+
         // Check for redraw
         if (needsRedraw) {
-            // TODO: Render scene
             std::cout << "Rendering scene...\n";
             if (!renderer.render(scene, width, height, buffer.getData())) {
                 std::cerr << "Render failed\n";
                 running = false;
                 break;
             }
-            // TODO: Display rendered image
             if (!window.updateDisplay(buffer)) {
                 std::cerr << "Failed to update display\n";
                 running = false;
@@ -180,7 +207,7 @@ int main(int argc, char* argv[])
             needsRedraw = false;
         }
 
-        // TODO: Check for window resize
+        // Check for window resize
         if (eventHandler.wasWindowResized()) {
             int newWidth, newHeight;
             if (eventHandler.getNewWindowSize(newWidth, newHeight)) {
@@ -190,8 +217,8 @@ int main(int argc, char* argv[])
             }
         }
 
-        // TODO: Sleep briefly to avoid busy waiting
-        // SDL_Delay(16); // ~60 FPS
+        // Avoid busy waiting
+        SDL_Delay(16); // ~60 FPS
     }
 
     std::cout << "Shutting down...\n";

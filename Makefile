@@ -19,8 +19,12 @@ TARGET_TEST := $(BIN_DIR)/rt_test
 
 # Source files
 SOURCES := $(shell find $(SRC_DIR) -name '*.cpp' | sort)
+MAIN_SRC := src/app/main.cpp
+LIB_SRCS := $(filter-out $(MAIN_SRC), $(SOURCES))
+TEST_SRCS := $(sort $(LIB_SRCS) $(shell find tests -name '*.cpp'))
 OBJECTS := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SOURCES))
-OBJECTS_TEST := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR_TEST)/%.o, $(SOURCES))
+OBJECTS_TEST := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR_TEST)/%.o, $(LIB_SRCS)) \
+                $(patsubst tests/%.cpp, $(OBJ_DIR_TEST)/%.o, $(filter tests/%.cpp, $(TEST_SRCS)))
 HEADERS := $(shell find $(INC_DIR) -name '*.hpp' | sort)
 
 # Include path
@@ -61,6 +65,12 @@ $(TARGET_TEST): $(OBJECTS_TEST)
 	@echo "Linked (test): $@"
 
 $(OBJ_DIR_TEST)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS_TEST) -I$(INC_DIR) -c $< -o $@
+	@echo "Compiled (test): $<"
+
+# Test sources from tests/ directory
+$(OBJ_DIR_TEST)/%.o: tests/%.cpp $(HEADERS)
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXFLAGS_TEST) -I$(INC_DIR) -c $< -o $@
 	@echo "Compiled (test): $<"

@@ -13,15 +13,60 @@
 
 **Dependencies**: `libsdl2-dev`, `libpng-dev`, `libjpeg-dev`.
 
-## Project State — Mostly Stubs
+## Project State — Fully implemented
 
-Most `.cpp` files have **stub implementations** marked `// TODO:`. What is actually implemented:
-- **Cylinder** / **Cone** — full intersection, normal, UV (`src/geometry/`)
-- **Window** — SDL2 init + display (`src/platform/`)
-- **Material**, **HitRecord**, **Scene**, **AObject** — data plumbing (ctors, getters, setters, assignment)
-- **Ray** — constructors, `pointAt()`
+All modules are **fully implemented**. No stubs remain.
 
-Still stubs: `Vec3`, `Matrix4x4`, `Transform`, `Camera`, `Renderer`, `SceneParser`, `Sphere`, `Plane`.
+### What was implemented
+
+| Module | Status |
+|--------|--------|
+| **Core** — Vec3, Ray, Matrix4x4, HitRecord, Material | Arithmetic, reflect/refract, transforms, data plumbing |
+| **Geometry** — Sphere, Plane, Cylinder, Cone | Full intersection, normals, UV, bounding boxes |
+| **Lighting** — AmbientLight, PointLight, DirectionalLight | Phong-ready with attenuation |
+| **Scene** — Camera, Scene, SceneParser, Transform | Ray generation, `.rt` file parsing (all directives), camera movement |
+| **Renderer** — Renderer, ImageBuffer | Full ray tracing with shadows, reflections, refractions, PNG export |
+| **Platform** — Window, EventHandler (SDL2) | Display with WASD camera controls, resize, ESC quit |
+
+### `.rt` Scene Format — All Directives
+
+| Directive | Example | Description |
+|-----------|---------|-------------|
+| `bg r g b` | `bg 0.3 0.3 0.35` | Background color |
+| `A r g b` | `A 0.4 0.4 0.4` | Ambient light (or `A intensity` for white) |
+| `L px py pz r g b intensity` | `L 8.0 8.0 8.0 1.0 1.0 0.9 1.0` | Point light |
+| `directional dx dy dz r g b intensity` | `directional 1.0 1.0 0.5 1.0 1.0 0.8 0.95` | Directional light |
+| `c px py pz lx ly lz ux uy uz fov` | `c 0.0 2.5 10.0 0.0 1.0 -1.2 0.0 1.0 0.0 45.0` | Camera (10 values) |
+| `c px py pz lx ly lz fov` | `c 0.0 3.0 12.0 0.0 0.5 -2.0 40.0` | Camera (7 values, up=(0,1,0)) |
+| `sp cx cy cz radius` | `sp 0.0 0.5 0.0 1.0` | Sphere |
+| `pl px py pz nx ny nz` | `pl 0.0 -2.0 0.0 0.0 1.0 0.0` | Plane |
+| `cy cx cy cz ax ay az radius height` | `cy 0.0 -1.5 -4.0 0.0 1.0 0.0 0.5 1.5` | Cylinder |
+| `co ax ay az dx dy dz halfAngle height` | `co 2.5 -1.8 -6.0 0.0 1.0 0.0 25.0 1.8` | Cone |
+| `material r g b amb diff spec shininess reflect` | `material 0.9 0.2 0.1 0.8 0.6 0.1 32.0 0.1` | Postfix material |
+
+**Parser quirk**: `material` is **postfix** — applies to the most recently declared object.
+
+### Runtime Controls
+
+| Input | Action |
+|-------|--------|
+| **W/A/S/D** | Move camera forward/left/back/right |
+| **Q/E** | Move camera down/up |
+| **↑/↓/←/→** | Rotate camera pitch/yaw |
+| **ESC** | Quit |
+| **S** | Save screenshot (`screenshot_N.png`) |
+| **R** | Force re-render |
+
+### Reflections & Refractions
+
+- Reflection: `ray.getDirection().reflect(normal)` via Vec3::reflect, weighted by `material.getReflectivity()`
+- Refraction: `ray.getDirection().refract(normal, n1/n2, ...)` via Vec3::refract (Snell's law), weighted by `material.getTransparency()`
+- Recursion depth capped at `maxRecursionDepth` (default 4)
+- Total internal reflection: discriminant check in Vec3::refract
+
+### Rendering Pipeline
+
+`main` loop: poll SDL events → detect camera movement → `Renderer::render()` → `trace()` per pixel → `castRay()` finds closest hit → `calculateLighting()` (Phong) + optional reflection/refraction → `window.updateDisplay()`
 
 ## Architecture
 
@@ -46,8 +91,8 @@ Custom grammar in `scenes/`. Example directives: `bg`, `A`, `L`, `sp`, `pl`, `cy
 
 ## Testing
 
-- `tests/` has **one file**: `.gitkeep` — no tests exist.
-- The `make test` target builds `./rt_test` linking all `.o` files (not a dedicated test runner). If you add a test framework, configure it separately.
+- `tests/` has **`test_main.cpp`** with 13 tests (Cylinder + Cone intersection, normals, caps).
+- `make test` → `./rt_test` — test binary (excludes `src/app/main.cpp`, includes `tests/*.cpp`).
 
 ## Git Conventions (from docs)
 

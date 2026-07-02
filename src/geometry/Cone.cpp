@@ -167,7 +167,7 @@ Vec3 Cone::getNormalAt(const Vec3& point) const
     double rLen = radial.magnitude();
 
     if (std::abs(h - height) < Vec3::EPSILON)
-        return -axis;
+        return axis;
 
     if (rLen < Vec3::EPSILON)
         return axis;

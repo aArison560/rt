@@ -18,6 +18,7 @@
 #include "core/Vec3.hpp"
 #include <cstddef>
 #include <memory>
+#include <string>
 
 class ImageBuffer
 {
@@ -165,6 +166,13 @@ public:
      * @return Pixel count * 4 (RGBA)
      */
     size_t getDataSize() const;
+
+    /**
+     * @brief Save buffer to PNG file
+     * @param filename Output file path
+     * @return true on success
+     */
+    bool savePNG(const std::string& filename) const;
 
 private:
     int width;                  ///< Buffer width

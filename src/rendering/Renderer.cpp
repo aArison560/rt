@@ -83,7 +83,50 @@ Vec3 Renderer::trace(const Ray& ray, const Scene& scene, int depth,
     if (!castRay(ray, scene, tMin, tMax, record)) {
         return scene.getBackgroundColor();
     }
-    return calculateLighting(record, -ray.getDirection(), scene, depth);
+    Vec3 viewDir = -ray.getDirection();
+    Vec3 color = calculateLighting(record, viewDir, scene, depth);
+    const Material* mat = record.getMaterial();
+
+    if (mat) {
+        Vec3 point = record.getPoint();
+        Vec3 normal = record.getNormal();
+
+        // Reflection
+        if (reflectionsEnabled && mat->getReflectivity() > 0.0 && depth < maxRecursionDepth) {
+            Vec3 reflectedDir = ray.getDirection().reflect(normal);
+            Vec3 reflectedOrigin = point + normal * Vec3::EPSILON;
+            Ray reflectedRay(reflectedOrigin, reflectedDir);
+            Vec3 reflectedColor = trace(reflectedRay, scene, depth + 1, 1e-4, 1e30);
+            color += reflectedColor * mat->getReflectivity();
+        }
+
+        // Refraction
+        if (refractionsEnabled && mat->getTransparency() > 0.0 && depth < maxRecursionDepth) {
+            Vec3 refractedDir;
+            double ratio;
+            Vec3 refractionNormal;
+            if (record.isFrontFace()) {
+                // Entering material (air → medium)
+                ratio = 1.0 / mat->getRefractiveIndex();
+                refractionNormal = normal;
+            } else {
+                // Exiting material (medium → air)
+                ratio = mat->getRefractiveIndex();
+                refractionNormal = -normal;
+            }
+            if (ray.getDirection().refract(refractionNormal, ratio, refractedDir)) {
+                Vec3 refractedOrigin = point - normal * Vec3::EPSILON;
+                Ray refractedRay(refractedOrigin, refractedDir);
+                Vec3 refractedColor = trace(refractedRay, scene, depth + 1, 1e-4, 1e30);
+                color += refractedColor * mat->getTransparency();
+            }
+        }
+    }
+
+    color.x = std::clamp(color.x, 0.0, 1.0);
+    color.y = std::clamp(color.y, 0.0, 1.0);
+    color.z = std::clamp(color.z, 0.0, 1.0);
+    return color;
 }
 
 bool Renderer::castRay(const Ray& ray, const Scene& scene, double tMin, double tMax,
