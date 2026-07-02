@@ -141,6 +141,17 @@ int main(int argc, char* argv[])
 
     ImageBuffer buffer(width, height);
 
+    // Quick debug fill to verify the window shows image data
+    buffer.fill(255, 0, 255, 255); // magenta test
+    if (!window.updateDisplay(buffer)) {
+        std::cerr << "Warning: initial updateDisplay failed\n";
+    } else {
+        window.present();
+    }
+
+    // Pause briefly so user can see the test pattern (1000ms)
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
     // TODO: Setup event handler
     EventHandler eventHandler;
     eventHandler.setupCameraControls(&scene.getCamera(), 0.5, 0.05);
