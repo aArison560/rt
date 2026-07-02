@@ -55,32 +55,55 @@ const unsigned char* ImageBuffer::getDataConst() const { return data.get(); }
 
 void ImageBuffer::setPixel(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
-    // TODO: Set pixel with bounds checking
+    if (!inBounds(x,y) || !data) return;
+    size_t off = pixelOffset(x,y);
+    data[off+0] = r;
+    data[off+1] = g;
+    data[off+2] = b;
+    data[off+3] = a;
 }
 
 void ImageBuffer::setPixel(int x, int y, const Vec3& color)
 {
-    // TODO: Convert Vec3 [0,1] to RGBA [0,255]
+    unsigned char r = static_cast<unsigned char>(std::clamp(color.x, 0.0, 1.0) * 255.0);
+    unsigned char g = static_cast<unsigned char>(std::clamp(color.y, 0.0, 1.0) * 255.0);
+    unsigned char b = static_cast<unsigned char>(std::clamp(color.z, 0.0, 1.0) * 255.0);
+    setPixel(x, y, r, g, b, 255);
 }
 
 void ImageBuffer::getPixel(int x, int y, unsigned char& r, unsigned char& g, unsigned char& b, unsigned char& a) const
 {
-    // TODO: Get pixel with bounds checking
+    if (!inBounds(x,y) || !data) { r = g = b = a = 0; return; }
+    size_t off = pixelOffset(x,y);
+    r = data[off+0];
+    g = data[off+1];
+    b = data[off+2];
+    a = data[off+3];
 }
 
 void ImageBuffer::fill(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
-    // TODO: Fill entire buffer with color
+    if (!data) return;
+    size_t total = getPixelCount();
+    for (size_t i = 0; i < total; ++i) {
+        data[i*4 + 0] = r;
+        data[i*4 + 1] = g;
+        data[i*4 + 2] = b;
+        data[i*4 + 3] = a;
+    }
 }
 
 void ImageBuffer::fill(const ImageBuffer& other)
 {
-    // TODO: Fill with another buffer's data
+    if (!data || !other.data) return;
+    if (width != other.width || height != other.height) return;
+    std::copy(other.data.get(), other.data.get() + getDataSize(), data.get());
 }
 
 void ImageBuffer::clear()
 {
-    // TODO: Clear to black transparent (0,0,0,0)
+    if (!data) return;
+    std::fill_n(data.get(), getDataSize(), 0);
 }
 
 size_t ImageBuffer::getPixelCount() const { return static_cast<size_t>(width) * height; }
