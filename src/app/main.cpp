@@ -12,6 +12,8 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <thread>
+#include <chrono>
 #include "scene/Scene.hpp"
 #include "scene/Camera.hpp"
 #include "rendering/Renderer.hpp"
