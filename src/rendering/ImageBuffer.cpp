@@ -6,6 +6,8 @@
  */
 
 #include "rendering/ImageBuffer.hpp"
+#include <algorithm>
+#include <utility>
 
 ImageBuffer::ImageBuffer() : width(0), height(0), data(nullptr) {}
 
@@ -21,7 +23,10 @@ ImageBuffer::~ImageBuffer()
 
 ImageBuffer::ImageBuffer(const ImageBuffer& other) : width(other.width), height(other.height)
 {
-    // TODO: Deep copy data
+    if (other.data) {
+        data = std::make_unique<unsigned char[]>(other.getDataSize());
+        std::copy(other.data.get(), other.data.get() + other.getDataSize(), data.get());
+    }
 }
 
 ImageBuffer::ImageBuffer(ImageBuffer&& other) noexcept 
@@ -29,13 +34,30 @@ ImageBuffer::ImageBuffer(ImageBuffer&& other) noexcept
 
 ImageBuffer& ImageBuffer::operator=(const ImageBuffer& other)
 {
-    // TODO: Assignment with deep copy
+    if (this == &other) {
+        return *this;
+    }
+    width = other.width;
+    height = other.height;
+    if (other.data) {
+        data = std::make_unique<unsigned char[]>(other.getDataSize());
+        std::copy(other.data.get(), other.data.get() + other.getDataSize(), data.get());
+    } else {
+        data.reset();
+    }
     return *this;
 }
 
 ImageBuffer& ImageBuffer::operator=(ImageBuffer&& other) noexcept
 {
-    // TODO: Move assignment
+    if (this == &other) {
+        return *this;
+    }
+    width = other.width;
+    height = other.height;
+    data = std::move(other.data);
+    other.width = 0;
+    other.height = 0;
     return *this;
 }
 

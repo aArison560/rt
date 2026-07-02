@@ -12,9 +12,6 @@
 #include <iostream>
 #include <string>
 #include <memory>
-#include <thread>
-#include <chrono>
-#include <SDL2/SDL.h>
 #include "scene/Scene.hpp"
 #include "scene/Camera.hpp"
 #include "rendering/Renderer.hpp"
@@ -40,13 +37,13 @@ Scene createDefaultScene()
 {
     Scene scene;
     scene.setName("Default Scene");
-    scene.setBackgroundColor(Vec3(0.2, 0.2, 0.3));
+    scene.setBackgroundColor(Vec3(0.35, 0.45, 0.6));
 
     // Simple default scene: one sphere, ambient + point light, camera
     scene.setName("Default Scene");
 
     // Camera
-    Camera cam(Vec3(0.0, 1.5, 8.0), Vec3(0.0, 0.0, -1.0), Vec3(0.0, 1.0, 0.0), 50.0);
+    Camera cam(Vec3(0.0, 1.5, 8.0), Vec3(0.0, -0.2, -1.0), Vec3(0.0, 1.0, 0.0), 50.0);
     scene.setCamera(cam);
 
     // Sphere material and object
@@ -130,7 +127,7 @@ int main(int argc, char* argv[])
 
     // TODO: Initialize window
     Window window("RT - Ray Tracer", width, height);
-    if (!window.initialize("RT - Ray Tracer", width, height)) {
+    if (!window.isInitialized()) {
         std::cerr << "Failed to initialize window\n";
         return 1;
     }
@@ -143,43 +140,6 @@ int main(int argc, char* argv[])
     renderer.setReflectionsEnabled(true);
 
     ImageBuffer buffer(width, height);
-
-    // Quick debug fill to verify the window shows image data
-    buffer.fill(255, 0, 255, 255); // magenta test
-    if (!window.updateDisplay(buffer)) {
-        std::cerr << "Warning: initial updateDisplay failed\n";
-    } else {
-        window.present();
-    }
-
-    // Pause briefly so user can see the test pattern (1000ms)
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-    // Diagnostic: draw a checkerboard pattern and block until window closed so user can verify display
-    const int tile = 16;
-    for (int y = 0; y < buffer.getHeight(); ++y) {
-        for (int x = 0; x < buffer.getWidth(); ++x) {
-            bool odd = ((x / tile) + (y / tile)) % 2 == 1;
-            if (odd) buffer.setPixel(x, y, 255, 255, 0, 255); // yellow
-            else buffer.setPixel(x, y, 0, 128, 255, 255); // blue
-        }
-    }
-    window.updateDisplay(buffer);
-    window.present();
-
-    // Block here until the user closes the window (diagnostic mode)
-    std::cout << "Diagnostic display shown. Close the window to continue.\n";
-    bool diagRunning = true;
-    SDL_Event ev;
-    while (diagRunning) {
-        while (SDL_PollEvent(&ev)) {
-            if (ev.type == SDL_QUIT) {
-                diagRunning = false;
-                break;
-            }
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
 
     // TODO: Setup event handler
     EventHandler eventHandler;
@@ -210,7 +170,6 @@ int main(int argc, char* argv[])
                 running = false;
                 break;
             }
-
             // TODO: Display rendered image
             if (!window.updateDisplay(buffer)) {
                 std::cerr << "Failed to update display\n";

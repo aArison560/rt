@@ -15,20 +15,51 @@ EventHandler::EventHandler() : cameraControl(nullptr), cameraMoveSpeed(0.5),
 
 EventHandler::~EventHandler()
 {
-    // TODO: Cleanup resources if needed
 }
 
 bool EventHandler::pollEvents()
 {
-    // TODO: Poll SDL events and dispatch callbacks
+    windowResized = false;
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-        // TODO: Handle different event types
-        // SDL_QUIT, SDL_KEYDOWN, SDL_KEYUP, SDL_WINDOWEVENT
-        if (event.type == SDL_QUIT) {
-            windowCloseRequested = true;
-            if (quitCallback) quitCallback();
-            return true;
+        switch (event.type) {
+            case SDL_QUIT:
+                windowCloseRequested = true;
+                if (quitCallback) {
+                    quitCallback();
+                }
+                return true;
+            case SDL_KEYDOWN:
+                if (keyPressCallback) {
+                    keyPressCallback(event.key.keysym.sym);
+                }
+                if (event.key.keysym.sym == SDLK_ESCAPE) {
+                    windowCloseRequested = true;
+                    if (quitCallback) {
+                        quitCallback();
+                    }
+                    return true;
+                }
+                break;
+            case SDL_KEYUP:
+                if (keyReleaseCallback) {
+                    keyReleaseCallback(event.key.keysym.sym);
+                }
+                break;
+            case SDL_WINDOWEVENT:
+                if (event.window.event == SDL_WINDOWEVENT_EXPOSED) {
+                    if (exposeCallback) {
+                        exposeCallback();
+                    }
+                } else if (event.window.event == SDL_WINDOWEVENT_RESIZED ||
+                           event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                    windowResized = true;
+                    newWindowWidth = event.window.data1;
+                    newWindowHeight = event.window.data2;
+                }
+                break;
+            default:
+                break;
         }
     }
     processKeyboardInput();
@@ -42,7 +73,6 @@ void EventHandler::onExpose(ExposeCallback callback) { exposeCallback = callback
 
 void EventHandler::setupCameraControls(Camera* camera, double moveSpeed, double rotateSpeed)
 {
-    // TODO: Setup camera control
     cameraControl = camera;
     cameraMoveSpeed = moveSpeed;
     cameraRotateSpeed = rotateSpeed;
@@ -50,8 +80,16 @@ void EventHandler::setupCameraControls(Camera* camera, double moveSpeed, double 
 
 bool EventHandler::isKeyPressed(int keyCode) const
 {
-    // TODO: Check if key is currently pressed
-    return false;
+    int keyCount = 0;
+    const Uint8* state = SDL_GetKeyboardState(&keyCount);
+    if (!state || keyCount <= 0) {
+        return false;
+    }
+    SDL_Scancode scan = SDL_GetScancodeFromKey(keyCode);
+    if (scan == SDL_SCANCODE_UNKNOWN || static_cast<int>(scan) >= keyCount) {
+        return false;
+    }
+    return state[scan] != 0;
 }
 
 bool EventHandler::isWindowCloseRequested() const { return windowCloseRequested; }
@@ -60,7 +98,6 @@ bool EventHandler::wasWindowResized() const { return windowResized; }
 
 bool EventHandler::getNewWindowSize(int& width, int& height) const
 {
-    // TODO: Return new window size if resized
     if (windowResized) {
         width = newWindowWidth;
         height = newWindowHeight;
@@ -71,5 +108,19 @@ bool EventHandler::getNewWindowSize(int& width, int& height) const
 
 void EventHandler::processKeyboardInput()
 {
-    // TODO: Process continuous key input for camera control
+    if (!cameraControl) {
+        return;
+    }
+
+    if (isKeyPressed(SDLK_w)) cameraControl->moveForward(cameraMoveSpeed);
+    if (isKeyPressed(SDLK_s)) cameraControl->moveBackward(cameraMoveSpeed);
+    if (isKeyPressed(SDLK_a)) cameraControl->moveLeft(cameraMoveSpeed);
+    if (isKeyPressed(SDLK_d)) cameraControl->moveRight(cameraMoveSpeed);
+    if (isKeyPressed(SDLK_q)) cameraControl->moveDown(cameraMoveSpeed);
+    if (isKeyPressed(SDLK_e)) cameraControl->moveUp(cameraMoveSpeed);
+
+    if (isKeyPressed(SDLK_UP)) cameraControl->rotatePitch(-cameraRotateSpeed);
+    if (isKeyPressed(SDLK_DOWN)) cameraControl->rotatePitch(cameraRotateSpeed);
+    if (isKeyPressed(SDLK_LEFT)) cameraControl->rotateYaw(-cameraRotateSpeed);
+    if (isKeyPressed(SDLK_RIGHT)) cameraControl->rotateYaw(cameraRotateSpeed);
 }

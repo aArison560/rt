@@ -17,7 +17,7 @@ Cone::Cone() : apex(0, 0, 0), axis(0, 1, 0), halfAngleDegrees(45.0), height(2.0)
 Cone::Cone(const Vec3& apex, const Vec3& axis, double halfAngleDegrees, double height)
     : apex(apex), axis(axis), halfAngleDegrees(halfAngleDegrees), height(height)
 {
-    // TODO: Normalize axis
+    this->axis.normalize();
     updateAngleCache();
 }
 
@@ -25,19 +25,29 @@ Cone::Cone(const Vec3& apex, const Vec3& axis, double halfAngleDegrees, double h
            std::shared_ptr<Material> material)
     : apex(apex), axis(axis), halfAngleDegrees(halfAngleDegrees), height(height)
 {
+    this->axis.normalize();
     this->material = material;
     updateAngleCache();
 }
 
 Cone::Cone(const Cone& other)
     : AObject(other), apex(other.apex), axis(other.axis), 
-      halfAngleDegrees(other.halfAngleDegrees), height(other.height),
-      halfAngleRadians(other.halfAngleRadians), cosHalfAngle(other.cosHalfAngle),
-      sinHalfAngle(other.sinHalfAngle) {}
+      halfAngleDegrees(other.halfAngleDegrees), halfAngleRadians(other.halfAngleRadians),
+      cosHalfAngle(other.cosHalfAngle), sinHalfAngle(other.sinHalfAngle), height(other.height) {}
 
 Cone& Cone::operator=(const Cone& other)
 {
-    // TODO: Assignment
+    if (this == &other) {
+        return *this;
+    }
+    AObject::operator=(other);
+    apex = other.apex;
+    axis = other.axis;
+    halfAngleDegrees = other.halfAngleDegrees;
+    halfAngleRadians = other.halfAngleRadians;
+    cosHalfAngle = other.cosHalfAngle;
+    sinHalfAngle = other.sinHalfAngle;
+    height = other.height;
     return *this;
 }
 
@@ -47,12 +57,18 @@ bool Cone::hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) c
     // 1. Intersect with cone surface
     // 2. Check if within height bounds
     // 3. Test base cap
+    (void)ray;
+    (void)tMin;
+    (void)tMax;
+    (void)hitRecord;
     return false;
 }
 
 void Cone::getBoundingBox(Vec3& minCorner, Vec3& maxCorner) const
 {
     // TODO: Calculate bounding box
+    minCorner = apex - Vec3(height, 0.0, height);
+    maxCorner = apex + Vec3(height, height, height);
 }
 
 const char* Cone::getType() const
@@ -76,33 +92,44 @@ double Cone::getHeight() const { return height; }
 Vec3 Cone::getNormalAt(const Vec3& point) const
 {
     // TODO: Calculate surface normal at point
+    (void)point;
     return Vec3();
 }
 
 void Cone::getUVAt(const Vec3& point, double& u, double& v) const
 {
     // TODO: Calculate UV coordinates
+    (void)point;
+    u = 0.0;
+    v = 0.0;
 }
 
 void Cone::updateAngleCache()
 {
     // TODO: Convert degrees to radians and cache sin/cos
+    halfAngleRadians = halfAngleDegrees * M_PI / 180.0;
+    sinHalfAngle = std::sin(halfAngleRadians);
+    cosHalfAngle = std::cos(halfAngleRadians);
 }
 
 int Cone::intersectConeSurface(const Ray& ray, double tValues[2]) const
 {
     // TODO: Intersect with cone surface
+    (void)ray;
+    (void)tValues;
     return 0;
 }
 
 double Cone::intersectBaseCap(const Ray& ray) const
 {
     // TODO: Intersect with base cap
+    (void)ray;
     return -1.0;
 }
 
 bool Cone::isWithinHeightBounds(const Vec3& point) const
 {
     // TODO: Check if point is within height bounds
+    (void)point;
     return false;
 }

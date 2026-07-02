@@ -6,6 +6,8 @@
  */
 
 #include "rendering/Texture.hpp"
+#include <algorithm>
+#include <utility>
 
 Texture::Texture() : width(0), height(0), channels(0), data(nullptr), valid(false) {}
 
@@ -17,7 +19,11 @@ Texture::Texture(const std::string& filePath) : width(0), height(0), channels(0)
 Texture::Texture(const Texture& other) : width(other.width), height(other.height), 
                                          channels(other.channels), valid(other.valid)
 {
-    // TODO: Deep copy pixel data
+    if (other.data) {
+        const size_t sz = static_cast<size_t>(width) * static_cast<size_t>(height) * static_cast<size_t>(channels);
+        data = std::make_unique<unsigned char[]>(sz);
+        std::copy(other.data.get(), other.data.get() + sz, data.get());
+    }
 }
 
 Texture::Texture(Texture&& other) noexcept : width(other.width), height(other.height),
@@ -26,13 +32,37 @@ Texture::Texture(Texture&& other) noexcept : width(other.width), height(other.he
 
 Texture& Texture::operator=(const Texture& other)
 {
-    // TODO: Assignment (handle data properly)
+    if (this == &other) {
+        return *this;
+    }
+    width = other.width;
+    height = other.height;
+    channels = other.channels;
+    valid = other.valid;
+    if (other.data) {
+        const size_t sz = static_cast<size_t>(width) * static_cast<size_t>(height) * static_cast<size_t>(channels);
+        data = std::make_unique<unsigned char[]>(sz);
+        std::copy(other.data.get(), other.data.get() + sz, data.get());
+    } else {
+        data.reset();
+    }
     return *this;
 }
 
 Texture& Texture::operator=(Texture&& other) noexcept
 {
-    // TODO: Move assignment
+    if (this == &other) {
+        return *this;
+    }
+    width = other.width;
+    height = other.height;
+    channels = other.channels;
+    data = std::move(other.data);
+    valid = other.valid;
+    other.width = 0;
+    other.height = 0;
+    other.channels = 0;
+    other.valid = false;
     return *this;
 }
 
@@ -45,6 +75,8 @@ bool Texture::load(const std::string& filePath)
 {
     // TODO: Load PNG or JPEG using libpng/libjpeg
     // Set data, width, height, channels, valid
+    (void)filePath;
+    valid = false;
     return false;
 }
 
@@ -84,5 +116,7 @@ void Texture::clampUV(double& u, double& v) const
 Vec3 Texture::getPixel(int x, int y) const
 {
     // TODO: Get pixel and normalize to [0, 1]
+    (void)x;
+    (void)y;
     return Vec3();
 }

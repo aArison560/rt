@@ -13,7 +13,11 @@ ALight::ALight(const ALight& other) : color(other.color), intensity(other.intens
 
 ALight& ALight::operator=(const ALight& other)
 {
-    // TODO: Assignment
+    if (this == &other) {
+        return *this;
+    }
+    color = other.color;
+    intensity = other.intensity;
     return *this;
 }
 

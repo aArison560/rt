@@ -15,7 +15,10 @@ AmbientLight::AmbientLight(const AmbientLight& other) : ALight(other) {}
 
 AmbientLight& AmbientLight::operator=(const AmbientLight& other)
 {
-    // TODO: Assignment
+    if (this == &other) {
+        return *this;
+    }
+    ALight::operator=(other);
     return *this;
 }
 

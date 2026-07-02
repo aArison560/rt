@@ -90,7 +90,6 @@ bool Renderer::castRay(const Ray& ray, const Scene& scene, double tMin, double t
 {
     double closest = tMax;
     bool found = false;
-    HitRecord temp;
 
     const auto& objects = scene.getObjects();
     for (const auto& obj : objects) {
@@ -132,9 +131,8 @@ double Renderer::calculateShadow(const Vec3& hitPoint, const ALight& light,
 Vec3 Renderer::calculateLighting(const HitRecord& hitRecord, const Vec3& rayDir,
                                 const Scene& scene, int depth) const
 {
+    (void)depth;
     const Material* material = hitRecord.getMaterial();
-    Vec3 baseColor(1.0, 1.0, 1.0);
-    if (material) baseColor = material->getColor();
 
     // Ambient
     Vec3 color = calculateAmbient(material, scene);

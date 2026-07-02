@@ -14,6 +14,37 @@
 #include "lighting/AmbientLight.hpp"
 #include <fstream>
 #include <sstream>
+#include <vector>
+#include <cctype>
+#include <memory>
+
+namespace {
+static std::string trim(const std::string& s)
+{
+    size_t start = 0;
+    while (start < s.size() && std::isspace(static_cast<unsigned char>(s[start]))) {
+        ++start;
+    }
+    size_t end = s.size();
+    while (end > start && std::isspace(static_cast<unsigned char>(s[end - 1]))) {
+        --end;
+    }
+    return s.substr(start, end - start);
+}
+
+static bool toDoubles(const std::vector<std::string>& tokens, size_t startIndex, std::vector<double>& out)
+{
+    out.clear();
+    for (size_t i = startIndex; i < tokens.size(); ++i) {
+        try {
+            out.push_back(std::stod(tokens[i]));
+        } catch (...) {
+            return false;
+        }
+    }
+    return true;
+}
+}
 
 SceneParser::SceneParser() : currentLine(1), currentPos(0) {}
 
@@ -34,10 +65,11 @@ bool SceneParser::parseFile(const std::string& filePath, Scene& scene)
 
 bool SceneParser::parseString(const std::string& content, Scene& scene)
 {
-    // TODO: Parse scene from string content
+    lastError.clear();
     this->content = content;
     currentPos = 0;
     currentLine = 1;
+    scene.clear();
     return parse(scene);
 }
 
@@ -46,13 +78,189 @@ int SceneParser::getCurrentLine() const { return currentLine; }
 
 bool SceneParser::parse(Scene& scene)
 {
-    // TODO: Main parse loop calling specific parsers
-    return false;
+    std::istringstream input(content);
+    std::string line;
+    std::shared_ptr<AObject> lastObject;
+    currentLine = 0;
+
+    while (std::getline(input, line)) {
+        ++currentLine;
+
+        const size_t hashPos = line.find('#');
+        if (hashPos != std::string::npos) {
+            line = line.substr(0, hashPos);
+        }
+        line = trim(line);
+        if (line.empty()) {
+            continue;
+        }
+
+        std::istringstream ls(line);
+        std::vector<std::string> tokens;
+        std::string tok;
+        while (ls >> tok) {
+            tokens.push_back(tok);
+        }
+        if (tokens.empty()) {
+            continue;
+        }
+
+        const std::string& id = tokens[0];
+        std::vector<double> v;
+        if (!toDoubles(tokens, 1, v)) {
+            reportError("Invalid numeric value in line: " + line);
+            return false;
+        }
+
+        if (id == "bg") {
+            if (v.size() != 3) {
+                reportError("bg expects 3 values");
+                return false;
+            }
+            scene.setBackgroundColor(Vec3(v[0], v[1], v[2]));
+            continue;
+        }
+
+        if (id == "A") {
+            if (v.size() == 1) {
+                scene.addLight(std::make_shared<AmbientLight>(Vec3(1.0, 1.0, 1.0), v[0]));
+            } else if (v.size() == 3) {
+                scene.addLight(std::make_shared<AmbientLight>(Vec3(v[0], v[1], v[2]), 1.0));
+            } else {
+                reportError("A expects 1 or 3 values");
+                return false;
+            }
+            continue;
+        }
+
+        if (id == "L") {
+            if (v.size() != 7) {
+                reportError("L expects 7 values: px py pz r g b intensity");
+                return false;
+            }
+            scene.addLight(std::make_shared<PointLight>(
+                Vec3(v[0], v[1], v[2]),
+                Vec3(v[3], v[4], v[5]),
+                v[6]
+            ));
+            continue;
+        }
+
+        if (id == "c") {
+            if (v.size() == 7) {
+                Camera cam(
+                    Vec3(v[0], v[1], v[2]),
+                    Vec3(v[3], v[4], v[5]),
+                    Vec3(0.0, 1.0, 0.0),
+                    v[6]
+                );
+                scene.setCamera(cam);
+            } else if (v.size() == 10) {
+                const Vec3 pos(v[0], v[1], v[2]);
+                const Vec3 lookAt(v[3], v[4], v[5]);
+                Vec3 dir = lookAt - pos;
+                try {
+                    dir = dir.normalized();
+                } catch (...) {
+                    dir = Vec3(0.0, 0.0, -1.0);
+                }
+                Camera cam(
+                    pos,
+                    dir,
+                    Vec3(v[6], v[7], v[8]),
+                    v[9]
+                );
+                scene.setCamera(cam);
+            } else {
+                reportError("c expects 7 or 10 values");
+                return false;
+            }
+            continue;
+        }
+
+        if (id == "sp") {
+            if (v.size() != 4) {
+                reportError("sp expects 4 values: cx cy cz radius");
+                return false;
+            }
+            lastObject = std::make_shared<Sphere>(Vec3(v[0], v[1], v[2]), v[3]);
+            scene.addObject(lastObject);
+            continue;
+        }
+
+        if (id == "pl") {
+            if (v.size() != 6) {
+                reportError("pl expects 6 values: px py pz nx ny nz");
+                return false;
+            }
+            lastObject = std::make_shared<Plane>(Vec3(v[0], v[1], v[2]), Vec3(v[3], v[4], v[5]));
+            scene.addObject(lastObject);
+            continue;
+        }
+
+        if (id == "cy") {
+            if (v.size() != 8) {
+                reportError("cy expects 8 values: cx cy cz ax ay az radius height");
+                return false;
+            }
+            lastObject = std::make_shared<Cylinder>(
+                Vec3(v[0], v[1], v[2]),
+                Vec3(v[3], v[4], v[5]),
+                v[6],
+                v[7]
+            );
+            scene.addObject(lastObject);
+            continue;
+        }
+
+        if (id == "co") {
+            if (v.size() != 8) {
+                reportError("co expects 8 values: ax ay az dx dy dz halfAngle height");
+                return false;
+            }
+            lastObject = std::make_shared<Cone>(
+                Vec3(v[0], v[1], v[2]),
+                Vec3(v[3], v[4], v[5]),
+                v[6],
+                v[7]
+            );
+            scene.addObject(lastObject);
+            continue;
+        }
+
+        if (id == "material") {
+            if (!lastObject) {
+                reportError("material found before any object");
+                return false;
+            }
+            if (v.size() != 8) {
+                reportError("material expects 8 values: r g b amb diff spec shininess reflectivity");
+                return false;
+            }
+            std::shared_ptr<Material> mat = std::make_shared<Material>(
+                Vec3(v[0], v[1], v[2]),
+                v[3],
+                v[4],
+                v[5],
+                v[6]
+            );
+            mat->setReflectivity(v[7]);
+            lastObject->setMaterial(mat);
+            continue;
+        }
+
+        reportError("Unknown directive: " + id);
+        return false;
+    }
+
+    return true;
 }
 
 void SceneParser::skipWhitespace()
 {
-    // TODO: Skip spaces, tabs, newlines and comments
+    while (!isAtEnd() && std::isspace(static_cast<unsigned char>(peekChar()))) {
+        consumeChar();
+    }
 }
 
 bool SceneParser::isAtEnd() const
@@ -76,8 +284,25 @@ char SceneParser::consumeChar()
 
 bool SceneParser::parseNumber(double& value)
 {
-    // TODO: Parse floating point number
-    return false;
+    skipWhitespace();
+    size_t start = currentPos;
+    while (!isAtEnd()) {
+        const char c = peekChar();
+        if (std::isdigit(static_cast<unsigned char>(c)) || c == '-' || c == '+' || c == '.' || c == 'e' || c == 'E') {
+            consumeChar();
+        } else {
+            break;
+        }
+    }
+    if (start == currentPos) {
+        return false;
+    }
+    try {
+        value = std::stod(content.substr(start, currentPos - start));
+    } catch (...) {
+        return false;
+    }
+    return true;
 }
 
 bool SceneParser::parseVec3(Vec3& point)
@@ -93,57 +318,49 @@ bool SceneParser::parseVec3(Vec3& point)
 
 bool SceneParser::parseAmbient(Scene& scene)
 {
-    // TODO: Parse ambient light directive
-    // Format: A intensity color
+    (void)scene;
     return true;
 }
 
 bool SceneParser::parseLight(Scene& scene)
 {
-    // TODO: Parse point light directive
-    // Format: L position color intensity
+    (void)scene;
     return true;
 }
 
 bool SceneParser::parseSphere(Scene& scene)
 {
-    // TODO: Parse sphere directive
-    // Format: sp center radius color
+    (void)scene;
     return true;
 }
 
 bool SceneParser::parsePlane(Scene& scene)
 {
-    // TODO: Parse plane directive
-    // Format: pl point normal color
+    (void)scene;
     return true;
 }
 
 bool SceneParser::parseCylinder(Scene& scene)
 {
-    // TODO: Parse cylinder directive
-    // Format: cy center normal radius height color
+    (void)scene;
     return true;
 }
 
 bool SceneParser::parseCone(Scene& scene)
 {
-    // TODO: Parse cone directive
-    // Format: co apex normal half-angle height color
+    (void)scene;
     return true;
 }
 
 bool SceneParser::parseCamera(Scene& scene)
 {
-    // TODO: Parse camera directive
-    // Format: c position direction fov
+    (void)scene;
     return true;
 }
 
 bool SceneParser::parseBackground(Scene& scene)
 {
-    // TODO: Parse background color directive
-    // Format: bg color
+    (void)scene;
     return true;
 }
 
@@ -154,6 +371,12 @@ void SceneParser::reportError(const std::string& message)
 
 bool SceneParser::matchIdentifier(const std::string& identifier)
 {
-    // TODO: Check if current position matches identifier
+    if (currentPos + identifier.size() > content.size()) {
+        return false;
+    }
+    if (content.compare(currentPos, identifier.size(), identifier) == 0) {
+        currentPos += identifier.size();
+        return true;
+    }
     return false;
 }

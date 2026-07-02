@@ -152,6 +152,7 @@ void Window::swapBuffers()
 bool Window::setVSync(bool enabled)
 {
     // TODO: Set vertical sync
+    (void)enabled;
     return true;
 }
 

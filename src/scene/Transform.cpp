@@ -6,12 +6,13 @@
  */
 
 #include "scene/Transform.hpp"
+#include <cmath>
+#include <stdexcept>
 
 Transform::Transform() : matrix(Matrix4x4::identity()), inverseMatrix(Matrix4x4::identity()) {}
 
 Transform::Transform(const Matrix4x4& matrix) : matrix(matrix)
 {
-    // TODO: Calculate inverse
     updateInverse();
 }
 
@@ -20,19 +21,25 @@ Transform::Transform(const Transform& other)
 
 Transform& Transform::operator=(const Transform& other)
 {
-    // TODO: Assignment
+    if (this == &other) {
+        return *this;
+    }
+    matrix = other.matrix;
+    inverseMatrix = other.inverseMatrix;
     return *this;
 }
 
 Transform& Transform::compose(const Transform& other)
 {
-    // TODO: Compose transformations
+    matrix = matrix * other.matrix;
+    updateInverse();
     return *this;
 }
 
 Transform& Transform::translate(double x, double y, double z)
 {
-    // TODO: Apply translation
+    matrix = matrix * Matrix4x4::translate(x, y, z);
+    updateInverse();
     return *this;
 }
 
@@ -43,31 +50,36 @@ Transform& Transform::translate(const Vec3& offset)
 
 Transform& Transform::rotateX(double angleRadians)
 {
-    // TODO: Apply X rotation
+    matrix = matrix * Matrix4x4::rotateX(angleRadians);
+    updateInverse();
     return *this;
 }
 
 Transform& Transform::rotateY(double angleRadians)
 {
-    // TODO: Apply Y rotation
+    matrix = matrix * Matrix4x4::rotateY(angleRadians);
+    updateInverse();
     return *this;
 }
 
 Transform& Transform::rotateZ(double angleRadians)
 {
-    // TODO: Apply Z rotation
+    matrix = matrix * Matrix4x4::rotateZ(angleRadians);
+    updateInverse();
     return *this;
 }
 
 Transform& Transform::rotateAxis(const Vec3& axis, double angleRadians)
 {
-    // TODO: Apply arbitrary axis rotation
+    matrix = matrix * Matrix4x4::rotateAxis(axis, angleRadians);
+    updateInverse();
     return *this;
 }
 
 Transform& Transform::scale(double sx, double sy, double sz)
 {
-    // TODO: Apply scaling
+    matrix = matrix * Matrix4x4::scale(sx, sy, sz);
+    updateInverse();
     return *this;
 }
 
@@ -78,25 +90,21 @@ Transform& Transform::scale(const Vec3& scale)
 
 Vec3 Transform::transformPoint(const Vec3& point) const
 {
-    // TODO: Transform point
     return matrix.transformPoint(point);
 }
 
 Vec3 Transform::transformDirection(const Vec3& direction) const
 {
-    // TODO: Transform direction
     return matrix.transformDirection(direction);
 }
 
 Vec3 Transform::inverseTransformPoint(const Vec3& point) const
 {
-    // TODO: Inverse transform point
     return inverseMatrix.transformPoint(point);
 }
 
 Vec3 Transform::inverseTransformDirection(const Vec3& direction) const
 {
-    // TODO: Inverse transform direction
     return inverseMatrix.transformDirection(direction);
 }
 
@@ -112,27 +120,30 @@ const Matrix4x4& Transform::getInverseMatrix() const
 
 void Transform::setMatrix(const Matrix4x4& matrix)
 {
-    // TODO: Set matrix and update inverse
+    this->matrix = matrix;
+    updateInverse();
 }
 
 void Transform::identity()
 {
-    // TODO: Reset to identity
+    matrix = Matrix4x4::identity();
+    inverseMatrix = Matrix4x4::identity();
 }
 
 Vec3 Transform::getTranslation() const
 {
-    // TODO: Extract translation component
-    return Vec3();
+    return Vec3(matrix.get(0, 3), matrix.get(1, 3), matrix.get(2, 3));
 }
 
 Vec3 Transform::getScale() const
 {
-    // TODO: Extract scale component
-    return Vec3(1.0, 1.0, 1.0);
+    Vec3 c0(matrix.get(0, 0), matrix.get(1, 0), matrix.get(2, 0));
+    Vec3 c1(matrix.get(0, 1), matrix.get(1, 1), matrix.get(2, 1));
+    Vec3 c2(matrix.get(0, 2), matrix.get(1, 2), matrix.get(2, 2));
+    return Vec3(c0.magnitude(), c1.magnitude(), c2.magnitude());
 }
 
 void Transform::updateInverse()
 {
-    // TODO: Recalculate inverse matrix
+    inverseMatrix = matrix.inverse();
 }

@@ -12,7 +12,7 @@ DirectionalLight::DirectionalLight() : ALight(Vec3(1, 1, 1), 1.0), direction(0, 
 DirectionalLight::DirectionalLight(const Vec3& direction, const Vec3& color, double intensity)
     : ALight(color, intensity), direction(direction)
 {
-    // TODO: Normalize direction
+    this->direction.normalize();
 }
 
 DirectionalLight::DirectionalLight(const DirectionalLight& other) 
@@ -20,7 +20,11 @@ DirectionalLight::DirectionalLight(const DirectionalLight& other)
 
 DirectionalLight& DirectionalLight::operator=(const DirectionalLight& other)
 {
-    // TODO: Assignment
+    if (this == &other) {
+        return *this;
+    }
+    ALight::operator=(other);
+    direction = other.direction;
     return *this;
 }
 
@@ -32,7 +36,7 @@ const char* DirectionalLight::getType() const
 void DirectionalLight::setDirection(const Vec3& direction) 
 { 
     this->direction = direction;
-    // TODO: Normalize
+    this->direction.normalize();
 }
 
 const Vec3& DirectionalLight::getDirection() const { return direction; }

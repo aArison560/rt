@@ -26,7 +26,14 @@ PointLight::PointLight(const PointLight& other) : ALight(other), position(other.
 
 PointLight& PointLight::operator=(const PointLight& other)
 {
-    // TODO: Assignment
+    if (this == &other) {
+        return *this;
+    }
+    ALight::operator=(other);
+    position = other.position;
+    constantAtt = other.constantAtt;
+    linearAtt = other.linearAtt;
+    quadraticAtt = other.quadraticAtt;
     return *this;
 }
 
@@ -57,12 +64,10 @@ double PointLight::getAttenuationFactor(double distance) const
 
 Vec3 PointLight::getDirectionTo(const Vec3& point) const
 {
-    // TODO: Return normalized direction from light to point
-    return Vec3();
+    return (position - point).normalized();
 }
 
 double PointLight::getDistance(const Vec3& point) const
 {
-    // TODO: Calculate distance from light to point
-    return 0.0;
+    return position.distance(point);
 }

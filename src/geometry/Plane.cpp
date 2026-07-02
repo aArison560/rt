@@ -13,12 +13,13 @@ Plane::Plane() : point(0, 0, 0), normal(0, 1, 0) {}
 
 Plane::Plane(const Vec3& point, const Vec3& normal) : point(point), normal(normal)
 {
-    // TODO: Normalize normal
+    this->normal.normalize();
 }
 
 Plane::Plane(const Vec3& point, const Vec3& normal, std::shared_ptr<Material> material)
     : point(point), normal(normal)
 {
+    this->normal.normalize();
     this->material = material;
 }
 
@@ -26,15 +27,36 @@ Plane::Plane(const Plane& other) : AObject(other), point(other.point), normal(ot
 
 Plane& Plane::operator=(const Plane& other)
 {
-    // TODO: Assignment
+    if (this == &other) {
+        return *this;
+    }
+    AObject::operator=(other);
+    point = other.point;
+    normal = other.normal;
     return *this;
 }
 
 bool Plane::hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) const
 {
-    // TODO: Ray-plane intersection using dot product
-    // t = (p - o) · n / (d · n)
-    return false;
+    const double denom = ray.getDirection().dot(normal);
+    if (std::abs(denom) <= Vec3::EPSILON) {
+        return false;
+    }
+
+    const double t = (point - ray.getOrigin()).dot(normal) / denom;
+    if (t < tMin || t > tMax) {
+        return false;
+    }
+
+    const Vec3 hitPoint = ray.pointAt(t);
+    const bool frontFace = ray.getDirection().dot(normal) < 0.0;
+    const Vec3 outward = normal;
+    const Vec3 finalNormal = frontFace ? outward : -outward;
+
+    hitRecord = HitRecord(t, hitPoint, finalNormal, material.get(), const_cast<Plane*>(this));
+    hitRecord.setFrontFace(frontFace);
+    hitRecord.setUV(0.0, 0.0);
+    return true;
 }
 
 void Plane::getBoundingBox(Vec3& minCorner, Vec3& maxCorner) const
@@ -51,7 +73,7 @@ const char* Plane::getType() const
 
 void Plane::setPoint(const Vec3& point)
 {
-    // TODO: Set plane point
+    this->point = point;
 }
 
 const Vec3& Plane::getPoint() const
@@ -61,7 +83,8 @@ const Vec3& Plane::getPoint() const
 
 void Plane::setNormal(const Vec3& normal)
 {
-    // TODO: Set and normalize normal
+    this->normal = normal;
+    this->normal.normalize();
 }
 
 const Vec3& Plane::getNormal() const
@@ -71,17 +94,16 @@ const Vec3& Plane::getNormal() const
 
 Vec3 Plane::getNormalAt(const Vec3& point) const
 {
+    (void)point;
     return normal;
 }
 
 double Plane::distanceTo(const Vec3& point) const
 {
-    // TODO: Calculate signed distance from point to plane
-    return 0.0;
+    return (point - this->point).dot(normal);
 }
 
 bool Plane::contains(const Vec3& point) const
 {
-    // TODO: Check if point is on plane within epsilon
-    return false;
+    return std::abs(distanceTo(point)) <= Vec3::EPSILON;
 }

@@ -6,6 +6,7 @@
  */
 
 #include "scene/Scene.hpp"
+#include <algorithm>
 
 Scene::Scene() : camera(), backgroundColor(0.1, 0.1, 0.1), name("Unnamed Scene"), ambientMultiplier(1.0) {}
 
@@ -20,7 +21,15 @@ Scene::Scene(const Scene& other) : camera(other.camera), objects(other.objects),
 
 Scene& Scene::operator=(const Scene& other)
 {
-    // TODO: Assignment
+    if (this == &other) {
+        return *this;
+    }
+    camera = other.camera;
+    objects = other.objects;
+    lights = other.lights;
+    backgroundColor = other.backgroundColor;
+    name = other.name;
+    ambientMultiplier = other.ambientMultiplier;
     return *this;
 }
 
@@ -36,8 +45,12 @@ void Scene::addObject(std::shared_ptr<AObject> object)
 
 bool Scene::removeObject(std::shared_ptr<AObject> object)
 {
-    // TODO: Remove object from scene
-    return false;
+    auto it = std::find(objects.begin(), objects.end(), object);
+    if (it == objects.end()) {
+        return false;
+    }
+    objects.erase(it);
+    return true;
 }
 
 size_t Scene::getObjectCount() const { return objects.size(); }
@@ -61,8 +74,12 @@ void Scene::addLight(std::shared_ptr<ALight> light)
 
 bool Scene::removeLight(std::shared_ptr<ALight> light)
 {
-    // TODO: Remove light from scene
-    return false;
+    auto it = std::find(lights.begin(), lights.end(), light);
+    if (it == lights.end()) {
+        return false;
+    }
+    lights.erase(it);
+    return true;
 }
 
 size_t Scene::getLightCount() const { return lights.size(); }

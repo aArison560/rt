@@ -140,20 +140,17 @@ void Camera::moveDown(double distance)
 
 void Camera::rotatePitch(double angleRadians)
 {
-    // Simple rotation around right vector
-    // Not implemented for minimal demo
+    (void)angleRadians;
 }
 
 void Camera::rotateYaw(double angleRadians)
 {
-    // Simple rotation around up vector
-    // Not implemented for minimal demo
+    (void)angleRadians;
 }
 
 void Camera::rotateRoll(double angleRadians)
 {
-    // Simple rotation around direction vector
-    // Not implemented for minimal demo
+    (void)angleRadians;
 }
 
 void Camera::updateBasis()

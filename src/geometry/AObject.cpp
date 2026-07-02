@@ -14,13 +14,18 @@ AObject::AObject(const AObject& other)
 
 AObject& AObject::operator=(const AObject& other)
 {
-    // TODO: Assignment
+    if (this == &other) {
+        return *this;
+    }
+    transform = other.transform;
+    material = other.material;
+    castsShadows = other.castsShadows;
     return *this;
 }
 
 void AObject::setTransform(const Transform& transform)
 {
-    // TODO: Set transform
+    this->transform = transform;
 }
 
 const Transform& AObject::getTransform() const
@@ -30,7 +35,7 @@ const Transform& AObject::getTransform() const
 
 void AObject::setMaterial(std::shared_ptr<Material> material)
 {
-    // TODO: Set material
+    this->material = material;
 }
 
 std::shared_ptr<Material> AObject::getMaterial() const
@@ -40,7 +45,7 @@ std::shared_ptr<Material> AObject::getMaterial() const
 
 void AObject::setCastsShadows(bool castsShadows)
 {
-    // TODO: Set shadow casting flag
+    this->castsShadows = castsShadows;
 }
 
 bool AObject::getCastsShadows() const
@@ -57,12 +62,14 @@ void AObject::getWorldBoundingBox(Vec3& minCorner, Vec3& maxCorner) const
 Vec3 AObject::getNormalAt(const Vec3& point) const
 {
     // TODO: Default implementation (should be overridden)
+    (void)point;
     return Vec3(0, 1, 0);
 }
 
 void AObject::getUVAt(const Vec3& point, double& u, double& v) const
 {
     // TODO: Default implementation (should be overridden)
+    (void)point;
     u = 0.5;
     v = 0.5;
 }
