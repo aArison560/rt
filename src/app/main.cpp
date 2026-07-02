@@ -14,6 +14,7 @@
 #include <memory>
 #include <thread>
 #include <chrono>
+#include <SDL2/SDL.h>
 #include "scene/Scene.hpp"
 #include "scene/Camera.hpp"
 #include "rendering/Renderer.hpp"
@@ -153,6 +154,32 @@ int main(int argc, char* argv[])
 
     // Pause briefly so user can see the test pattern (1000ms)
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    // Diagnostic: draw a checkerboard pattern and block until window closed so user can verify display
+    const int tile = 16;
+    for (int y = 0; y < buffer.getHeight(); ++y) {
+        for (int x = 0; x < buffer.getWidth(); ++x) {
+            bool odd = ((x / tile) + (y / tile)) % 2 == 1;
+            if (odd) buffer.setPixel(x, y, 255, 255, 0, 255); // yellow
+            else buffer.setPixel(x, y, 0, 128, 255, 255); // blue
+        }
+    }
+    window.updateDisplay(buffer);
+    window.present();
+
+    // Block here until the user closes the window (diagnostic mode)
+    std::cout << "Diagnostic display shown. Close the window to continue.\n";
+    bool diagRunning = true;
+    SDL_Event ev;
+    while (diagRunning) {
+        while (SDL_PollEvent(&ev)) {
+            if (ev.type == SDL_QUIT) {
+                diagRunning = false;
+                break;
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
 
     // TODO: Setup event handler
     EventHandler eventHandler;
