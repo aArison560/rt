@@ -40,3 +40,6 @@ rt*
 
 # debug information files
 *.dwo
+
+# Object folders
+obj/

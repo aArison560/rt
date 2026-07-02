@@ -13,9 +13,15 @@
 
 **Dependencies**: `libsdl2-dev`, `libpng-dev`, `libjpeg-dev`.
 
-## Project State — Skeleton with TODOs
+## Project State — Mostly Stubs
 
-Nearly every `.cpp` file has **stub implementations** marked `// TODO:`. Headers are fully designed with Doxygen; only a few getters/setters and SDL2 Window init are actually implemented. The project needs the function bodies filled in.
+Most `.cpp` files have **stub implementations** marked `// TODO:`. What is actually implemented:
+- **Cylinder** / **Cone** — full intersection, normal, UV (`src/geometry/`)
+- **Window** — SDL2 init + display (`src/platform/`)
+- **Material**, **HitRecord**, **Scene**, **AObject** — data plumbing (ctors, getters, setters, assignment)
+- **Ray** — constructors, `pointAt()`
+
+Still stubs: `Vec3`, `Matrix4x4`, `Transform`, `Camera`, `Renderer`, `SceneParser`, `Sphere`, `Plane`.
 
 ## Architecture
 
@@ -35,6 +41,8 @@ Nearly every `.cpp` file has **stub implementations** marked `// TODO:`. Headers
 ## Scene File Format (`.rt`)
 
 Custom grammar in `scenes/`. Example directives: `bg`, `A`, `L`, `sp`, `pl`, `cy`, `co`, `c`, `material`. 5 example scenes provided. Parsed by `SceneParser`.
+
+**Parser quirk**: The `material` directive is **postfix** — it applies to the most recently declared object. The parser must track the last created object to attach the material to it.
 
 ## Testing
 

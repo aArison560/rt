@@ -8,6 +8,7 @@
 #include "rendering/Renderer.hpp"
 #include "core/HitRecord.hpp"
 #include "lighting/PointLight.hpp"
+#include "lighting/DirectionalLight.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -124,6 +125,16 @@ double Renderer::calculateShadow(const Vec3& hitPoint, const ALight& light,
         if (castRay(shadowRay, scene, 1e-4, dist - 1e-4, hr)) {
             return 0.0; // in shadow
         }
+    } else if (std::string(type) == "DirectionalLight") {
+        const DirectionalLight* dl = dynamic_cast<const DirectionalLight*>(&light);
+        if (!dl) return 1.0;
+        Vec3 dir = dl->getDirectionToLight();
+        Ray shadowRay(hitPoint + dir * 1e-4, dir);
+        HitRecord hr;
+        // Directional lights are at infinity, use large max distance
+        if (castRay(shadowRay, scene, 1e-4, 1e30, hr)) {
+            return 0.0; // in shadow
+        }
     }
     return 1.0;
 }
@@ -166,6 +177,19 @@ Vec3 Renderer::calculateLighting(const HitRecord& hitRecord, const Vec3& rayDir,
             Vec3 spec = calculateSpecular(hitRecord, light, lightDir, rayDir, shadow);
 
             color += (diff + spec) * attenuation;
+        }
+
+        if (type == std::string("DirectionalLight")) {
+            const DirectionalLight* dl = dynamic_cast<const DirectionalLight*>(&light);
+            if (!dl) continue;
+
+            Vec3 lightDir = dl->getDirectionToLight();
+            double shadow = calculateShadow(hitRecord.getPoint(), light, scene);
+
+            Vec3 diff = calculateDiffuse(hitRecord, light, lightDir, shadow);
+            Vec3 spec = calculateSpecular(hitRecord, light, lightDir, rayDir, shadow);
+
+            color += diff + spec;
         }
     }
 

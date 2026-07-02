@@ -7,6 +7,8 @@
 
 #include "geometry/Cylinder.hpp"
 #include "core/HitRecord.hpp"
+#include <algorithm>
+#include <cmath>
 
 Cylinder::Cylinder() : center(0, 0, 0), axis(0, 1, 0), radius(1.0), height(2.0) {}
 
@@ -43,21 +45,74 @@ Cylinder& Cylinder::operator=(const Cylinder& other)
 
 bool Cylinder::hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) const
 {
-    // TODO: Ray-cylinder intersection
-    // 1. Intersect with infinite cylinder surface
-    // 2. Check if within height bounds
-    // 3. Test end caps
-    (void)ray;
-    (void)tMin;
-    (void)tMax;
-    (void)hitRecord;
-    return false;
+    double tClosest = tMax;
+    HitRecord best;
+    bool found = false;
+
+    double bodyTs[2];
+    int bodyCount = intersectCylinderBody(ray, bodyTs);
+
+    for (int i = 0; i < bodyCount; ++i) {
+        double t = bodyTs[i];
+        if (t < tMin || t > tMax) continue;
+
+        Vec3 p = ray.pointAt(t);
+        if (!isWithinHeightBounds(p)) continue;
+
+        if (t < tClosest) {
+            tClosest = t;
+            found = true;
+            best.setT(t);
+            best.setPoint(p);
+        }
+    }
+
+    double tLower = intersectLowerCap(ray);
+    if (tLower >= tMin && tLower <= tMax && tLower < tClosest) {
+        Vec3 p = ray.pointAt(tLower);
+        if ((p - center).magnitudeSquared() <= radius * radius + Vec3::EPSILON) {
+            tClosest = tLower;
+            found = true;
+            best.setT(tLower);
+            best.setPoint(p);
+        }
+    }
+
+    double tUpper = intersectUpperCap(ray);
+    if (tUpper >= tMin && tUpper <= tMax && tUpper < tClosest) {
+        Vec3 p = ray.pointAt(tUpper);
+        Vec3 capCenter = center + axis * height;
+        if ((p - capCenter).magnitudeSquared() <= radius * radius + Vec3::EPSILON) {
+            tClosest = tUpper;
+            found = true;
+            best.setT(tUpper);
+            best.setPoint(p);
+        }
+    }
+
+    if (found) {
+        Vec3 normal = getNormalAt(best.getPoint());
+        best.setNormal(normal);
+        best.setMaterial(material.get());
+        best.setObject(const_cast<Cylinder*>(this));
+
+        double u, v;
+        getUVAt(best.getPoint(), u, v);
+        best.setUV(u, v);
+
+        best.setFrontFace(normal.dot(-ray.getDirection()) > 0.0);
+        hitRecord = best;
+    }
+
+    return found;
 }
 
 void Cylinder::getBoundingBox(Vec3& minCorner, Vec3& maxCorner) const
 {
-    minCorner = center - Vec3(radius, height * 0.5, radius);
-    maxCorner = center + Vec3(radius, height * 0.5, radius);
+    Vec3 halfH = axis * (height * 0.5);
+    Vec3 r(radius, radius, radius);
+    minCorner = center - r - halfH;
+    maxCorner = center + r + halfH;
 }
 
 const char* Cylinder::getType() const
@@ -76,44 +131,106 @@ double Cylinder::getHeight() const { return height; }
 
 Vec3 Cylinder::getNormalAt(const Vec3& point) const
 {
-    // TODO: Calculate surface normal at point
-    (void)point;
-    return Vec3();
+    Vec3 oc = point - center;
+    double h = oc.dot(axis);
+
+    if (h < Vec3::EPSILON)
+        return -axis;
+    if (h > height - Vec3::EPSILON)
+        return axis;
+
+    Vec3 radial = oc - axis * h;
+    double rLen = radial.magnitude();
+    if (rLen < Vec3::EPSILON)
+        return axis;
+
+    return radial / rLen;
 }
 
 void Cylinder::getUVAt(const Vec3& point, double& u, double& v) const
 {
-    // TODO: Calculate UV coordinates 
-    (void)point;
-    u = 0.0;
-    v = 0.0;
+    Vec3 oc = point - center;
+    double h = oc.dot(axis);
+    Vec3 radial = oc - axis * h;
+    double rLen = radial.magnitude();
+
+    if (rLen < Vec3::EPSILON) {
+        u = 0.5;
+        v = 0.5;
+        return;
+    }
+
+    Vec3 ref(1, 0, 0);
+    if (std::abs(axis.dot(ref)) > 0.9)
+        ref = Vec3(0, 0, 1);
+    Vec3 uDir = axis.cross(ref).normalized();
+    Vec3 vDir = uDir.cross(axis).normalized();
+
+    if (h >= 0.0 - Vec3::EPSILON && h <= height + Vec3::EPSILON &&
+        std::abs(rLen - radius) < Vec3::EPSILON) {
+        double angle = std::atan2(radial.dot(vDir), radial.dot(uDir));
+        u = angle / (2.0 * M_PI) + 0.5;
+        v = height > Vec3::EPSILON ? h / height : 0.0;
+    } else {
+        double pu = radial.dot(uDir) / radius;
+        double pv = radial.dot(vDir) / radius;
+        u = (pu + 1.0) / 2.0;
+        v = (pv + 1.0) / 2.0;
+    }
 }
 
 int Cylinder::intersectCylinderBody(const Ray& ray, double tValues[2]) const
 {
-    // TODO: Intersect with cylinder body
-    (void)ray;
-    (void)tValues;
-    return 0;
+    Vec3 oc = ray.getOrigin() - center;
+    double dDotA = ray.getDirection().dot(axis);
+    double ocDotA = oc.dot(axis);
+
+    Vec3 dPerp = ray.getDirection() - axis * dDotA;
+    Vec3 ocPerp = oc - axis * ocDotA;
+
+    double a = dPerp.dot(dPerp);
+    if (a < Vec3::EPSILON)
+        return 0;
+
+    double b = 2.0 * ocPerp.dot(dPerp);
+    double c = ocPerp.dot(ocPerp) - radius * radius;
+
+    double disc = b * b - 4.0 * a * c;
+    if (disc < 0.0)
+        return 0;
+
+    double sqrtDisc = std::sqrt(disc);
+    double t0 = (-b - sqrtDisc) / (2.0 * a);
+    double t1 = (-b + sqrtDisc) / (2.0 * a);
+
+    if (t0 > t1) std::swap(t0, t1);
+
+    tValues[0] = t0;
+    tValues[1] = t1;
+    return 2;
 }
 
 double Cylinder::intersectLowerCap(const Ray& ray) const
 {
-    // TODO: Intersect with bottom cap
-    (void)ray;
-    return -1.0;
+    double denom = ray.getDirection().dot(axis);
+    if (std::abs(denom) < Vec3::EPSILON)
+        return -1.0;
+
+    return (center - ray.getOrigin()).dot(axis) / denom;
 }
 
 double Cylinder::intersectUpperCap(const Ray& ray) const
 {
-    // TODO: Intersect with top cap
-    (void)ray;
-    return -1.0;
+    double denom = ray.getDirection().dot(axis);
+    if (std::abs(denom) < Vec3::EPSILON)
+        return -1.0;
+
+    Vec3 capCenter = center + axis * height;
+    return (capCenter - ray.getOrigin()).dot(axis) / denom;
 }
 
 bool Cylinder::isWithinHeightBounds(const Vec3& point) const
 {
-    // TODO: Check if point is within height bounds
-    (void)point;
-    return false;
+    double h = (point - center).dot(axis);
+    return h >= 0.0 && h <= height;
 }

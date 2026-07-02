@@ -12,6 +12,7 @@
 #include "geometry/Cone.hpp"
 #include "lighting/PointLight.hpp"
 #include "lighting/AmbientLight.hpp"
+#include "lighting/DirectionalLight.hpp"
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -139,6 +140,19 @@ bool SceneParser::parse(Scene& scene)
                 return false;
             }
             scene.addLight(std::make_shared<PointLight>(
+                Vec3(v[0], v[1], v[2]),
+                Vec3(v[3], v[4], v[5]),
+                v[6]
+            ));
+            continue;
+        }
+
+        if (id == "directional") {
+            if (v.size() != 7) {
+                reportError("directional expects 7 values: dx dy dz r g b intensity");
+                return false;
+            }
+            scene.addLight(std::make_shared<DirectionalLight>(
                 Vec3(v[0], v[1], v[2]),
                 Vec3(v[3], v[4], v[5]),
                 v[6]
