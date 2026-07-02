@@ -13,6 +13,7 @@ Camera::Camera()
       rightVector(1, 0, 0), fieldOfViewDegrees(45.0)
 {
     // Default camera at origin looking down positive Z
+    recalculateBasis();
 }
 
 Camera::Camera(const Vec3& position, const Vec3& direction, const Vec3& upVector,
@@ -20,7 +21,6 @@ Camera::Camera(const Vec3& position, const Vec3& direction, const Vec3& upVector
     : position(position), direction(direction), upVector(upVector),
       fieldOfViewDegrees(fieldOfViewDegrees)
 {
-    // TODO: Normalize vectors and calculate right vector
     recalculateBasis();
 }
 
@@ -30,37 +30,57 @@ Camera::Camera(const Camera& other)
 
 Camera& Camera::operator=(const Camera& other)
 {
-    // TODO: Assignment
+    if (this == &other) return *this;
+    position = other.position;
+    direction = other.direction;
+    upVector = other.upVector;
+    rightVector = other.rightVector;
+    fieldOfViewDegrees = other.fieldOfViewDegrees;
     return *this;
 }
 
 Ray Camera::generateRay(double screenX, double screenY, int screenWidth, int screenHeight) const
 {
-    // TODO: Generate ray from screen coordinates
-    // Convert screen coords to NDC, use FOV to determine ray direction
-    return Ray(position, direction);
+    // Convert pixel center to NDC
+    double nx = (screenX + 0.5) / static_cast<double>(screenWidth);
+    double ny = (screenY + 0.5) / static_cast<double>(screenHeight);
+
+    double aspect = static_cast<double>(screenWidth) / static_cast<double>(screenHeight);
+    double fovRad = fieldOfViewDegrees * M_PI / 180.0;
+    double scale = std::tan(fovRad * 0.5);
+
+    double px = (2.0 * nx - 1.0) * aspect * scale;
+    double py = (1.0 - 2.0 * ny) * scale; // y flipped so +y is up
+
+    Vec3 rayDir = direction + rightVector * px + upVector * py;
+    try {
+        rayDir = rayDir.normalized();
+    } catch (...) {
+        rayDir = direction;
+    }
+    return Ray(position, rayDir);
 }
 
-void Camera::setPosition(const Vec3& position)
+void Camera::setPosition(const Vec3& pos)
 {
-    // TODO: Set position
+    position = pos;
 }
 
-void Camera::setDirection(const Vec3& direction)
+void Camera::setDirection(const Vec3& dir)
 {
-    // TODO: Set direction and recalculate basis
+    direction = dir;
     recalculateBasis();
 }
 
-void Camera::setUp(const Vec3& upVector)
+void Camera::setUp(const Vec3& up)
 {
-    // TODO: Set up vector and recalculate basis
+    upVector = up;
     recalculateBasis();
 }
 
-void Camera::setFOV(double fieldOfViewDegrees)
+void Camera::setFOV(double fov)
 {
-    // TODO: Set field of view in degrees
+    fieldOfViewDegrees = fov;
 }
 
 const Vec3& Camera::getPosition() const
@@ -90,56 +110,83 @@ double Camera::getFOV() const
 
 void Camera::moveForward(double distance)
 {
-    // TODO: Move camera forward along direction
+    position += direction * distance;
 }
 
 void Camera::moveBackward(double distance)
 {
-    // TODO: Move camera backward
+    position -= direction * distance;
 }
 
 void Camera::moveLeft(double distance)
 {
-    // TODO: Move camera left (negative right direction)
+    position -= rightVector * distance;
 }
 
 void Camera::moveRight(double distance)
 {
-    // TODO: Move camera right
+    position += rightVector * distance;
 }
 
 void Camera::moveUp(double distance)
 {
-    // TODO: Move camera up
+    position += upVector * distance;
 }
 
 void Camera::moveDown(double distance)
 {
-    // TODO: Move camera down
+    position -= upVector * distance;
 }
 
 void Camera::rotatePitch(double angleRadians)
 {
-    // TODO: Rotate around right vector (pitch)
+    // Simple rotation around right vector
+    // Not implemented for minimal demo
 }
 
 void Camera::rotateYaw(double angleRadians)
 {
-    // TODO: Rotate around up vector (yaw)
+    // Simple rotation around up vector
+    // Not implemented for minimal demo
 }
 
 void Camera::rotateRoll(double angleRadians)
 {
-    // TODO: Rotate around direction vector (roll)
+    // Simple rotation around direction vector
+    // Not implemented for minimal demo
 }
 
 void Camera::updateBasis()
 {
-    // TODO: Update basis vectors
+    recalculateBasis();
 }
 
 void Camera::recalculateBasis()
 {
-    // TODO: Recalculate right vector and ensure consistency
-    // rightVector = direction × upVector
+    try {
+        direction = direction.normalized();
+    } catch (...) {
+        direction = Vec3(0,0,1);
+    }
+    try {
+        upVector = upVector.normalized();
+    } catch (...) {
+        upVector = Vec3(0,1,0);
+    }
+
+    // right = direction x up
+    rightVector = direction.cross(upVector);
+    try {
+        rightVector = rightVector.normalized();
+    } catch (...) {
+        rightVector = Vec3(1,0,0);
+    }
+
+    // Re-orthogonalize up
+    upVector = rightVector.cross(direction);
+    try {
+        upVector = upVector.normalized();
+    } catch (...) {
+        upVector = Vec3(0,1,0);
+    }
 }

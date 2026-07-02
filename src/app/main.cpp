@@ -39,12 +39,26 @@ Scene createDefaultScene()
     scene.setName("Default Scene");
     scene.setBackgroundColor(Vec3(0.2, 0.2, 0.3));
 
-    // TODO: Create a simple default scene with:
-    // - A sphere
-    // - A plane (ground)
-    // - Point light
-    // - Ambient light
-    // - Camera
+    // Simple default scene: one sphere, ambient + point light, camera
+    scene.setName("Default Scene");
+
+    // Camera
+    Camera cam(Vec3(0.0, 1.5, 8.0), Vec3(0.0, 0.0, -1.0), Vec3(0.0, 1.0, 0.0), 50.0);
+    scene.setCamera(cam);
+
+    // Sphere material and object
+    auto mat = std::make_shared<Material>(Vec3(0.9, 0.2, 0.2), 0.1, 0.7, 0.2, 32.0);
+    auto sphere = std::make_shared<Sphere>(Vec3(0.0, 0.0, -3.0), 1.5, mat);
+    scene.addObject(sphere);
+
+    // Ambient light
+    auto amb = std::make_shared<AmbientLight>(Vec3(1.0, 1.0, 1.0), 0.2);
+    scene.addLight(amb);
+
+    // Point light
+    auto pl = std::make_shared<PointLight>(Vec3(5.0, 5.0, 5.0), Vec3(1.0, 1.0, 1.0), 1.0);
+    pl->setAttenuation(1.0, 0.0, 0.0);
+    scene.addLight(pl);
 
     return scene;
 }

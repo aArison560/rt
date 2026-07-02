@@ -8,6 +8,7 @@
 #include "core/Vec3.hpp"
 #include <cassert>
 #include <cmath>
+#include <stdexcept>
 
 // Constructor implementations
 Vec3::Vec3() : x(0.0), y(0.0), z(0.0) {}
@@ -18,152 +19,160 @@ Vec3::Vec3(const Vec3& other) : x(other.x), y(other.y), z(other.z) {}
 
 Vec3& Vec3::operator=(const Vec3& other)
 {
-    // TODO: Assignment implementation
+    if (this == &other) return *this;
+    x = other.x;
+    y = other.y;
+    z = other.z;
     return *this;
 }
 
 // Arithmetic operators
 Vec3 Vec3::operator+(const Vec3& other) const
 {
-    // TODO: Addition implementation
-    return Vec3();
+    return Vec3(x + other.x, y + other.y, z + other.z);
 }
 
 Vec3 Vec3::operator-(const Vec3& other) const
 {
-    // TODO: Subtraction implementation
-    return Vec3();
+    return Vec3(x - other.x, y - other.y, z - other.z);
 }
 
 Vec3 Vec3::operator-() const
 {
-    // TODO: Negation implementation
-    return Vec3();
+    return Vec3(-x, -y, -z);
 }
 
 Vec3 Vec3::operator*(double scalar) const
 {
-    // TODO: Scalar multiplication implementation
-    return Vec3();
+    return Vec3(x * scalar, y * scalar, z * scalar);
 }
 
 Vec3 Vec3::operator/(double scalar) const
 {
-    // TODO: Scalar division implementation
-    assert(std::abs(scalar) > EPSILON);
-    return Vec3();
+    if (std::abs(scalar) <= EPSILON) throw std::runtime_error("Division by zero in Vec3::operator/");
+    return Vec3(x / scalar, y / scalar, z / scalar);
 }
 
 Vec3& Vec3::operator+=(const Vec3& other)
 {
-    // TODO: Compound addition implementation
+    x += other.x;
+    y += other.y;
+    z += other.z;
     return *this;
 }
 
 Vec3& Vec3::operator-=(const Vec3& other)
 {
-    // TODO: Compound subtraction implementation
+    x -= other.x;
+    y -= other.y;
+    z -= other.z;
     return *this;
 }
 
 Vec3& Vec3::operator*=(double scalar)
 {
-    // TODO: Compound scalar multiplication implementation
+    x *= scalar;
+    y *= scalar;
+    z *= scalar;
     return *this;
 }
 
 // Comparison operators
 bool Vec3::operator==(const Vec3& other) const
 {
-    // TODO: Equality comparison with epsilon tolerance
-    return false;
+    return (std::abs(x - other.x) <= EPSILON) &&
+           (std::abs(y - other.y) <= EPSILON) &&
+           (std::abs(z - other.z) <= EPSILON);
 }
 
 bool Vec3::operator!=(const Vec3& other) const
 {
-    // TODO: Inequality comparison
-    return true;
+    return !(*this == other);
 }
 
 // Vector operations
 Vec3 Vec3::componentMult(const Vec3& other) const
 {
-    // TODO: Component-wise (Hadamard) product
-    return Vec3();
+    return Vec3(x * other.x, y * other.y, z * other.z);
 }
 
 double Vec3::dot(const Vec3& other) const
 {
-    // TODO: Dot product calculation
-    return 0.0;
+    return x * other.x + y * other.y + z * other.z;
 }
 
 Vec3 Vec3::cross(const Vec3& other) const
 {
-    // TODO: Cross product calculation
-    return Vec3();
+    return Vec3(
+        y * other.z - z * other.y,
+        z * other.x - x * other.z,
+        x * other.y - y * other.x
+    );
 }
 
 double Vec3::magnitude() const
 {
-    // TODO: Calculate magnitude
-    return 0.0;
+    return std::sqrt(magnitudeSquared());
 }
 
 double Vec3::magnitudeSquared() const
 {
-    // TODO: Calculate squared magnitude (more efficient than magnitude)
-    return 0.0;
+    return x * x + y * y + z * z;
 }
 
 Vec3& Vec3::normalize()
 {
-    // TODO: Normalize vector to unit length
-    // Should throw if vector is zero
+    double mag = magnitude();
+    if (mag <= EPSILON) throw std::runtime_error("Cannot normalize zero-length vector");
+    x /= mag;
+    y /= mag;
+    z /= mag;
     return *this;
 }
 
 Vec3 Vec3::normalized() const
 {
-    // TODO: Return normalized copy
-    return Vec3();
+    double mag = magnitude();
+    if (mag <= EPSILON) throw std::runtime_error("Cannot normalize zero-length vector");
+    return Vec3(x / mag, y / mag, z / mag);
 }
 
 double Vec3::distance(const Vec3& other) const
 {
-    // TODO: Distance to another point
-    return 0.0;
+    return (*this - other).magnitude();
 }
 
 double Vec3::distanceSquared(const Vec3& other) const
 {
-    // TODO: Squared distance (faster)
-    return 0.0;
+    return (*this - other).magnitudeSquared();
 }
 
 Vec3 Vec3::lerp(const Vec3& other, double t) const
 {
-    // TODO: Linear interpolation
-    return Vec3();
+    return (*this) * (1.0 - t) + other * t;
 }
 
 Vec3 Vec3::reflect(const Vec3& normal) const
 {
-    // TODO: Reflect around normal
-    // Formula: r = v - 2(v·n)n
-    return Vec3();
+    // r = v - 2 (v·n) n
+    return (*this) - normal * (2.0 * this->dot(normal));
 }
 
 bool Vec3::refract(const Vec3& normal, double refractionIndex, Vec3& refractedDir) const
 {
-    // TODO: Refraction calculation
-    // Implement Snell's law with total internal reflection check
+    // Using Snell's law. Assumes this is the incident vector (pointing away from surface).
+    Vec3 uv = this->normalized();
+    double dt = uv.dot(normal);
+    double discriminant = 1.0 - refractionIndex * refractionIndex * (1.0 - dt * dt);
+    if (discriminant > 0.0) {
+        refractedDir = (uv - normal * dt) * refractionIndex - normal * std::sqrt(discriminant);
+        return true;
+    }
     return false;
 }
 
 // Stream output
 std::ostream& operator<<(std::ostream& out, const Vec3& v)
 {
-    // TODO: Stream formatting
     return out << "(" << v.x << ", " << v.y << ", " << v.z << ")";
 }

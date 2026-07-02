@@ -23,22 +23,21 @@ Sphere::Sphere(const Sphere& other) : AObject(other), center(other.center), radi
 
 Sphere& Sphere::operator=(const Sphere& other)
 {
-    // TODO: Assignment
+    if (this == &other) return *this;
+    AObject::operator=(other);
+    center = other.center;
+    radius = other.radius;
     return *this;
 }
 
 bool Sphere::hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) const
 {
-    // TODO: Implement ray-sphere intersection
-    // Transform ray to object space using inverse transform
-    // Solve quadratic equation: (p-c)·(p-c) - r² = 0
-    // where p = o + td
+    // Implement ray-sphere intersection
     return computeIntersection(ray, tMin, tMax, hitRecord);
 }
 
 void Sphere::getBoundingBox(Vec3& minCorner, Vec3& maxCorner) const
 {
-    // TODO: Calculate bounding box
     minCorner = center - Vec3(radius, radius, radius);
     maxCorner = center + Vec3(radius, radius, radius);
 }
@@ -48,9 +47,9 @@ const char* Sphere::getType() const
     return "Sphere";
 }
 
-void Sphere::setCenter(const Vec3& center)
+void Sphere::setCenter(const Vec3& c)
 {
-    // TODO: Set center
+    center = c;
 }
 
 const Vec3& Sphere::getCenter() const
@@ -58,9 +57,9 @@ const Vec3& Sphere::getCenter() const
     return center;
 }
 
-void Sphere::setRadius(double radius)
+void Sphere::setRadius(double r)
 {
-    // TODO: Set radius
+    radius = r;
 }
 
 double Sphere::getRadius() const
@@ -70,19 +69,53 @@ double Sphere::getRadius() const
 
 Vec3 Sphere::getNormalAt(const Vec3& point) const
 {
-    // TODO: Normal is (point - center) normalized
-    return Vec3();
+    return (point - center).normalized();
 }
 
 void Sphere::getUVAt(const Vec3& point, double& u, double& v) const
 {
-    // TODO: Calculate UV using spherical coordinates
-    // u = atan2(z, x) / (2π) + 0.5
-    // v = acos(y/r) / π
+    Vec3 p = (point - center).normalized();
+    double theta = std::atan2(p.z, p.x);
+    double phi = std::acos(p.y);
+    u = 1.0 - (theta + M_PI) / (2.0 * M_PI);
+    v = 1.0 - (phi) / M_PI;
 }
 
 bool Sphere::computeIntersection(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) const
 {
-    // TODO: Implement quadratic ray-sphere intersection
-    return false;
+    Vec3 oc = ray.getOrigin() - center;
+    Vec3 d = ray.getDirection();
+    double a = d.dot(d);
+    double b = 2.0 * oc.dot(d);
+    double c = oc.dot(oc) - radius * radius;
+    double discriminant = b * b - 4.0 * a * c;
+    if (discriminant < 0.0) return false;
+    double sqrtd = std::sqrt(discriminant);
+
+    double root = (-b - sqrtd) / (2.0 * a);
+    if (root < tMin || root > tMax) {
+        root = (-b + sqrtd) / (2.0 * a);
+        if (root < tMin || root > tMax) return false;
+    }
+
+    Vec3 point = ray.pointAt(root);
+    Vec3 outwardNormal = (point - center) / radius;
+    outwardNormal.normalize();
+
+    hitRecord.setT(root);
+    hitRecord.setPoint(point);
+    hitRecord.setNormal(outwardNormal);
+    hitRecord.setMaterial(material.get());
+    // const method; cast away const to set object pointer
+    hitRecord.setObject(const_cast<Sphere*>(this));
+
+    // Determine front face
+    bool front = ray.getDirection().dot(outwardNormal) < 0.0;
+    hitRecord.setFrontFace(front);
+
+    double u, v;
+    getUVAt(point, u, v);
+    hitRecord.setUV(u, v);
+
+    return true;
 }

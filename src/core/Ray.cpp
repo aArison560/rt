@@ -15,21 +15,27 @@ Ray::Ray() : origin(Vec3()), direction(Vec3(0, 0, 1))
 Ray::Ray(const Vec3& origin, const Vec3& direction) 
     : origin(origin), direction(direction)
 {
-    // TODO: Normalize direction if needed
+    // Normalize direction if needed
+    try {
+        this->direction = direction.normalized();
+    } catch (...) {
+        this->direction = Vec3(0,0,1);
+    }
 }
 
 Ray::Ray(const Ray& other) : origin(other.origin), direction(other.direction) {}
 
 Ray& Ray::operator=(const Ray& other)
 {
-    // TODO: Assignment
+    if (this == &other) return *this;
+    origin = other.origin;
+    direction = other.direction;
     return *this;
 }
 
 Vec3 Ray::pointAt(double t) const
 {
-    // TODO: Return origin + t * direction
-    return origin;
+    return origin + direction * t;
 }
 
 const Vec3& Ray::getOrigin() const
@@ -44,10 +50,14 @@ const Vec3& Ray::getDirection() const
 
 void Ray::setOrigin(const Vec3& origin)
 {
-    // TODO: Set origin
+    this->origin = origin;
 }
 
 void Ray::setDirection(const Vec3& direction)
 {
-    // TODO: Set and normalize direction
+    try {
+        this->direction = direction.normalized();
+    } catch (...) {
+        // keep previous direction if provided vector is invalid
+    }
 }

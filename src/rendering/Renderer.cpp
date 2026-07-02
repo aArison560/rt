@@ -7,7 +7,9 @@
 
 #include "rendering/Renderer.hpp"
 #include "core/HitRecord.hpp"
+#include "lighting/PointLight.hpp"
 #include <algorithm>
+#include <cmath>
 
 Renderer::Renderer() : maxRecursionDepth(4), shadowSamples(1), shadowsEnabled(true),
                        reflectionsEnabled(true), refractionsEnabled(false), cancelled(false) {}
@@ -76,10 +78,6 @@ bool Renderer::isCancelled() const { return cancelled; }
 Vec3 Renderer::trace(const Ray& ray, const Scene& scene, int depth,
                     double tMin, double tMax) const
 {
-    // TODO: Main ray tracing function
-    // 1. Find closest intersection
-    // 2. Calculate lighting at intersection
-    // 3. Handle reflections and refractions recursively
     HitRecord record;
     if (!castRay(ray, scene, tMin, tMax, record)) {
         return scene.getBackgroundColor();
@@ -90,52 +88,142 @@ Vec3 Renderer::trace(const Ray& ray, const Scene& scene, int depth,
 bool Renderer::castRay(const Ray& ray, const Scene& scene, double tMin, double tMax,
                       HitRecord& hitRecord) const
 {
-    // TODO: Find closest intersection with any object
-    return false;
+    double closest = tMax;
+    bool found = false;
+    HitRecord temp;
+
+    const auto& objects = scene.getObjects();
+    for (const auto& obj : objects) {
+        HitRecord hr;
+        if (obj->hit(ray, tMin, closest, hr)) {
+            // hr.t may be set by object
+            if (hr.isValid() || hr.getT() > 0.0) {
+                closest = hr.getT();
+                hitRecord = hr;
+                found = true;
+            }
+        }
+    }
+    return found;
 }
 
 double Renderer::calculateShadow(const Vec3& hitPoint, const ALight& light,
                                 const Scene& scene) const
 {
-    // TODO: Calculate shadow factor using shadow rays
-    return 1.0; // No shadow
+    // Minimal implementation: no soft shadows, simple hard shadow check
+    if (!shadowsEnabled) return 1.0;
+    // If light is point light, cast shadow ray toward it and check occlusion
+    const char* type = light.getType();
+    if (std::string(type) == "PointLight") {
+        const PointLight* pl = dynamic_cast<const PointLight*>(&light);
+        if (!pl) return 1.0;
+        Vec3 toLight = pl->getPosition() - hitPoint;
+        double dist = toLight.magnitude();
+        Vec3 dir = toLight / dist;
+        Ray shadowRay(hitPoint + dir * 1e-4, dir);
+        HitRecord hr;
+        if (castRay(shadowRay, scene, 1e-4, dist - 1e-4, hr)) {
+            return 0.0; // in shadow
+        }
+    }
+    return 1.0;
 }
 
 Vec3 Renderer::calculateLighting(const HitRecord& hitRecord, const Vec3& rayDir,
                                 const Scene& scene, int depth) const
 {
-    // TODO: Implement Phong lighting model
-    Vec3 color = calculateAmbient(hitRecord.getMaterial(), scene);
-    // Add diffuse and specular from each light
-    // Handle reflections and refractions if enabled and depth allows
+    const Material* material = hitRecord.getMaterial();
+    Vec3 baseColor(1.0, 1.0, 1.0);
+    if (material) baseColor = material->getColor();
+
+    // Ambient
+    Vec3 color = calculateAmbient(material, scene);
+
+    // For each light
+    for (const auto& lightPtr : scene.getLights()) {
+        const ALight& light = *lightPtr;
+        const std::string type = light.getType();
+
+        if (type == std::string("AmbientLight")) {
+            // ambient handled globally
+            continue;
+        }
+
+        if (type == std::string("PointLight")) {
+            const PointLight* pl = dynamic_cast<const PointLight*>(&light);
+            if (!pl) continue;
+            Vec3 lightPos = pl->getPosition();
+            Vec3 hitPoint = hitRecord.getPoint();
+
+            Vec3 lightDir = (lightPos - hitPoint).normalized();
+            double distance = (lightPos - hitPoint).magnitude();
+            double attenuation = pl->getAttenuationFactor(distance);
+
+            double shadow = calculateShadow(hitPoint, light, scene);
+
+            // Diffuse
+            Vec3 diff = calculateDiffuse(hitRecord, light, lightDir, shadow);
+
+            // Specular
+            Vec3 spec = calculateSpecular(hitRecord, light, lightDir, rayDir, shadow);
+
+            color += (diff + spec) * attenuation;
+        }
+    }
+
+    // Clamp to [0,1]
+    color.x = std::clamp(color.x, 0.0, 1.0);
+    color.y = std::clamp(color.y, 0.0, 1.0);
+    color.z = std::clamp(color.z, 0.0, 1.0);
+
     return color;
 }
 
 Vec3 Renderer::calculateAmbient(const Material* material,
                                 const Scene& scene) const
 {
-    // TODO: Calculate ambient component
-    return Vec3();
+    Vec3 ambientColor(0.0, 0.0, 0.0);
+    if (material) {
+        ambientColor = material->getColor() * material->getAmbient() * scene.getAmbientMultiplier();
+    }
+    // Also include ambient lights present in scene
+    for (const auto& lp : scene.getLights()) {
+        if (std::string(lp->getType()) == std::string("AmbientLight")) {
+            ambientColor = ambientColor + lp->getColor() * lp->getIntensity();
+        }
+    }
+    return ambientColor;
 }
 
 Vec3 Renderer::calculateDiffuse(const HitRecord& hitRecord, const ALight& light,
                                const Vec3& lightDir, double shadow) const
 {
-    // TODO: Calculate diffuse (Lambert) component
-    return Vec3();
+    const Material* material = hitRecord.getMaterial();
+    if (!material) return Vec3(0,0,0);
+    Vec3 normal = hitRecord.getFacingNormal();
+    double ndotl = std::max(0.0, normal.dot(lightDir));
+    Vec3 diffuse = material->getColor() * material->getDiffuse() * ndotl * light.getIntensity() * shadow;
+    // Modulate by light color
+    diffuse = diffuse.componentMult(light.getColor());
+    return diffuse;
 }
 
 Vec3 Renderer::calculateSpecular(const HitRecord& hitRecord, const ALight& light,
                                 const Vec3& lightDir, const Vec3& viewDir, double shadow) const
 {
-    // TODO: Calculate specular (Blinn-Phong) component
-    return Vec3();
+    const Material* material = hitRecord.getMaterial();
+    if (!material) return Vec3(0,0,0);
+    Vec3 normal = hitRecord.getFacingNormal();
+    Vec3 half = (lightDir + viewDir).normalized();
+    double nh = std::max(0.0, normal.dot(half));
+    double specFactor = std::pow(nh, material->getShininess());
+    Vec3 spec = light.getColor() * (material->getSpecular() * specFactor * light.getIntensity() * shadow);
+    return spec;
 }
 
 void Renderer::colorToRGBA(const Vec3& color, unsigned char& r, unsigned char& g,
                           unsigned char& b, unsigned char& a) const
 {
-    // TODO: Convert Vec3 [0,1] to RGBA [0,255]
     r = static_cast<unsigned char>(std::clamp(color.x, 0.0, 1.0) * 255.0);
     g = static_cast<unsigned char>(std::clamp(color.y, 0.0, 1.0) * 255.0);
     b = static_cast<unsigned char>(std::clamp(color.z, 0.0, 1.0) * 255.0);
