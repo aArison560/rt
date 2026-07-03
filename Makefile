@@ -23,8 +23,16 @@ MAIN_SRC := src/app/main.cpp
 LIB_SRCS := $(filter-out $(MAIN_SRC), $(SOURCES))
 TEST_SRCS := $(sort $(LIB_SRCS) $(shell find tests -name '*.cpp'))
 OBJECTS := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SOURCES))
+
 OBJECTS_TEST := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR_TEST)/%.o, $(LIB_SRCS)) \
                 $(patsubst tests/%.cpp, $(OBJ_DIR_TEST)/%.o, $(filter tests/%.cpp, $(TEST_SRCS)))
+
+# Progress tracking
+TOTAL_OBJS := $(words $(SOURCES))
+TOTAL_TEST_OBJS := $(words $(OBJECTS_TEST))
+COUNTER_FILE := $(OBJ_DIR)/.counter
+COUNTER_FILE_TEST := $(OBJ_DIR_TEST)/.counter
+$(shell rm -f $(COUNTER_FILE) $(COUNTER_FILE_TEST))
 HEADERS := $(shell find $(INC_DIR) -name '*.hpp' | sort)
 
 # Include path
@@ -38,12 +46,18 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS)
 	@mkdir -p $(BIN_DIR)
 	@$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-	@echo "Linked: $@"
+	@printf "\nLinked: $@\n"
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXFLAGS) -c $< -o $@
-	@echo "Compiled: $<"
+	@count=$$(cat $(COUNTER_FILE) 2>/dev/null || echo 0); \
+	count=$$((count + 1)); \
+	echo $$count > $(COUNTER_FILE); \
+	pct=$$((count * 100 / $(TOTAL_OBJS))); \
+	filled=$$((pct / 2)); \
+	bar=""; i=0; while [ $$i -lt $$filled ]; do bar="$$bar#"; i=$$((i + 1)); done; \
+	printf "\rCompilation [%-50s] %3d/%d (%3d%%)" "$$bar" $$count $(TOTAL_OBJS) $$pct
 
 clean:
 	@rm -rf $(OBJ_DIR) $(OBJ_DIR_TEST)
@@ -62,18 +76,30 @@ test: $(TARGET_TEST)
 $(TARGET_TEST): $(OBJECTS_TEST)
 	@mkdir -p $(BIN_DIR)
 	@$(CXX) $(CXXFLAGS_TEST) -o $@ $^ $(LDFLAGS)
-	@echo "Linked (test): $@"
+	@printf "\nLinked (test): $@\n"
 
 $(OBJ_DIR_TEST)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXFLAGS_TEST) -I$(INC_DIR) -c $< -o $@
-	@echo "Compiled (test): $<"
+	@count=$$(cat $(COUNTER_FILE_TEST) 2>/dev/null || echo 0); \
+	count=$$((count + 1)); \
+	echo $$count > $(COUNTER_FILE_TEST); \
+	pct=$$((count * 100 / $(TOTAL_TEST_OBJS))); \
+	filled=$$((pct / 2)); \
+	bar=""; i=0; while [ $$i -lt $$filled ]; do bar="$$bar#"; i=$$((i + 1)); done; \
+	printf "\rCompilation test [%-50s] %3d/%d (%3d%%)" "$$bar" $$count $(TOTAL_TEST_OBJS) $$pct
 
 # Test sources from tests/ directory
 $(OBJ_DIR_TEST)/%.o: tests/%.cpp $(HEADERS)
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXFLAGS_TEST) -I$(INC_DIR) -c $< -o $@
-	@echo "Compiled (test): $<"
+	@count=$$(cat $(COUNTER_FILE_TEST) 2>/dev/null || echo 0); \
+	count=$$((count + 1)); \
+	echo $$count > $(COUNTER_FILE_TEST); \
+	pct=$$((count * 100 / $(TOTAL_TEST_OBJS))); \
+	filled=$$((pct / 2)); \
+	bar=""; i=0; while [ $$i -lt $$filled ]; do bar="$$bar#"; i=$$((i + 1)); done; \
+	printf "\rCompilation test [%-50s] %3d/%d (%3d%%)" "$$bar" $$count $(TOTAL_TEST_OBJS) $$pct
 
 # Help target
 .PHONY: help
