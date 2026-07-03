@@ -11,16 +11,36 @@
 #include "lighting/DirectionalLight.hpp"
 #include <algorithm>
 #include <cmath>
+#include <random>
+#include <thread>
 
 Renderer::Renderer() : maxRecursionDepth(4), shadowSamples(1), shadowsEnabled(true),
-                       reflectionsEnabled(true), refractionsEnabled(false), cancelled(false) {}
+                       reflectionsEnabled(true), refractionsEnabled(false),
+                       samplesPerPixel(1), cancelled(false) {}
 
 Renderer::~Renderer() {}
 
 bool Renderer::render(const Scene& scene, int width, int height, unsigned char* pixelBuffer)
 {
     cancelled = false;
-    return renderRegion(scene, width, height, 0, 0, width, height, pixelBuffer);
+
+    unsigned int numThreads = std::max(1u, std::thread::hardware_concurrency());
+    int stripHeight = height / numThreads;
+
+    std::vector<std::thread> threads;
+    for (unsigned int i = 0; i < numThreads; ++i) {
+        int startY = static_cast<int>(i) * stripHeight;
+        int regionH = (i == numThreads - 1) ? height - startY : stripHeight;
+        threads.emplace_back([this, &scene, width, height, startY, regionH, pixelBuffer]() {
+            renderRegion(scene, width, height, 0, startY, width, regionH, pixelBuffer);
+        });
+    }
+
+    for (auto& t : threads) {
+        t.join();
+    }
+
+    return !cancelled;
 }
 
 bool Renderer::renderRegion(const Scene& scene, int width, int height,
@@ -40,14 +60,27 @@ bool Renderer::renderRegion(const Scene& scene, int width, int height,
 
     const Camera& camera = scene.getCamera();
 
+    static thread_local std::mt19937 rng(std::random_device{}());
+    static thread_local std::uniform_real_distribution<double> dist(0.0, 1.0);
+
     for (int y = y0; y < y1; ++y) {
         if (cancelled)
             return false;
 
         for (int x = x0; x < x1; ++x) {
-            const Ray ray = camera.generateRay(static_cast<double>(x), static_cast<double>(y),
-                                               width, height);
-            const Vec3 color = trace(ray, scene, 0, 1e-4, 1e30);
+            Vec3 accumulatedColor(0, 0, 0);
+
+            for (int s = 0; s < samplesPerPixel; ++s) {
+                double offsetX = dist(rng) - 0.5;
+                double offsetY = dist(rng) - 0.5;
+                const Ray ray = camera.generateRay(
+                    static_cast<double>(x) + offsetX,
+                    static_cast<double>(y) + offsetY,
+                    width, height);
+                accumulatedColor += trace(ray, scene, 0, 1e-4, 1e30);
+            }
+
+            Vec3 color = accumulatedColor / static_cast<double>(samplesPerPixel);
 
             unsigned char r, g, b, a;
             colorToRGBA(color, r, g, b, a);
@@ -73,6 +106,8 @@ void Renderer::setReflectionsEnabled(bool enabled) { reflectionsEnabled = enable
 bool Renderer::getReflectionsEnabled() const { return reflectionsEnabled; }
 void Renderer::setRefractionsEnabled(bool enabled) { refractionsEnabled = enabled; }
 bool Renderer::getRefractionsEnabled() const { return refractionsEnabled; }
+void Renderer::setSamplesPerPixel(int samples) { samplesPerPixel = std::max(1, samples); }
+int Renderer::getSamplesPerPixel() const { return samplesPerPixel; }
 void Renderer::cancel() { cancelled = true; }
 bool Renderer::isCancelled() const { return cancelled; }
 

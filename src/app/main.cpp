@@ -139,6 +139,7 @@ int main(int argc, char* argv[])
     renderer.setMaxRecursionDepth(4);
     renderer.setShadowsEnabled(true);
     renderer.setReflectionsEnabled(true);
+    renderer.setSamplesPerPixel(8);
 
     ImageBuffer buffer(width, height);
 

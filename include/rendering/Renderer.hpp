@@ -23,6 +23,7 @@
 #include "core/HitRecord.hpp"
 #include "lighting/ALight.hpp"
 #include "core/Material.hpp"
+#include <atomic>
 #include <vector>
 
 class Renderer
@@ -125,6 +126,18 @@ public:
     bool getRefractionsEnabled() const;
 
     /**
+     * @brief Set number of samples per pixel for anti-aliasing
+     * @param samples Samples per pixel (1 = no AA, 4+ = good quality)
+     */
+    void setSamplesPerPixel(int samples);
+
+    /**
+     * @brief Get number of samples per pixel
+     * @return Sample count
+     */
+    int getSamplesPerPixel() const;
+
+    /**
      * @brief Cancel ongoing render (for multithreading)
      */
     void cancel();
@@ -141,7 +154,8 @@ private:
     bool shadowsEnabled;    ///< Whether to compute shadows
     bool reflectionsEnabled; ///< Whether to compute reflections
     bool refractionsEnabled; ///< Whether to compute refractions
-    bool cancelled;         ///< Whether render was cancelled
+    int samplesPerPixel;    ///< Anti-aliasing samples per pixel
+    std::atomic<bool> cancelled; ///< Whether render was cancelled
 
     /**
      * @brief Trace a ray through the scene
