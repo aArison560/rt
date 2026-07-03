@@ -142,19 +142,16 @@ int main(int argc, char* argv[])
 
     ImageBuffer buffer(width, height);
 
-    // Setup event handler
-    EventHandler eventHandler;
-    eventHandler.setupCameraControls(&scene.getCamera(), 0.5, 0.05);
-    eventHandler.onExpose([&]() {
-        // TODO: Handle expose event (partial redraw)
-    });
-
-    std::cout << "Starting render loop...\n";
-
     // Main render loop state
     bool running = true;
     bool needsRedraw = true;
     int screenshotCount = 0;
+
+    // Setup event handler
+    EventHandler eventHandler;
+    eventHandler.setupCameraControls(&scene.getCamera(), 0.5, 0.05);
+
+    std::cout << "Starting render loop...\n";
 
     eventHandler.onKeyPress([&](int key) {
         if (key == 's' || key == 'S') {
@@ -190,7 +187,7 @@ int main(int argc, char* argv[])
             oldCamDir = newCamDir;
         }
 
-        // Check for redraw
+        // Re-render only when needed (camera movement, resize, etc.)
         if (needsRedraw) {
             std::cout << "Rendering scene...\n";
             if (!renderer.render(scene, width, height, buffer.getData())) {
@@ -198,14 +195,16 @@ int main(int argc, char* argv[])
                 running = false;
                 break;
             }
-            if (!window.updateDisplay(buffer)) {
-                std::cerr << "Failed to update display\n";
-                running = false;
-                break;
-            }
-            window.present();
             needsRedraw = false;
         }
+
+        // Always refresh the display (handles window expose/uncover)
+        if (!window.updateDisplay(buffer)) {
+            std::cerr << "Failed to update display\n";
+            running = false;
+            break;
+        }
+        window.present();
 
         // Check for window resize
         if (eventHandler.wasWindowResized()) {
