@@ -1,0 +1,59 @@
+# ============================================
+# Scène RT : "Clairière au crépuscule"
+# Une clairière forestière au coucher du soleil,
+# avec un ciel étoilé qui commence à poindre,
+# une sphère centrale en verre, des sphères
+# métalliques et deux pins stylisés.
+# ============================================
+
+# --- Ambiance générale ---
+# bg 0.04 0.05 0.11          # Ciel bleu-nuit profond, crépuscule avancé
+bg 0 0 0
+# A 0.08 0.08 0.13           # Ambiante froide et douce
+A 0
+
+# --- Éclairages ---
+directional 0.35 -0.35 -0.15 1.0 0.55 0.25 0.55   # Dernière lumière chaude du soleil couchant
+L 7.0 2.5 4.0 1.0 0.5 0.2 0.9      # Point lumineux chaud près de l'horizon (soleil)
+L -9.0 7.0 -6.0 0.45 0.55 1.0 0.55  # Lumière froide lunaire en hauteur
+
+# --- Caméra ---
+c 0.0 2.0 11.0 0.0 -0.1 -1.0 0.0 1.0 0.0 45.0
+
+# --- Sol ---
+pl 0.0 -1.0 0.0 0.0 1.0 0.0
+material 0.15 0.18 0.12 0.3 0.5 0.1 4.0 0.05   # Mousse/terre mate
+
+# --- Sphère centrale : orbe de verre teinté ---
+sp 0.0 0.5 -2.0 1.5
+material 0.7 0.85 1.0 0.1 0.2 0.9 128.0 0.6    # Bleu translucide très réfléchissant
+
+# --- Sphère rouge rubis (gauche) ---
+sp -2.5 -0.3 0.0 0.7
+material 0.9 0.15 0.1 0.2 0.6 0.4 32.0 0.1
+
+# --- Sphère dorée (droite) ---
+sp 2.8 -0.4 1.0 0.6
+material 0.95 0.75 0.2 0.2 0.6 0.5 48.0 0.2
+
+# --- Petite lune réfléchissante au loin ---
+sp -8.0 6.0 -12.0 1.2
+material 0.9 0.9 0.95 0.5 0.3 0.2 16.0 0.05
+
+# --- Pin n°1 (gauche, arrière-plan) ---
+cy -4.0 -1.0 -3.0 0.0 1.0 0.0 0.25 1.5
+material 0.35 0.22 0.12 0.3 0.5 0.05 4.0 0.0   # Tronc brun mat
+
+co -4.0 2.5 -3.0 0.0 -1.0 0.0 20.0 2.0
+material 0.1 0.35 0.15 0.2 0.5 0.05 6.0 0.0    # Feuillage vert sombre
+
+# --- Pin n°2 (droite, arrière-plan) ---
+cy 4.5 -1.0 -4.0 0.0 1.0 0.0 0.25 1.5
+material 0.35 0.22 0.12 0.3 0.5 0.05 4.0 0.0
+
+co 4.5 2.5 -4.0 0.0 -1.0 0.0 22.0 2.2
+material 0.12 0.4 0.18 0.2 0.5 0.05 6.0 0.0
+
+# --- Mur du fond (légère variation d'ambiance) ---
+pl 0.0 0.0 -18.0 0.0 0.0 1.0
+material 0.08 0.09 0.15 0.2 0.15 0.0 2.0 0.0
