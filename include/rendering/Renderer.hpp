@@ -25,6 +25,7 @@
 #include "core/Material.hpp"
 #include "rendering/BVH.hpp"
 #include <atomic>
+#include <cstdint>
 #include <optional>
 #include <vector>
 
@@ -159,6 +160,7 @@ private:
     int samplesPerPixel;    ///< Anti-aliasing samples per pixel
     std::atomic<bool> cancelled; ///< Whether render was cancelled
     std::unique_ptr<BVHNode> bvhRoot; ///< BVH acceleration structure
+    uint64_t lastObjectVersion; ///< Last seen Scene::objectVersion (to avoid unnecessary BVH rebuilds)
 
     /**
      * @brief Trace a ray through the scene

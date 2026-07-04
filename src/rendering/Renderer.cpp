@@ -21,7 +21,7 @@ static thread_local std::uniform_real_distribution<double> tlDist(0.0, 1.0);
 
 Renderer::Renderer() : maxRecursionDepth(4), shadowSamples(8), shadowsEnabled(true),
                        reflectionsEnabled(true), refractionsEnabled(false),
-                       samplesPerPixel(4), cancelled(false) {}
+                       samplesPerPixel(4), cancelled(false), lastObjectVersion(0) {}
 
 Renderer::~Renderer() {}
 
@@ -29,9 +29,13 @@ bool Renderer::render(const Scene& scene, int width, int height, unsigned char* 
 {
     cancelled = false;
 
-    // Rebuild BVH
-    auto objects = scene.getObjects();
-    bvhRoot = BVHNode::build(objects, 0, objects.size());
+    // Rebuild BVH only if the scene objects have changed since last render
+    uint64_t currentVersion = scene.getObjectVersion();
+    if (currentVersion != lastObjectVersion || !bvhRoot) {
+        auto objects = scene.getObjects();
+        bvhRoot = BVHNode::build(objects, 0, objects.size());
+        lastObjectVersion = currentVersion;
+    }
 
     unsigned int numThreads = std::max(1u, std::thread::hardware_concurrency());
     int stripHeight = height / numThreads;

@@ -8,7 +8,7 @@
 #include "scene/Scene.hpp"
 #include <algorithm>
 
-Scene::Scene() : camera(), backgroundColor(0.1, 0.1, 0.1), name("Unnamed Scene"), ambientMultiplier(1.0) {}
+Scene::Scene() : camera(), backgroundColor(0.1, 0.1, 0.1), name("Unnamed Scene"), ambientMultiplier(1.0), objectVersion(0) {}
 
 Scene::~Scene()
 {
@@ -16,7 +16,8 @@ Scene::~Scene()
 
 Scene::Scene(const Scene& other) : camera(other.camera), objects(other.objects),
                                    lights(other.lights), backgroundColor(other.backgroundColor),
-                                   name(other.name), ambientMultiplier(other.ambientMultiplier) {}
+                                   name(other.name), ambientMultiplier(other.ambientMultiplier),
+                                   objectVersion(other.objectVersion) {}
 
 Scene& Scene::operator=(const Scene& other)
 {
@@ -29,6 +30,7 @@ Scene& Scene::operator=(const Scene& other)
     backgroundColor = other.backgroundColor;
     name = other.name;
     ambientMultiplier = other.ambientMultiplier;
+    objectVersion = other.objectVersion;
     return *this;
 }
 
@@ -38,7 +40,10 @@ const Camera& Scene::getCamera() const { return camera; }
 
 void Scene::addObject(std::shared_ptr<AObject> object)
 {
-    if (object) objects.push_back(object);
+    if (object) {
+        objects.push_back(object);
+        ++objectVersion;
+    }
 }
 
 bool Scene::removeObject(std::shared_ptr<AObject> object)
@@ -48,6 +53,7 @@ bool Scene::removeObject(std::shared_ptr<AObject> object)
         return false;
     }
     objects.erase(it);
+    ++objectVersion;
     return true;
 }
 
@@ -93,7 +99,7 @@ const std::vector<std::shared_ptr<ALight>>& Scene::getLights() const
 void Scene::setBackgroundColor(const Vec3& color) { backgroundColor = color; }
 const Vec3& Scene::getBackgroundColor() const { return backgroundColor; }
 
-void Scene::clearObjects() { objects.clear(); }
+void Scene::clearObjects() { objects.clear(); ++objectVersion; }
 void Scene::clearLights() { lights.clear(); }
 void Scene::clear() { clearObjects(); clearLights(); }
 
@@ -102,3 +108,6 @@ void Scene::setName(const std::string& name) { this->name = name; }
 
 double Scene::getAmbientMultiplier() const { return ambientMultiplier; }
 void Scene::setAmbientMultiplier(double multiplier) { ambientMultiplier = multiplier; }
+
+uint64_t Scene::getObjectVersion() const { return objectVersion; }
+void Scene::resetObjectVersion() { objectVersion = 0; }

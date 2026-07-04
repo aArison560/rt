@@ -22,6 +22,7 @@
 #include "lighting/ALight.hpp"
 #include "core/Vec3.hpp"
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <memory>
@@ -187,6 +188,17 @@ public:
      */
     void setAmbientMultiplier(double multiplier);
 
+    /**
+     * @brief Get scene object version (incremented on object modifications)
+     * @return Current version number
+     */
+    [[nodiscard]] uint64_t getObjectVersion() const;
+
+    /**
+     * @brief Reset object version to zero (e.g., after scene load)
+     */
+    void resetObjectVersion();
+
 private:
     Camera camera;                              ///< Scene camera
     std::vector<std::shared_ptr<AObject>> objects; ///< Scene objects
@@ -194,4 +206,5 @@ private:
     Vec3 backgroundColor;                       ///< Background color
     std::string name;                           ///< Scene name
     double ambientMultiplier;                   ///< Global ambient multiplier
+    uint64_t objectVersion;                     ///< Monotonic counter incremented on object changes
 };
