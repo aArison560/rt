@@ -112,6 +112,18 @@ public:
     [[nodiscard]] double getShininess() const;
 
     /**
+     * @brief Set roughness coefficient (for Cook-Torrance specular)
+     * @param roughness Surface roughness (0.0 = perfect mirror, 1.0 = fully rough)
+     */
+    void setRoughness(double roughness);
+
+    /**
+     * @brief Get roughness coefficient
+     * @return The roughness value
+     */
+    [[nodiscard]] double getRoughness() const;
+
+    /**
      * @brief Set reflectivity
      * @param reflectivity Reflection coefficient (0.0-1.0)
      */
@@ -170,7 +182,8 @@ private:
     double ambient;          ///< Ambient lighting coefficient
     double diffuse;          ///< Diffuse lighting coefficient
     double specular;         ///< Specular lighting coefficient
-    double shininess;        ///< Shininess/glossiness coefficient
+    double shininess;        ///< Shininess/glossiness coefficient (legacy Phong)
+    double roughness;        ///< Surface roughness for Cook-Torrance (0.0-1.0)
     double reflectivity;     ///< Reflection strength (0.0-1.0)
     double transparency;     ///< Transparency (0.0 = opaque, 1.0 = transparent)
     double refractiveIndex;  ///< Refractive index for transparency

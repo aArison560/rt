@@ -8,19 +8,20 @@
 #include "core/Material.hpp"
 
 Material::Material() : color(1, 1, 1), ambient(0.1), diffuse(0.7), specular(0.2), 
-                       shininess(32.0), reflectivity(0.0), transparency(0.0), 
-                       refractiveIndex(1.0), texture(nullptr) {}
+                       shininess(32.0), roughness(0.3), reflectivity(0.0), 
+                       transparency(0.0), refractiveIndex(1.5), texture(nullptr) {}
 
 Material::Material(const Vec3& color, double ambient, double diffuse, double specular, double shininess)
     : color(color), ambient(ambient), diffuse(diffuse), specular(specular), 
-      shininess(shininess), reflectivity(0.0), transparency(0.0), 
-      refractiveIndex(1.0), texture(nullptr) {}
+      shininess(shininess), roughness(0.3), reflectivity(0.0), 
+      transparency(0.0), refractiveIndex(1.5), texture(nullptr) {}
 
 Material::Material(const Material& other)
     : color(other.color), ambient(other.ambient), diffuse(other.diffuse), 
       specular(other.specular), shininess(other.shininess), 
-      reflectivity(other.reflectivity), transparency(other.transparency),
-      refractiveIndex(other.refractiveIndex), texture(other.texture) {}
+      roughness(other.roughness), reflectivity(other.reflectivity), 
+      transparency(other.transparency), refractiveIndex(other.refractiveIndex), 
+      texture(other.texture) {}
 
 Material& Material::operator=(const Material& other)
 {
@@ -32,6 +33,7 @@ Material& Material::operator=(const Material& other)
   diffuse = other.diffuse;
   specular = other.specular;
   shininess = other.shininess;
+  roughness = other.roughness;
   reflectivity = other.reflectivity;
   transparency = other.transparency;
   refractiveIndex = other.refractiveIndex;
@@ -49,6 +51,8 @@ void Material::setSpecular(double specular) { this->specular = specular; }
 double Material::getSpecular() const { return specular; }
 void Material::setShininess(double shininess) { this->shininess = shininess; }
 double Material::getShininess() const { return shininess; }
+void Material::setRoughness(double roughness) { this->roughness = std::clamp(roughness, 0.0, 1.0); }
+double Material::getRoughness() const { return roughness; }
 void Material::setReflectivity(double reflectivity) { this->reflectivity = reflectivity; }
 double Material::getReflectivity() const { return reflectivity; }
 void Material::setTransparency(double transparency) { this->transparency = transparency; }

@@ -246,8 +246,8 @@ bool SceneParser::parse(const std::string& content, Scene& scene)
                 reportError("material found before any object");
                 return false;
             }
-            if (v.size() != 8) {
-                reportError("material expects 8 values: r g b amb diff spec shininess reflectivity");
+            if (v.size() != 8 && v.size() != 9) {
+                reportError("material expects 8 or 9 values: r g b amb diff spec shininess reflect [roughness]");
                 return false;
             }
             std::shared_ptr<Material> mat = std::make_shared<Material>(
@@ -258,6 +258,9 @@ bool SceneParser::parse(const std::string& content, Scene& scene)
                 v[6]
             );
             mat->setReflectivity(v[7]);
+            if (v.size() == 9) {
+                mat->setRoughness(v[8]);
+            }
             lastObject->setMaterial(mat);
             continue;
         }

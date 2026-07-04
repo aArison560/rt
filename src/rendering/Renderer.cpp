@@ -502,15 +502,51 @@ Vec3 Renderer::calculateDiffuse(const HitRecord& hitRecord, const ALight& light,
     return diffuse;
 }
 
+/// @brief Smith G1 for a single direction (height-correlated masking/shadowing)
+static double smithG1(double NdotX, double alpha2)
+{
+    return 2.0 * NdotX / (NdotX + std::sqrt(alpha2 + (1.0 - alpha2) * NdotX * NdotX));
+}
+
 Vec3 Renderer::calculateSpecular(const HitRecord& hitRecord, const ALight& light,
                                  const Vec3& lightDir, const Vec3& viewDir, double shadow) const
 {
     const Material* material = hitRecord.getMaterial().get();
-    if (!material) return Vec3(0,0,0);
+    if (!material) return Vec3(0, 0, 0);
+
     Vec3 normal = hitRecord.getFacingNormal();
-    Vec3 half = (lightDir + viewDir).normalized();
-    double nh = std::max(0.0, normal.dot(half));
-    double specFactor = std::pow(nh, material->getShininess());
+    Vec3 halfDir = (lightDir + viewDir).normalized();
+
+    double NdotV = std::max(normal.dot(viewDir), 0.0001);
+    double NdotL = std::max(normal.dot(lightDir), 0.0001);
+    double NdotH = std::max(normal.dot(halfDir), 0.0001);
+    double HdotV = std::max(halfDir.dot(viewDir), 0.0001);
+
+    if (NdotL <= 0.0 || NdotV <= 0.0) return Vec3(0, 0, 0);
+
+    // --- Cook-Torrance Microfacet BRDF ---
+
+    // α = roughness² for GGX
+    double alpha = std::max(material->getRoughness(), 0.001);
+    alpha = alpha * alpha;
+    double alpha2 = alpha * alpha;
+
+    // D — GGX/Trowbridge-Reitz normal distribution
+    double denom = NdotH * NdotH * (alpha2 - 1.0) + 1.0;
+    double D = alpha2 / (M_PI * denom * denom);
+
+    // G — Smith geometry attenuation (height-correlated)
+    double G = smithG1(NdotV, alpha2) * smithG1(NdotL, alpha2);
+
+    // F — Schlick Fresnel from IOR
+    double ior = material->getRefractiveIndex();
+    double f0 = (ior - 1.0) / (ior + 1.0);
+    f0 = f0 * f0;
+    double F = f0 + (1.0 - f0) * std::pow(1.0 - HdotV, 5.0);
+
+    // Cook-Torrance specular term: D * G * F / (4 * NdotV * NdotL)
+    double specFactor = (D * G * F) / (4.0 * NdotV * NdotL + 1e-8);
+
     Vec3 spec = light.getColor() * (material->getSpecular() * specFactor * light.getIntensity() * shadow);
     return spec;
 }
