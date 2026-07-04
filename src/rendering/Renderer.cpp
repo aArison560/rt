@@ -9,6 +9,7 @@
 #include "core/HitRecord.hpp"
 #include "lighting/PointLight.hpp"
 #include "lighting/DirectionalLight.hpp"
+#include "lighting/AreaLight.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -387,6 +388,26 @@ double Renderer::calculateShadow(const Vec3& hitPoint, const ALight& light,
             }
         }
         return static_cast<double>(visible) / static_cast<double>(shadowSamples);
+
+    } else if (light.getLightType() == LightType::Area) {
+        const AreaLight& al = static_cast<const AreaLight&>(light);
+        int areaSamples = al.getSamples();
+        int visible = 0;
+
+        for (int s = 0; s < areaSamples; ++s) {
+            Vec3 samplePos = al.samplePoint();
+            Vec3 toLight = samplePos - hitPoint;
+            double dist = toLight.magnitude();
+            if (dist <= 1e-6) continue;
+            Vec3 dir = toLight / dist;
+
+            Ray shadowRay(hitPoint + dir * 1e-4, dir);
+            shadowRayCount.fetch_add(1, std::memory_order_relaxed);
+            if (!castRay(shadowRay, scene, 1e-4, dist - 1e-4)) {
+                ++visible;
+            }
+        }
+        return static_cast<double>(visible) / static_cast<double>(areaSamples);
     }
     return 1.0;
 }
@@ -426,6 +447,16 @@ Vec3 Renderer::calculateLighting(const HitRecord& hitRecord, const Vec3& rayDir,
         if (light.getLightType() == LightType::Directional) {
             const DirectionalLight& dl = static_cast<const DirectionalLight&>(light);
             Vec3 lightDir = dl.getDirectionToLight();
+
+            Vec3 diff = calculateDiffuse(hitRecord, light, lightDir, shadow);
+            Vec3 spec = calculateSpecular(hitRecord, light, lightDir, rayDir, shadow);
+
+            color += diff + spec;
+        }
+
+        if (light.getLightType() == LightType::Area) {
+            const AreaLight& al = static_cast<const AreaLight&>(light);
+            Vec3 lightDir = (al.getPosition() - hitPoint).normalized();
 
             Vec3 diff = calculateDiffuse(hitRecord, light, lightDir, shadow);
             Vec3 spec = calculateSpecular(hitRecord, light, lightDir, rayDir, shadow);

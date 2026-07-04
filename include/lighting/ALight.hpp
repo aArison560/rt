@@ -22,7 +22,8 @@ enum class LightType
 {
     Ambient,
     Point,
-    Directional
+    Directional,
+    Area
 };
 
 class ALight
