@@ -37,9 +37,9 @@ PointLight& PointLight::operator=(const PointLight& other)
     return *this;
 }
 
-const char* PointLight::getType() const
+LightType PointLight::getLightType() const
 {
-    return "PointLight";
+    return LightType::Point;
 }
 
 void PointLight::setPosition(const Vec3& position) { this->position = position; }
@@ -58,7 +58,6 @@ double PointLight::getQuadraticAttenuation() const { return quadraticAtt; }
 
 double PointLight::getAttenuationFactor(double distance) const
 {
-    // TODO: Calculate attenuation: 1 / (c + l*d + q*d²)
     return 1.0 / (constantAtt + linearAtt * distance + quadraticAtt * distance * distance);
 }
 

@@ -17,7 +17,7 @@
 #pragma once
 
 #include "core/Vec3.hpp"
-#include <string>
+#include <filesystem>
 #include <memory>
 
 class Texture
@@ -33,7 +33,7 @@ public:
      * @param filePath Path to PNG or JPEG image file
      * @throw std::runtime_error if file cannot be loaded
      */
-    Texture(const std::string& filePath);
+    explicit Texture(const std::filesystem::path& filePath);
 
     /**
      * @brief Copy constructor
@@ -71,13 +71,13 @@ public:
      * @param filePath Path to PNG or JPEG image file
      * @return true if load successful, false otherwise
      */
-    bool load(const std::string& filePath);
+    [[nodiscard]] bool load(const std::filesystem::path& filePath);
 
     /**
      * @brief Check if texture is valid and loaded
      * @return true if texture data is available
      */
-    bool isValid() const;
+    [[nodiscard]] bool isValid() const;
 
     /**
      * @brief Sample color from texture at UV coordinates
@@ -85,7 +85,7 @@ public:
      * @param v V coordinate (0.0-1.0)
      * @return Color at UV as Vec3 (RGB normalized to 0-1)
      */
-    Vec3 sample(double u, double v) const;
+    [[nodiscard]] Vec3 sample(double u, double v) const;
 
     /**
      * @brief Sample color with bilinear filtering
@@ -99,19 +99,19 @@ public:
      * @brief Get texture width in pixels
      * @return Width in pixels
      */
-    int getWidth() const;
+    [[nodiscard]] int getWidth() const;
 
     /**
      * @brief Get texture height in pixels
      * @return Height in pixels
      */
-    int getHeight() const;
+    [[nodiscard]] int getHeight() const;
 
     /**
      * @brief Get number of channels (3 for RGB, 4 for RGBA)
      * @return Channel count
      */
-    int getChannels() const;
+    [[nodiscard]] int getChannels() const;
 
 private:
     int width;           ///< Texture width in pixels

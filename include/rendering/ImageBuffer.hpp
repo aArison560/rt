@@ -17,8 +17,8 @@
 
 #include "core/Vec3.hpp"
 #include <cstddef>
+#include <filesystem>
 #include <memory>
-#include <string>
 
 class ImageBuffer
 {
@@ -77,31 +77,31 @@ public:
      * @brief Check if buffer is allocated
      * @return true if buffer has data
      */
-    bool isAllocated() const;
+    [[nodiscard]] bool isAllocated() const;
 
     /**
      * @brief Get buffer width
      * @return Width in pixels
      */
-    int getWidth() const;
+    [[nodiscard]] int getWidth() const;
 
     /**
      * @brief Get buffer height
      * @return Height in pixels
      */
-    int getHeight() const;
+    [[nodiscard]] int getHeight() const;
 
     /**
      * @brief Get pointer to pixel data
      * @return Pointer to RGBA data (width*height*4 bytes)
      */
-    unsigned char* getData() const;
+    [[nodiscard]] unsigned char* getData() const;
 
     /**
      * @brief Get pointer to pixel data (const)
      * @return Const pointer to RGBA data
      */
-    const unsigned char* getDataConst() const;
+    [[nodiscard]] const unsigned char* getDataConst() const;
 
     /**
      * @brief Set pixel color
@@ -159,20 +159,20 @@ public:
      * @brief Get total pixel count
      * @return Width * Height
      */
-    size_t getPixelCount() const;
+    [[nodiscard]] size_t getPixelCount() const;
 
     /**
      * @brief Get total data size in bytes
      * @return Pixel count * 4 (RGBA)
      */
-    size_t getDataSize() const;
+    [[nodiscard]] size_t getDataSize() const;
 
     /**
      * @brief Save buffer to PNG file
      * @param filename Output file path
      * @return true on success
      */
-    bool savePNG(const std::string& filename) const;
+    [[nodiscard]] bool savePNG(const std::filesystem::path& filename) const;
 
 private:
     int width;                  ///< Buffer width
@@ -193,5 +193,5 @@ private:
      * @param y Y coordinate
      * @return true if coordinates are valid
      */
-    bool inBounds(int x, int y) const;
+    [[nodiscard]] bool inBounds(int x, int y) const;
 };

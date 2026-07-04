@@ -61,7 +61,7 @@ public:
      * @brief Get material color
      * @return The color as Vec3 (RGB in range 0-1)
      */
-    const Vec3& getColor() const;
+    [[nodiscard]] const Vec3& getColor() const;
 
     /**
      * @brief Set ambient coefficient
@@ -73,7 +73,7 @@ public:
      * @brief Get ambient coefficient
      * @return The ambient coefficient
      */
-    double getAmbient() const;
+    [[nodiscard]] double getAmbient() const;
 
     /**
      * @brief Set diffuse coefficient
@@ -85,7 +85,7 @@ public:
      * @brief Get diffuse coefficient
      * @return The diffuse coefficient
      */
-    double getDiffuse() const;
+    [[nodiscard]] double getDiffuse() const;
 
     /**
      * @brief Set specular coefficient
@@ -97,7 +97,7 @@ public:
      * @brief Get specular coefficient
      * @return The specular coefficient
      */
-    double getSpecular() const;
+    [[nodiscard]] double getSpecular() const;
 
     /**
      * @brief Set shininess coefficient
@@ -109,7 +109,7 @@ public:
      * @brief Get shininess coefficient
      * @return The shininess value
      */
-    double getShininess() const;
+    [[nodiscard]] double getShininess() const;
 
     /**
      * @brief Set reflectivity
@@ -121,7 +121,7 @@ public:
      * @brief Get reflectivity
      * @return The reflectivity coefficient
      */
-    double getReflectivity() const;
+    [[nodiscard]] double getReflectivity() const;
 
     /**
      * @brief Set transparency
@@ -133,7 +133,7 @@ public:
      * @brief Get transparency
      * @return The transparency coefficient
      */
-    double getTransparency() const;
+    [[nodiscard]] double getTransparency() const;
 
     /**
      * @brief Set refractive index
@@ -145,7 +145,7 @@ public:
      * @brief Get refractive index
      * @return The refractive index
      */
-    double getRefractiveIndex() const;
+    [[nodiscard]] double getRefractiveIndex() const;
 
     /**
      * @brief Set texture
@@ -157,13 +157,13 @@ public:
      * @brief Get texture
      * @return Pointer to texture or nullptr if no texture
      */
-    Texture* getTexture() const;
+    [[nodiscard]] Texture* getTexture() const;
 
     /**
      * @brief Check if material has a texture
      * @return true if material has a texture
      */
-    bool hasTexture() const;
+    [[nodiscard]] bool hasTexture() const;
 
 private:
     Vec3 color;              ///< Material color (RGB)

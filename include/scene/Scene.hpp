@@ -68,7 +68,7 @@ public:
      * @brief Get camera (const)
      * @return Const reference to Camera
      */
-    const Camera& getCamera() const;
+    [[nodiscard]] const Camera& getCamera() const;
 
     /**
      * @brief Add object to scene
@@ -81,13 +81,13 @@ public:
      * @param object Shared pointer to object to remove
      * @return true if object was removed, false if not found
      */
-    bool removeObject(std::shared_ptr<AObject> object);
+    [[nodiscard]] bool removeObject(std::shared_ptr<AObject> object);
 
     /**
      * @brief Get number of objects in scene
      * @return Object count
      */
-    size_t getObjectCount() const;
+    [[nodiscard]] size_t getObjectCount() const;
 
     /**
      * @brief Get object at index
@@ -95,13 +95,13 @@ public:
      * @return Shared pointer to object
      * @throw std::out_of_range if index is invalid
      */
-    std::shared_ptr<AObject> getObject(size_t index) const;
+    [[nodiscard]] std::shared_ptr<AObject> getObject(size_t index) const;
 
     /**
      * @brief Get all objects
      * @return Vector of all objects
      */
-    const std::vector<std::shared_ptr<AObject>>& getObjects() const;
+    [[nodiscard]] const std::vector<std::shared_ptr<AObject>>& getObjects() const;
 
     /**
      * @brief Add light to scene
@@ -114,13 +114,13 @@ public:
      * @param light Shared pointer to light to remove
      * @return true if light was removed, false if not found
      */
-    bool removeLight(std::shared_ptr<ALight> light);
+    [[nodiscard]] bool removeLight(std::shared_ptr<ALight> light);
 
     /**
      * @brief Get number of lights in scene
      * @return Light count
      */
-    size_t getLightCount() const;
+    [[nodiscard]] size_t getLightCount() const;
 
     /**
      * @brief Get light at index
@@ -128,13 +128,13 @@ public:
      * @return Shared pointer to light
      * @throw std::out_of_range if index is invalid
      */
-    std::shared_ptr<ALight> getLight(size_t index) const;
+    [[nodiscard]] std::shared_ptr<ALight> getLight(size_t index) const;
 
     /**
      * @brief Get all lights
      * @return Vector of all lights
      */
-    const std::vector<std::shared_ptr<ALight>>& getLights() const;
+    [[nodiscard]] const std::vector<std::shared_ptr<ALight>>& getLights() const;
 
     /**
      * @brief Set background color
@@ -146,7 +146,7 @@ public:
      * @brief Get background color
      * @return The background color as Vec3
      */
-    const Vec3& getBackgroundColor() const;
+    [[nodiscard]] const Vec3& getBackgroundColor() const;
 
     /**
      * @brief Clear all objects from scene
@@ -167,7 +167,7 @@ public:
      * @brief Get scene name/identifier
      * @return Scene name
      */
-    const std::string& getName() const;
+    [[nodiscard]] const std::string& getName() const;
 
     /**
      * @brief Set scene name/identifier
@@ -179,7 +179,7 @@ public:
      * @brief Get scene ambient multiplier
      * @return Ambient multiplier (0.0-1.0+)
      */
-    double getAmbientMultiplier() const;
+    [[nodiscard]] double getAmbientMultiplier() const;
 
     /**
      * @brief Set scene ambient multiplier

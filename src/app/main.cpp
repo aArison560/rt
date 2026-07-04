@@ -10,6 +10,8 @@
  */
 
 #include <iostream>
+#include <format>
+#include <filesystem>
 #include <string>
 #include <memory>
 #include "scene/Scene.hpp"
@@ -70,11 +72,12 @@ Scene createDefaultScene()
  */
 void printUsage(const std::string& programName)
 {
-    std::cout << "Usage: " << programName << " [scene_file] [width] [height]\n"
-              << "  scene_file: Path to .rt scene file (default: " << DEFAULT_SCENE_FILE << ")\n"
-              << "  width:      Output width in pixels (default: " << DEFAULT_WIDTH << ")\n"
-              << "  height:     Output height in pixels (default: " << DEFAULT_HEIGHT << ")\n"
-              << "\nExample: " << programName << " scenes/test.rt 1920 1080\n";
+    std::cout << std::format("Usage: {} [scene_file] [width] [height]\n"
+              "  scene_file: Path to .rt scene file (default: {})\n"
+              "  width:      Output width in pixels (default: {})\n"
+              "  height:     Output height in pixels (default: {})\n"
+              "\nExample: {} scenes/test.rt 1920 1080\n",
+              programName, DEFAULT_SCENE_FILE, DEFAULT_WIDTH, DEFAULT_HEIGHT, programName);
 }
 
 /**
@@ -82,8 +85,7 @@ void printUsage(const std::string& programName)
  */
 int main(int argc, char* argv[])
 {
-    // TODO: Parse command line arguments
-    std::string sceneFile = DEFAULT_SCENE_FILE;
+    std::filesystem::path sceneFile = DEFAULT_SCENE_FILE;
     int width = DEFAULT_WIDTH;
     int height = DEFAULT_HEIGHT;
 
@@ -114,7 +116,6 @@ int main(int argc, char* argv[])
         }
     }
 
-    // TODO: Load scene from file or create default
     Scene scene;
     SceneParser parser;
     if (!parser.parseFile(sceneFile, scene)) {
@@ -126,19 +127,18 @@ int main(int argc, char* argv[])
         std::cout << "Loaded scene: " << scene.getName() << std::endl;
     }
 
-    // TODO: Initialize window
     Window window("RT - Ray Tracer", width, height);
     if (!window.isInitialized()) {
         std::cerr << "Failed to initialize window\n";
         return 1;
     }
-    std::cout << "Window initialized: " << width << "x" << height << std::endl;
+    std::cout << std::format("Window initialized: {}x{}", width, height) << std::endl;
 
-    // TODO: Setup rendering
     Renderer renderer;
     renderer.setMaxRecursionDepth(4);
     renderer.setShadowsEnabled(true);
     renderer.setReflectionsEnabled(true);
+    renderer.setRefractionsEnabled(true);
     renderer.setSamplesPerPixel(8);
 
     ImageBuffer buffer(width, height);
@@ -156,7 +156,7 @@ int main(int argc, char* argv[])
 
     eventHandler.onKeyPress([&](int key) {
         if (key == 's' || key == 'S') {
-            std::string filename = "screenshot_" + std::to_string(screenshotCount++) + ".png";
+            auto filename = std::format("screenshot_{}.png", screenshotCount++);
             if (buffer.savePNG(filename)) {
                 std::cout << "Saved: " << filename << std::endl;
             } else {

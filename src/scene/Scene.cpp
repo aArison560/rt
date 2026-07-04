@@ -12,7 +12,6 @@ Scene::Scene() : camera(), backgroundColor(0.1, 0.1, 0.1), name("Unnamed Scene")
 
 Scene::~Scene()
 {
-    // TODO: Cleanup (smart pointers handle this automatically)
 }
 
 Scene::Scene(const Scene& other) : camera(other.camera), objects(other.objects),
@@ -39,7 +38,6 @@ const Camera& Scene::getCamera() const { return camera; }
 
 void Scene::addObject(std::shared_ptr<AObject> object)
 {
-    // TODO: Add object to scene
     if (object) objects.push_back(object);
 }
 
@@ -57,7 +55,6 @@ size_t Scene::getObjectCount() const { return objects.size(); }
 
 std::shared_ptr<AObject> Scene::getObject(size_t index) const
 {
-    // TODO: Get object with bounds checking
     return objects.at(index);
 }
 
@@ -68,7 +65,6 @@ const std::vector<std::shared_ptr<AObject>>& Scene::getObjects() const
 
 void Scene::addLight(std::shared_ptr<ALight> light)
 {
-    // TODO: Add light to scene
     if (light) lights.push_back(light);
 }
 
@@ -86,7 +82,6 @@ size_t Scene::getLightCount() const { return lights.size(); }
 
 std::shared_ptr<ALight> Scene::getLight(size_t index) const
 {
-    // TODO: Get light with bounds checking
     return lights.at(index);
 }
 

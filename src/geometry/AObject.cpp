@@ -61,14 +61,12 @@ void AObject::getWorldBoundingBox(Vec3& minCorner, Vec3& maxCorner) const
 
 Vec3 AObject::getNormalAt(const Vec3& point) const
 {
-    // TODO: Default implementation (should be overridden)
     (void)point;
     return Vec3(0, 1, 0);
 }
 
 void AObject::getUVAt(const Vec3& point, double& u, double& v) const
 {
-    // TODO: Default implementation (should be overridden)
     (void)point;
     u = 0.5;
     v = 0.5;

@@ -28,9 +28,9 @@ DirectionalLight& DirectionalLight::operator=(const DirectionalLight& other)
     return *this;
 }
 
-const char* DirectionalLight::getType() const
+LightType DirectionalLight::getLightType() const
 {
-    return "DirectionalLight";
+    return LightType::Directional;
 }
 
 void DirectionalLight::setDirection(const Vec3& direction) 
@@ -43,6 +43,5 @@ const Vec3& DirectionalLight::getDirection() const { return direction; }
 
 Vec3 DirectionalLight::getDirectionToLight() const
 {
-    // TODO: Return negated direction (towards light source)
     return -direction;
 }

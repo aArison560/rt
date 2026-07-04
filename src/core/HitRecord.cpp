@@ -6,13 +6,17 @@
  */
 
 #include "core/HitRecord.hpp"
+#include "core/Material.hpp"
+#include "geometry/AObject.hpp"
 
 HitRecord::HitRecord() : t(0), point(), normal(), u(0), v(0), 
                          material(nullptr), object(nullptr), valid(false), frontFace(true) {}
 
+HitRecord::~HitRecord() = default;
+
 HitRecord::HitRecord(double t, const Vec3& point, const Vec3& normal,
-                     Material* material, AObject* object)
-    : t(t), point(point), normal(normal), u(0), v(0), material(material), 
+                     std::shared_ptr<Material> material, const AObject* object)
+    : t(t), point(point), normal(normal), u(0), v(0), material(std::move(material)), 
       object(object), valid(true), frontFace(true) {}
 
 HitRecord::HitRecord(const HitRecord& other)
@@ -44,10 +48,10 @@ const Vec3& HitRecord::getPoint() const { return point; }
 void HitRecord::setPoint(const Vec3& point) { this->point = point; }
 const Vec3& HitRecord::getNormal() const { return normal; }
 void HitRecord::setNormal(const Vec3& normal) { this->normal = normal; }
-Material* HitRecord::getMaterial() const { return material; }
-void HitRecord::setMaterial(Material* material) { this->material = material; }
-AObject* HitRecord::getObject() const { return object; }
-void HitRecord::setObject(AObject* object) { this->object = object; }
+std::shared_ptr<Material> HitRecord::getMaterial() const { return material; }
+void HitRecord::setMaterial(std::shared_ptr<Material> material) { this->material = std::move(material); }
+const AObject* HitRecord::getObject() const { return object; }
+void HitRecord::setObject(const AObject* object) { this->object = object; }
 
 void HitRecord::getUV(double& u, double& v) const
 {
@@ -66,7 +70,6 @@ void HitRecord::setFrontFace(bool frontFace) { this->frontFace = frontFace; }
 
 Vec3 HitRecord::getFacingNormal() const
 {
-    // TODO: Return normal pointing toward ray origin
     return frontFace ? normal : -normal;
 }
 

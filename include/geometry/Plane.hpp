@@ -17,6 +17,7 @@
 #pragma once
 
 #include "AObject.hpp"
+#include <optional>
 
 class Plane : public AObject
 {
@@ -67,7 +68,7 @@ public:
      * @param hitRecord Output: intersection data if hit
      * @return true if intersection found
      */
-    bool hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) const override;
+    [[nodiscard]] std::optional<HitRecord> hit(const Ray& ray, double tMin, double tMax) const override;
 
     /**
      * @brief Get bounding box in object space
@@ -81,7 +82,7 @@ public:
      * @brief Get object type identifier
      * @return "Plane"
      */
-    const char* getType() const override;
+    [[nodiscard]] const char* getType() const override;
 
     /**
      * @brief Set plane point
@@ -93,7 +94,7 @@ public:
      * @brief Get plane point
      * @return Point as Vec3
      */
-    const Vec3& getPoint() const;
+    [[nodiscard]] const Vec3& getPoint() const;
 
     /**
      * @brief Set plane normal
@@ -105,28 +106,28 @@ public:
      * @brief Get plane normal
      * @return Normal as Vec3 (normalized)
      */
-    const Vec3& getNormal() const;
+    [[nodiscard]] const Vec3& getNormal() const;
 
     /**
      * @brief Get surface normal at point (constant for plane)
      * @param point Point on plane (unused)
      * @return Surface normal
      */
-    Vec3 getNormalAt(const Vec3& point) const override;
+    [[nodiscard]] Vec3 getNormalAt(const Vec3& point) const override;
 
     /**
      * @brief Calculate signed distance from point to plane
      * @param point Point in space
      * @return Signed distance (positive = normal side, negative = opposite)
      */
-    double distanceTo(const Vec3& point) const;
+    [[nodiscard]] double distanceTo(const Vec3& point) const;
 
     /**
      * @brief Check if point is on the plane (within epsilon)
      * @param point Point to test
      * @return true if point is on plane
      */
-    bool contains(const Vec3& point) const;
+    [[nodiscard]] bool contains(const Vec3& point) const;
 
 private:
     Vec3 point;   ///< A point on the plane

@@ -7,13 +7,19 @@
 
 #include "rendering/Texture.hpp"
 #include <algorithm>
+#include <filesystem>
 #include <utility>
+#include <png.h>
+#include <cstdio>
+#include <vector>
 
 Texture::Texture() : width(0), height(0), channels(0), data(nullptr), valid(false) {}
 
-Texture::Texture(const std::string& filePath) : width(0), height(0), channels(0), data(nullptr), valid(false)
+Texture::Texture(const std::filesystem::path& filePath) : width(0), height(0), channels(0), data(nullptr), valid(false)
 {
-    load(filePath);
+    if (!load(filePath)) {
+        valid = false;
+    }
 }
 
 Texture::Texture(const Texture& other) : width(other.width), height(other.height), 
@@ -68,16 +74,63 @@ Texture& Texture::operator=(Texture&& other) noexcept
 
 Texture::~Texture()
 {
-    // TODO: Clean up resources (data is unique_ptr, auto-cleanup)
 }
 
-bool Texture::load(const std::string& filePath)
+bool Texture::load(const std::filesystem::path& filePath)
 {
-    // TODO: Load PNG or JPEG using libpng/libjpeg
-    // Set data, width, height, channels, valid
-    (void)filePath;
-    valid = false;
-    return false;
+    FILE* fp = fopen(filePath.c_str(), "rb");
+    if (!fp) return false;
+
+    unsigned char sig[8];
+    if (fread(sig, 1, 8, fp) != 8 || png_sig_cmp(sig, 0, 8) != 0) {
+        fclose(fp);
+        return false;
+    }
+
+    png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+    if (!png) { fclose(fp); return false; }
+
+    png_infop info = png_create_info_struct(png);
+    if (!info) { png_destroy_read_struct(&png, nullptr, nullptr); fclose(fp); return false; }
+
+    if (setjmp(png_jmpbuf(png))) {
+        png_destroy_read_struct(&png, &info, nullptr);
+        fclose(fp);
+        return false;
+    }
+
+    png_init_io(png, fp);
+    png_set_sig_bytes(png, 8);
+    png_read_info(png, info);
+
+    width = png_get_image_width(png, info);
+    height = png_get_image_height(png, info);
+    int bitDepth = png_get_bit_depth(png, info);
+    int colorType = png_get_color_type(png, info);
+
+    if (bitDepth == 16) png_set_strip_16(png);
+    if (colorType == PNG_COLOR_TYPE_PALETTE) png_set_palette_to_rgb(png);
+    if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8) png_set_expand_gray_1_2_4_to_8(png);
+    if (png_get_valid(png, info, PNG_INFO_tRNS)) png_set_tRNS_to_alpha(png);
+    if (colorType == PNG_COLOR_TYPE_RGB || colorType == PNG_COLOR_TYPE_GRAY || colorType == PNG_COLOR_TYPE_PALETTE) {
+        png_set_filler(png, 0xFF, PNG_FILLER_AFTER);
+    }
+
+    png_read_update_info(png, info);
+    channels = 4;
+
+    data = std::make_unique<unsigned char[]>(static_cast<size_t>(width) * height * 4);
+    std::vector<png_bytep> rowPointers(height);
+    for (int y = 0; y < height; ++y) {
+        rowPointers[y] = data.get() + static_cast<size_t>(y) * width * 4;
+    }
+    png_read_image(png, rowPointers.data());
+    png_read_end(png, nullptr);
+    png_destroy_read_struct(&png, &info, nullptr);
+    fclose(fp);
+
+    valid = true;
+    return true;
 }
 
 bool Texture::isValid() const
@@ -87,7 +140,6 @@ bool Texture::isValid() const
 
 Vec3 Texture::sample(double u, double v) const
 {
-    // TODO: Sample color at UV without filtering
     clampUV(u, v);
     int x = (int)(u * width);
     int y = (int)(v * height);
@@ -106,7 +158,6 @@ int Texture::getChannels() const { return channels; }
 
 void Texture::clampUV(double& u, double& v) const
 {
-    // TODO: Clamp UV to [0, 1]
     if (u < 0.0) u = 0.0;
     if (u > 1.0) u = 1.0;
     if (v < 0.0) v = 0.0;
@@ -115,8 +166,7 @@ void Texture::clampUV(double& u, double& v) const
 
 Vec3 Texture::getPixel(int x, int y) const
 {
-    // TODO: Get pixel and normalize to [0, 1]
-    (void)x;
-    (void)y;
-    return Vec3();
+    if (!data || x < 0 || x >= width || y < 0 || y >= height) return Vec3();
+    size_t off = (static_cast<size_t>(y) * width + x) * 4;
+    return Vec3(data[off + 0] / 255.0, data[off + 1] / 255.0, data[off + 2] / 255.0);
 }

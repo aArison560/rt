@@ -125,33 +125,33 @@ public:
      * @param other The Vec3 to multiply component-wise
      * @return New Vec3 with component-wise products
      */
-    Vec3 componentMult(const Vec3& other) const;
+    [[nodiscard]] Vec3 componentMult(const Vec3& other) const;
 
     /**
      * @brief Dot product calculation
      * @param other The Vec3 to dot with
      * @return Scalar dot product result
      */
-    double dot(const Vec3& other) const;
+    [[nodiscard]] double dot(const Vec3& other) const;
 
     /**
      * @brief Cross product calculation
      * @param other The Vec3 to cross with
      * @return New Vec3 representing the cross product
      */
-    Vec3 cross(const Vec3& other) const;
+    [[nodiscard]] Vec3 cross(const Vec3& other) const;
 
     /**
      * @brief Calculate vector magnitude (length)
      * @return The magnitude of the vector
      */
-    double magnitude() const;
+    [[nodiscard]] double magnitude() const;
 
     /**
      * @brief Calculate squared magnitude (avoids sqrt)
      * @return The squared magnitude
      */
-    double magnitudeSquared() const;
+    [[nodiscard]] double magnitudeSquared() const;
 
     /**
      * @brief Normalize the vector to unit length
@@ -165,21 +165,21 @@ public:
      * @return New normalized Vec3
      * @throw std::runtime_error if vector is zero
      */
-    Vec3 normalized() const;
+    [[nodiscard]] Vec3 normalized() const;
 
     /**
      * @brief Calculate distance to another point
      * @param other The other point as Vec3
      * @return The distance between points
      */
-    double distance(const Vec3& other) const;
+    [[nodiscard]] double distance(const Vec3& other) const;
 
     /**
      * @brief Calculate squared distance (avoids sqrt)
      * @param other The other point as Vec3
      * @return The squared distance
      */
-    double distanceSquared(const Vec3& other) const;
+    [[nodiscard]] double distanceSquared(const Vec3& other) const;
 
     /**
      * @brief Linearly interpolate between two vectors
@@ -187,14 +187,14 @@ public:
      * @param t Interpolation parameter (0.0 to 1.0)
      * @return New interpolated Vec3
      */
-    Vec3 lerp(const Vec3& other, double t) const;
+    [[nodiscard]] Vec3 lerp(const Vec3& other, double t) const;
 
     /**
      * @brief Reflect vector around a normal
      * @param normal The surface normal
      * @return New reflected Vec3
      */
-    Vec3 reflect(const Vec3& normal) const;
+    [[nodiscard]] Vec3 reflect(const Vec3& normal) const;
 
     /**
      * @brief Refract vector through a surface
@@ -203,7 +203,7 @@ public:
      * @param refractedDir Output vector for refracted direction
      * @return true if refraction occurs, false if total internal reflection
      */
-    bool refract(const Vec3& normal, double refractionIndex, Vec3& refractedDir) const;
+    [[nodiscard]] bool refract(const Vec3& normal, double refractionIndex, Vec3& refractedDir) const;
 
     /**
      * @brief Stream output operator

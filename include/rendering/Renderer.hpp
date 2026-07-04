@@ -23,7 +23,9 @@
 #include "core/HitRecord.hpp"
 #include "lighting/ALight.hpp"
 #include "core/Material.hpp"
+#include "rendering/BVH.hpp"
 #include <atomic>
+#include <optional>
 #include <vector>
 
 class Renderer
@@ -47,7 +49,7 @@ public:
      * @param pixelBuffer Output: array of pixels (width*height*4, RGBA format)
      * @return true if render succeeded
      */
-    bool render(const Scene& scene, int width, int height, unsigned char* pixelBuffer);
+    [[nodiscard]] bool render(const Scene& scene, int width, int height, unsigned char* pixelBuffer);
 
     /**
      * @brief Render a region of the scene (for progressive rendering)
@@ -61,7 +63,7 @@ public:
      * @param pixelBuffer Output: pixel buffer (must be width*height*4)
      * @return true if render succeeded
      */
-    bool renderRegion(const Scene& scene, int width, int height,
+    [[nodiscard]] bool renderRegion(const Scene& scene, int width, int height,
                      int startX, int startY, int regionWidth, int regionHeight,
                      unsigned char* pixelBuffer);
 
@@ -75,7 +77,7 @@ public:
      * @brief Get maximum recursion depth
      * @return Maximum depth
      */
-    int getMaxRecursionDepth() const;
+    [[nodiscard]] int getMaxRecursionDepth() const;
 
     /**
      * @brief Set number of shadow ray samples per light
@@ -87,7 +89,7 @@ public:
      * @brief Get number of shadow ray samples
      * @return Sample count
      */
-    int getShadowSamples() const;
+    [[nodiscard]] int getShadowSamples() const;
 
     /**
      * @brief Enable/disable shadow tracing
@@ -99,7 +101,7 @@ public:
      * @brief Check if shadows are enabled
      * @return true if shadows are enabled
      */
-    bool getShadowsEnabled() const;
+    [[nodiscard]] bool getShadowsEnabled() const;
 
     /**
      * @brief Enable/disable reflection tracing
@@ -111,7 +113,7 @@ public:
      * @brief Check if reflections are enabled
      * @return true if reflections are enabled
      */
-    bool getReflectionsEnabled() const;
+    [[nodiscard]] bool getReflectionsEnabled() const;
 
     /**
      * @brief Enable/disable refraction tracing
@@ -123,7 +125,7 @@ public:
      * @brief Check if refractions are enabled
      * @return true if refractions are enabled
      */
-    bool getRefractionsEnabled() const;
+    [[nodiscard]] bool getRefractionsEnabled() const;
 
     /**
      * @brief Set number of samples per pixel for anti-aliasing
@@ -135,7 +137,7 @@ public:
      * @brief Get number of samples per pixel
      * @return Sample count
      */
-    int getSamplesPerPixel() const;
+    [[nodiscard]] int getSamplesPerPixel() const;
 
     /**
      * @brief Cancel ongoing render (for multithreading)
@@ -146,7 +148,7 @@ public:
      * @brief Check if render was cancelled
      * @return true if render was cancelled
      */
-    bool isCancelled() const;
+    [[nodiscard]] bool isCancelled() const;
 
 private:
     int maxRecursionDepth;  ///< Maximum recursion depth
@@ -156,6 +158,7 @@ private:
     bool refractionsEnabled; ///< Whether to compute refractions
     int samplesPerPixel;    ///< Anti-aliasing samples per pixel
     std::atomic<bool> cancelled; ///< Whether render was cancelled
+    std::unique_ptr<BVHNode> bvhRoot; ///< BVH acceleration structure
 
     /**
      * @brief Trace a ray through the scene
@@ -166,7 +169,7 @@ private:
      * @param tMax Maximum ray parameter
      * @return Color at ray endpoint as Vec3 (RGB in range 0-1)
      */
-    Vec3 trace(const Ray& ray, const Scene& scene, int depth,
+    [[nodiscard]] Vec3 trace(const Ray& ray, const Scene& scene, int depth,
               double tMin, double tMax) const;
 
     /**
@@ -178,8 +181,7 @@ private:
      * @param hitRecord Output: intersection information
      * @return true if intersection found
      */
-    bool castRay(const Ray& ray, const Scene& scene, double tMin, double tMax,
-                HitRecord& hitRecord) const;
+    [[nodiscard]] std::optional<HitRecord> castRay(const Ray& ray, const Scene& scene, double tMin, double tMax) const;
 
     /**
      * @brief Calculate shadow factor from a point to a light
@@ -188,7 +190,7 @@ private:
      * @param scene The scene
      * @return Shadow factor (0.0 = fully shadowed, 1.0 = fully lit)
      */
-    double calculateShadow(const Vec3& hitPoint, const ALight& light,
+    [[nodiscard]] double calculateShadow(const Vec3& hitPoint, const ALight& light,
                           const Scene& scene) const;
 
     /**

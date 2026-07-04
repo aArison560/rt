@@ -9,6 +9,7 @@
 #include "core/HitRecord.hpp"
 #include <algorithm>
 #include <cmath>
+#include <optional>
 
 Cone::Cone() : apex(0, 0, 0), axis(0, 1, 0), halfAngleDegrees(45.0), height(2.0)
 {
@@ -52,10 +53,10 @@ Cone& Cone::operator=(const Cone& other)
     return *this;
 }
 
-bool Cone::hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) const
+std::optional<HitRecord> Cone::hit(const Ray& ray, double tMin, double tMax) const
 {
     double tClosest = tMax;
-    HitRecord best;
+    std::optional<HitRecord> best;
     bool found = false;
 
     double bodyTs[2];
@@ -75,8 +76,10 @@ bool Cone::hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) c
         if (t < tClosest) {
             tClosest = t;
             found = true;
-            best.setT(t);
-            best.setPoint(p);
+            HitRecord hr;
+            hr.setT(t);
+            hr.setPoint(p);
+            best = hr;
         }
     }
 
@@ -92,13 +95,15 @@ bool Cone::hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) c
             radial.magnitudeSquared() <= baseRadius * baseRadius + Vec3::EPSILON) {
             tClosest = tCap;
             found = true;
-            best.setT(tCap);
-            best.setPoint(p);
+            HitRecord hr;
+            hr.setT(tCap);
+            hr.setPoint(p);
+            best = hr;
         }
     }
 
-    if (found) {
-        Vec3 oc = best.getPoint() - apex;
+    if (found && best.has_value()) {
+        Vec3 oc = best->getPoint() - apex;
         double h = oc.dot(axis);
         Vec3 normal;
 
@@ -110,19 +115,18 @@ bool Cone::hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) c
             normal = (radial - axis * (tanSq * h)).normalized();
         }
 
-        best.setNormal(normal);
-        best.setMaterial(material.get());
-        best.setObject(const_cast<Cone*>(this));
+        best->setNormal(normal);
+        best->setMaterial(material);
+        best->setObject(this);
 
         double u, v;
-        getUVAt(best.getPoint(), u, v);
-        best.setUV(u, v);
+        getUVAt(best->getPoint(), u, v);
+        best->setUV(u, v);
 
-        best.setFrontFace(normal.dot(-ray.getDirection()) > 0.0);
-        hitRecord = best;
+        best->setFrontFace(normal.dot(-ray.getDirection()) > 0.0);
     }
 
-    return found;
+    return best;
 }
 
 void Cone::getBoundingBox(Vec3& minCorner, Vec3& maxCorner) const

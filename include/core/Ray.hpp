@@ -50,19 +50,19 @@ public:
      * @param t The ray parameter (distance along direction from origin)
      * @return The point P = origin + t * direction
      */
-    Vec3 pointAt(double t) const;
+    [[nodiscard]] Vec3 pointAt(double t) const;
 
     /**
      * @brief Get the ray origin
      * @return Reference to the origin Vec3
      */
-    const Vec3& getOrigin() const;
+    [[nodiscard]] const Vec3& getOrigin() const;
 
     /**
      * @brief Get the ray direction
      * @return Reference to the direction Vec3
      */
-    const Vec3& getDirection() const;
+    [[nodiscard]] const Vec3& getDirection() const;
 
     /**
      * @brief Set the ray origin

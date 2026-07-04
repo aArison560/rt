@@ -45,7 +45,7 @@ public:
      * @brief Process all pending SDL events
      * @return true if quit event received
      */
-    bool pollEvents();
+    [[nodiscard]] bool pollEvents();
 
     /**
      * @brief Register quit event callback
@@ -85,13 +85,13 @@ public:
      * @param keyCode SDL keycode to check
      * @return true if key is currently pressed
      */
-    bool isKeyPressed(int keyCode) const;
+    [[nodiscard]] bool isKeyPressed(int keyCode) const;
 
     /**
      * @brief Check if window close requested
      * @return true if close was requested
      */
-    bool isWindowCloseRequested() const;
+    [[nodiscard]] bool isWindowCloseRequested() const;
 
     /**
      * @brief Reset window close flag
@@ -102,7 +102,7 @@ public:
      * @brief Check if window resized
      * @return true if window was resized
      */
-    bool wasWindowResized() const;
+    [[nodiscard]] bool wasWindowResized() const;
 
     /**
      * @brief Get new window dimensions after resize
@@ -110,7 +110,7 @@ public:
      * @param height Output: new height
      * @return true if window was resized
      */
-    bool getNewWindowSize(int& width, int& height) const;
+    [[nodiscard]] bool getNewWindowSize(int& width, int& height) const;
 
 private:
     QuitCallback quitCallback;           ///< Quit event callback

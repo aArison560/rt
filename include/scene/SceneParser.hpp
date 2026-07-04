@@ -44,9 +44,8 @@
 #pragma once
 
 #include "Scene.hpp"
+#include <filesystem>
 #include <string>
-#include <fstream>
-#include <sstream>
 
 class SceneParser
 {
@@ -67,7 +66,7 @@ public:
      * @param scene Output: scene populated with parsed content
      * @return true if parsing successful
      */
-    bool parseFile(const std::string& filePath, Scene& scene);
+    [[nodiscard]] bool parseFile(const std::filesystem::path& filePath, Scene& scene);
 
     /**
      * @brief Parse scene from string
@@ -75,136 +74,35 @@ public:
      * @param scene Output: scene populated from content
      * @return true if parsing successful
      */
-    bool parseString(const std::string& content, Scene& scene);
+    [[nodiscard]] bool parseString(const std::string& content, Scene& scene);
 
     /**
      * @brief Get last error message
      * @return Error description
      */
-    const std::string& getLastError() const;
+    [[nodiscard]] const std::string& getLastError() const;
 
     /**
      * @brief Get current line number during parsing
      * @return Line number (1-based)
      */
-    int getCurrentLine() const;
+    [[nodiscard]] int getCurrentLine() const;
 
 private:
     std::string lastError;    ///< Last error message
     int currentLine;          ///< Current line during parsing
-    size_t currentPos;        ///< Current position in parsed content
-    std::string content;      ///< Current content being parsed
 
     /**
      * @brief Main parsing loop
+     * @param content Scene content as string
      * @param scene Scene to populate
      * @return true if successful
      */
-    bool parse(Scene& scene);
-
-    /**
-     * @brief Skip whitespace and comments
-     */
-    void skipWhitespace();
-
-    /**
-     * @brief Check if at end of input
-     * @return true if no more input
-     */
-    bool isAtEnd() const;
-
-    /**
-     * @brief Peek next character
-     * @return Next character, or '\0' if at end
-     */
-    char peekChar() const;
-
-    /**
-     * @brief Consume next character
-     * @return Next character
-     */
-    char consumeChar();
-
-    /**
-     * @brief Parse single number
-     * @param value Output: parsed number
-     * @return true if successful
-     */
-    bool parseNumber(double& value);
-
-    /**
-     * @brief Parse 3D point
-     * @param point Output: parsed point
-     * @return true if successful
-     */
-    bool parseVec3(Vec3& point);
-
-    /**
-     * @brief Parse ambient light
-     * @param scene Scene to add to
-     * @return true if successful
-     */
-    bool parseAmbient(Scene& scene);
-
-    /**
-     * @brief Parse point light
-     * @param scene Scene to add to
-     * @return true if successful
-     */
-    bool parseLight(Scene& scene);
-
-    /**
-     * @brief Parse sphere
-     * @param scene Scene to add to
-     * @return true if successful
-     */
-    bool parseSphere(Scene& scene);
-
-    /**
-     * @brief Parse plane
-     * @param scene Scene to add to
-     * @return true if successful
-     */
-    bool parsePlane(Scene& scene);
-
-    /**
-     * @brief Parse cylinder
-     * @param scene Scene to add to
-     * @return true if successful
-     */
-    bool parseCylinder(Scene& scene);
-
-    /**
-     * @brief Parse cone
-     * @param scene Scene to add to
-     * @return true if successful
-     */
-    bool parseCone(Scene& scene);
-
-    /**
-     * @brief Parse camera
-     * @param scene Scene to update
-     * @return true if successful
-     */
-    bool parseCamera(Scene& scene);
-
-    /**
-     * @brief Parse background color
-     * @param scene Scene to update
-     * @return true if successful
-     */
-    bool parseBackground(Scene& scene);
+    [[nodiscard]] bool parse(const std::string& content, Scene& scene);
 
     /**
      * @brief Report parsing error
      * @param message Error message
      */
     void reportError(const std::string& message);
-
-    /**
-     * @brief Check if character matches identifier
-     * @param identifier Expected identifier (1-2 chars)
-     * @return true if matches and consumed
-     */
-    bool matchIdentifier(const std::string& identifier);
 };

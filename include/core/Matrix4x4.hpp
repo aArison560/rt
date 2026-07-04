@@ -50,14 +50,14 @@ public:
      * @param other The Matrix4x4 to multiply with
      * @return New Matrix4x4 representing the product
      */
-    Matrix4x4 operator*(const Matrix4x4& other) const;
+    [[nodiscard]] Matrix4x4 operator*(const Matrix4x4& other) const;
 
     /**
      * @brief Transform a 3D point by this matrix
      * @param point The point to transform
      * @return Transformed point as Vec3
      */
-    Vec3 transformPoint(const Vec3& point) const;
+    [[nodiscard]] Vec3 transformPoint(const Vec3& point) const;
 
     /**
      * @brief Transform a 3D direction (vector) by this matrix
@@ -65,7 +65,7 @@ public:
      * @param direction The direction to transform
      * @return Transformed direction as Vec3
      */
-    Vec3 transformDirection(const Vec3& direction) const;
+    [[nodiscard]] Vec3 transformDirection(const Vec3& direction) const;
 
     /**
      * @brief Transform a homogeneous point (with w coordinate)
@@ -86,19 +86,19 @@ public:
      * @return New Matrix4x4 representing the inverse
      * @throw std::runtime_error if matrix is singular
      */
-    Matrix4x4 inverse() const;
+    [[nodiscard]] Matrix4x4 inverse() const;
 
     /**
      * @brief Calculate the transpose matrix
      * @return New Matrix4x4 representing the transpose
      */
-    Matrix4x4 transpose() const;
+    [[nodiscard]] Matrix4x4 transpose() const;
 
     /**
      * @brief Calculate the determinant
      * @return The determinant value
      */
-    double determinant() const;
+    [[nodiscard]] double determinant() const;
 
     /**
      * @brief Get element at position (row, col)
@@ -106,7 +106,7 @@ public:
      * @param col Column index (0-3)
      * @return The element value
      */
-    double get(int row, int col) const;
+    [[nodiscard]] double get(int row, int col) const;
 
     /**
      * @brief Set element at position (row, col)
@@ -120,7 +120,7 @@ public:
      * @brief Create identity matrix
      * @return New identity Matrix4x4
      */
-    static Matrix4x4 identity();
+    [[nodiscard]] static Matrix4x4 identity();
 
     /**
      * @brief Create translation matrix
@@ -129,35 +129,35 @@ public:
      * @param z Z translation
      * @return New translation Matrix4x4
      */
-    static Matrix4x4 translate(double x, double y, double z);
+    [[nodiscard]] static Matrix4x4 translate(double x, double y, double z);
 
     /**
      * @brief Create translation matrix from vector
      * @param offset The translation vector
      * @return New translation Matrix4x4
      */
-    static Matrix4x4 translate(const Vec3& offset);
+    [[nodiscard]] static Matrix4x4 translate(const Vec3& offset);
 
     /**
      * @brief Create rotation matrix around X axis
      * @param angleRadians Rotation angle in radians
      * @return New rotation Matrix4x4
      */
-    static Matrix4x4 rotateX(double angleRadians);
+    [[nodiscard]] static Matrix4x4 rotateX(double angleRadians);
 
     /**
      * @brief Create rotation matrix around Y axis
      * @param angleRadians Rotation angle in radians
      * @return New rotation Matrix4x4
      */
-    static Matrix4x4 rotateY(double angleRadians);
+    [[nodiscard]] static Matrix4x4 rotateY(double angleRadians);
 
     /**
      * @brief Create rotation matrix around Z axis
      * @param angleRadians Rotation angle in radians
      * @return New rotation Matrix4x4
      */
-    static Matrix4x4 rotateZ(double angleRadians);
+    [[nodiscard]] static Matrix4x4 rotateZ(double angleRadians);
 
     /**
      * @brief Create rotation matrix around arbitrary axis
@@ -165,7 +165,7 @@ public:
      * @param angleRadians Rotation angle in radians
      * @return New rotation Matrix4x4
      */
-    static Matrix4x4 rotateAxis(const Vec3& axis, double angleRadians);
+    [[nodiscard]] static Matrix4x4 rotateAxis(const Vec3& axis, double angleRadians);
 
     /**
      * @brief Create scaling matrix
@@ -174,14 +174,14 @@ public:
      * @param sz Z scale factor
      * @return New scaling Matrix4x4
      */
-    static Matrix4x4 scale(double sx, double sy, double sz);
+    [[nodiscard]] static Matrix4x4 scale(double sx, double sy, double sz);
 
     /**
      * @brief Create scaling matrix from vector
      * @param scale The scale factors vector
      * @return New scaling Matrix4x4
      */
-    static Matrix4x4 scale(const Vec3& scale);
+    [[nodiscard]] static Matrix4x4 scale(const Vec3& scale);
 
     /**
      * @brief Create perspective projection matrix
@@ -191,7 +191,7 @@ public:
      * @param far Far clipping plane
      * @return New perspective Matrix4x4
      */
-    static Matrix4x4 perspective(double fov, double aspect, double near, double far);
+    [[nodiscard]] static Matrix4x4 perspective(double fov, double aspect, double near, double far);
 
     /**
      * @brief Create orthographic projection matrix
@@ -203,7 +203,7 @@ public:
      * @param far Far plane
      * @return New orthographic Matrix4x4
      */
-    static Matrix4x4 orthographic(double left, double right, double bottom, double top,
+    [[nodiscard]] static Matrix4x4 orthographic(double left, double right, double bottom, double top,
                                  double near, double far);
 
 private:

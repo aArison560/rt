@@ -15,7 +15,7 @@ Window::Window(const std::string &title, int width, int height)
     : title(title), width(0), height(0), sdlWindow(nullptr), sdlRenderer(nullptr),
       sdlTexture(nullptr), initialized(false)
 {
-    initialize(title, width, height);
+    (void)initialize(title, width, height);
 }
 
 Window::~Window()
@@ -25,8 +25,6 @@ Window::~Window()
 
 bool Window::initialize(const std::string &title, int width, int height)
 {
-    // TODO: Initialize SDL window and renderer
-    // SDL_CreateWindow, SDL_CreateRenderer, create texture
     if (initialized)
         close();
 
@@ -80,7 +78,6 @@ bool Window::isInitialized() const
 
 void Window::close()
 {
-    // TODO: Cleanup SDL resources
     destroyTexture();
     if (sdlRenderer)
         SDL_DestroyRenderer(sdlRenderer);
@@ -95,7 +92,6 @@ const std::string &Window::getTitle() const { return title; }
 
 void Window::setTitle(const std::string &title)
 {
-    // TODO: Set window title
     this->title = title;
     if (sdlWindow)
         SDL_SetWindowTitle(sdlWindow, title.c_str());
@@ -132,14 +128,12 @@ bool Window::updateDisplay(const unsigned char *pixelData, size_t dataSize)
 
 void Window::present()
 {
-    // TODO: Present renderer
     if (sdlRenderer)
         SDL_RenderPresent(sdlRenderer);
 }
 
 void Window::clear()
 {
-    // TODO: Clear to black
     if (sdlRenderer)
         SDL_RenderClear(sdlRenderer);
 }
@@ -177,7 +171,6 @@ bool Window::createTexture()
 
 void Window::destroyTexture()
 {
-    // TODO: Destroy texture
     if (sdlTexture)
     {
         SDL_DestroyTexture(sdlTexture);

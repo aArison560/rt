@@ -166,13 +166,11 @@ double Matrix4x4::determinant() const
 
 double Matrix4x4::get(int row, int col) const
 {
-    // TODO: Return element at (row, col)
     return data[row * 4 + col];
 }
 
 void Matrix4x4::set(int row, int col, double value)
 {
-    // TODO: Set element
     data[row * 4 + col] = value;
 }
 
@@ -192,7 +190,6 @@ Matrix4x4 Matrix4x4::translate(double x, double y, double z)
 
 Matrix4x4 Matrix4x4::translate(const Vec3& offset)
 {
-    // TODO: Create translation from vector
     return translate(offset.x, offset.y, offset.z);
 }
 
@@ -265,7 +262,6 @@ Matrix4x4 Matrix4x4::scale(double sx, double sy, double sz)
 
 Matrix4x4 Matrix4x4::scale(const Vec3& scale)
 {
-    // TODO: Scale from vector
     return Matrix4x4::scale(scale.x, scale.y, scale.z);
 }
 

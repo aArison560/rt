@@ -2,9 +2,9 @@
 # C++23 project with SDL2, libpng, libjpeg
 
 CXX := g++
-CXXFLAGS := -std=c++23 -Wall -Wextra -Werror -O2 -fPIC
-CXXFLAGS_TEST := -std=c++23 -O2 -fPIC
-LDFLAGS := -lSDL2 -lm -lpng -ljpeg
+CXXFLAGS := -std=c++23 -Wall -Wextra -Werror -O2 -fPIC -march=native -pthread
+CXXFLAGS_TEST := -std=c++23 -O2 -fPIC -pthread
+LDFLAGS := -lSDL2 -lm -lpng -ljpeg -pthread
 
 # Directories
 SRC_DIR := src

@@ -22,7 +22,7 @@ AmbientLight& AmbientLight::operator=(const AmbientLight& other)
     return *this;
 }
 
-const char* AmbientLight::getType() const
+LightType AmbientLight::getLightType() const
 {
-    return "AmbientLight";
+    return LightType::Ambient;
 }

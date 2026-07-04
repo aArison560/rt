@@ -65,10 +65,10 @@ public:
     ~PointLight() override = default;
 
     /**
-     * @brief Get light type identifier
-     * @return "PointLight"
+     * @brief Get light type
+     * @return LightType::Point
      */
-    const char* getType() const override;
+    [[nodiscard]] LightType getLightType() const override;
 
     /**
      * @brief Set light position
@@ -80,7 +80,7 @@ public:
      * @brief Get light position
      * @return The position as Vec3
      */
-    const Vec3& getPosition() const;
+    [[nodiscard]] const Vec3& getPosition() const;
 
     /**
      * @brief Set attenuation factors
@@ -94,40 +94,40 @@ public:
      * @brief Get constant attenuation factor
      * @return Constant attenuation
      */
-    double getConstantAttenuation() const;
+    [[nodiscard]] double getConstantAttenuation() const;
 
     /**
      * @brief Get linear attenuation factor
      * @return Linear attenuation
      */
-    double getLinearAttenuation() const;
+    [[nodiscard]] double getLinearAttenuation() const;
 
     /**
      * @brief Get quadratic attenuation factor
      * @return Quadratic attenuation
      */
-    double getQuadraticAttenuation() const;
+    [[nodiscard]] double getQuadraticAttenuation() const;
 
     /**
      * @brief Calculate light intensity at a distance
      * @param distance Distance from light
      * @return Attenuated intensity factor (0.0-1.0)
      */
-    double getAttenuationFactor(double distance) const;
+    [[nodiscard]] double getAttenuationFactor(double distance) const;
 
     /**
      * @brief Get direction from light to a point
      * @param point The target point
      * @return Direction vector (normalized)
      */
-    Vec3 getDirectionTo(const Vec3& point) const;
+    [[nodiscard]] Vec3 getDirectionTo(const Vec3& point) const;
 
     /**
      * @brief Get distance from light to a point
      * @param point The target point
      * @return Distance value
      */
-    double getDistance(const Vec3& point) const;
+    [[nodiscard]] double getDistance(const Vec3& point) const;
 
 private:
     Vec3 position;      ///< Light position in world space

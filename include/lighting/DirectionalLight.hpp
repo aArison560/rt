@@ -53,10 +53,10 @@ public:
     ~DirectionalLight() override = default;
 
     /**
-     * @brief Get light type identifier
-     * @return "DirectionalLight"
+     * @brief Get light type
+     * @return LightType::Directional
      */
-    const char* getType() const override;
+    [[nodiscard]] LightType getLightType() const override;
 
     /**
      * @brief Set light direction
@@ -68,13 +68,13 @@ public:
      * @brief Get light direction
      * @return The direction as normalized Vec3
      */
-    const Vec3& getDirection() const;
+    [[nodiscard]] const Vec3& getDirection() const;
 
     /**
      * @brief Get light direction (negated for towards light)
      * @return Direction from surface towards light
      */
-    Vec3 getDirectionToLight() const;
+    [[nodiscard]] Vec3 getDirectionToLight() const;
 
 private:
     Vec3 direction; ///< Direction light travels (normalized)

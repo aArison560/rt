@@ -21,6 +21,7 @@
 #include "core/Material.hpp"
 #include "core/Ray.hpp"
 #include <memory>
+#include <optional>
 
 class HitRecord;
 
@@ -40,7 +41,7 @@ public:
      * @param hitRecord Output: contains intersection data if hit
      * @return true if intersection found within [tMin, tMax], false otherwise
      */
-    virtual bool hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) const = 0;
+    [[nodiscard]] virtual std::optional<HitRecord> hit(const Ray& ray, double tMin, double tMax) const = 0;
 
     /**
      * @brief Set object transformation
@@ -64,7 +65,7 @@ public:
      * @brief Get object material
      * @return Shared pointer to Material
      */
-    virtual std::shared_ptr<Material> getMaterial() const;
+    [[nodiscard]] virtual std::shared_ptr<Material> getMaterial() const;
 
     /**
      * @brief Set whether object casts shadows
@@ -76,7 +77,7 @@ public:
      * @brief Check if object casts shadows
      * @return true if object casts shadows
      */
-    virtual bool getCastsShadows() const;
+    [[nodiscard]] virtual bool getCastsShadows() const;
 
     /**
      * @brief Get bounding box of object in object space
@@ -96,7 +97,7 @@ public:
      * @brief Get object type identifier (for runtime type checking)
      * @return String identifier of object type
      */
-    virtual const char* getType() const = 0;
+    [[nodiscard]] virtual const char* getType() const = 0;
 
     /**
      * @brief Get normal at a specific point on object (in world space)
@@ -104,7 +105,7 @@ public:
      * @return Surface normal at point
      * @note Default implementation should be overridden for efficiency
      */
-    virtual Vec3 getNormalAt(const Vec3& point) const;
+    [[nodiscard]] virtual Vec3 getNormalAt(const Vec3& point) const;
 
     /**
      * @brief Get UV coordinates at a point on surface

@@ -18,6 +18,13 @@
 
 #include "core/Vec3.hpp"
 
+enum class LightType
+{
+    Ambient,
+    Point,
+    Directional
+};
+
 class ALight
 {
 public:
@@ -36,7 +43,7 @@ public:
      * @brief Get light color
      * @return The light color as Vec3
      */
-    virtual const Vec3& getColor() const;
+    [[nodiscard]] virtual const Vec3& getColor() const;
 
     /**
      * @brief Set light intensity
@@ -48,13 +55,13 @@ public:
      * @brief Get light intensity
      * @return The intensity value
      */
-    virtual double getIntensity() const;
+    [[nodiscard]] virtual double getIntensity() const;
 
     /**
-     * @brief Get light type identifier
-     * @return String identifier of light type
+     * @brief Get light type
+     * @return LightType enum value
      */
-    virtual const char* getType() const = 0;
+    [[nodiscard]] virtual LightType getLightType() const = 0;
 
 protected:
     /**

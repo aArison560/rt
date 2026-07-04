@@ -17,6 +17,7 @@
 #pragma once
 
 #include "AObject.hpp"
+#include <optional>
 
 class Sphere : public AObject
 {
@@ -67,7 +68,7 @@ public:
      * @param hitRecord Output: intersection data if hit
      * @return true if intersection found
      */
-    bool hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) const override;
+    [[nodiscard]] std::optional<HitRecord> hit(const Ray& ray, double tMin, double tMax) const override;
 
     /**
      * @brief Get bounding box in object space
@@ -80,7 +81,7 @@ public:
      * @brief Get object type identifier
      * @return "Sphere"
      */
-    const char* getType() const override;
+    [[nodiscard]] const char* getType() const override;
 
     /**
      * @brief Set sphere center
@@ -92,7 +93,7 @@ public:
      * @brief Get sphere center
      * @return Center as Vec3
      */
-    const Vec3& getCenter() const;
+    [[nodiscard]] const Vec3& getCenter() const;
 
     /**
      * @brief Set sphere radius
@@ -104,14 +105,14 @@ public:
      * @brief Get sphere radius
      * @return Radius value
      */
-    double getRadius() const;
+    [[nodiscard]] double getRadius() const;
 
     /**
      * @brief Get surface normal at point (in object space)
      * @param point Point on sphere surface
      * @return Surface normal
      */
-    Vec3 getNormalAt(const Vec3& point) const override;
+    [[nodiscard]] Vec3 getNormalAt(const Vec3& point) const override;
 
     /**
      * @brief Get UV coordinates at point on sphere surface
@@ -133,5 +134,5 @@ private:
      * @param hitRecord Output: intersection data
      * @return true if intersection found
      */
-    bool computeIntersection(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) const;
+    [[nodiscard]] std::optional<HitRecord> computeIntersection(const Ray& ray, double tMin, double tMax) const;
 };

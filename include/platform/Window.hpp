@@ -63,13 +63,13 @@ public:
      * @param height Window height
      * @return true if initialization successful
      */
-    bool initialize(const std::string& title, int width, int height);
+    [[nodiscard]] bool initialize(const std::string& title, int width, int height);
 
     /**
      * @brief Check if window is initialized
      * @return true if window is valid and ready
      */
-    bool isInitialized() const;
+    [[nodiscard]] bool isInitialized() const;
 
     /**
      * @brief Cleanup and close window
@@ -80,19 +80,19 @@ public:
      * @brief Get window width
      * @return Width in pixels
      */
-    int getWidth() const;
+    [[nodiscard]] int getWidth() const;
 
     /**
      * @brief Get window height
      * @return Height in pixels
      */
-    int getHeight() const;
+    [[nodiscard]] int getHeight() const;
 
     /**
      * @brief Get window title
      * @return Current title
      */
-    const std::string& getTitle() const;
+    [[nodiscard]] const std::string& getTitle() const;
 
     /**
      * @brief Set window title
@@ -105,7 +105,7 @@ public:
      * @param buffer The ImageBuffer to display
      * @return true if update successful
      */
-    bool updateDisplay(const ImageBuffer& buffer);
+    [[nodiscard]] bool updateDisplay(const ImageBuffer& buffer);
 
     /**
      * @brief Update display from raw pixel data
@@ -113,7 +113,7 @@ public:
      * @param dataSize Size of pixel data in bytes
      * @return true if update successful
      */
-    bool updateDisplay(const unsigned char* pixelData, size_t dataSize);
+    [[nodiscard]] bool updateDisplay(const unsigned char* pixelData, size_t dataSize);
 
     /**
      * @brief Present current frame to display
@@ -135,19 +135,19 @@ public:
      * @param enabled Whether to enable vsync
      * @return true if successful
      */
-    bool setVSync(bool enabled);
+    [[nodiscard]] bool setVSync(bool enabled);
 
     /**
      * @brief Get SDL window pointer (for advanced use)
      * @return SDL_Window* (nullptr if not initialized)
      */
-    SDL_Window* getSDLWindow() const;
+    [[nodiscard]] SDL_Window* getSDLWindow() const;
 
     /**
      * @brief Get SDL renderer pointer (for advanced use)
      * @return SDL_Renderer* (nullptr if not initialized)
      */
-    SDL_Renderer* getSDLRenderer() const;
+    [[nodiscard]] SDL_Renderer* getSDLRenderer() const;
 
 private:
     std::string title;        ///< Window title
@@ -162,7 +162,7 @@ private:
      * @brief Create or recreate texture
      * @return true if texture creation successful
      */
-    bool createTexture();
+    [[nodiscard]] bool createTexture();
 
     /**
      * @brief Destroy texture

@@ -19,7 +19,6 @@ ImageBuffer::ImageBuffer(int width, int height) : width(0), height(0), data(null
 
 ImageBuffer::~ImageBuffer()
 {
-    // TODO: Cleanup (unique_ptr handles this)
 }
 
 ImageBuffer::ImageBuffer(const ImageBuffer& other) : width(other.width), height(other.height)
@@ -64,7 +63,6 @@ ImageBuffer& ImageBuffer::operator=(ImageBuffer&& other) noexcept
 
 void ImageBuffer::allocate(int width, int height)
 {
-    // TODO: Allocate width*height*4 bytes for RGBA data
     this->width = width;
     this->height = height;
     data = std::make_unique<unsigned char[]>(static_cast<size_t>(width) * height * 4);
@@ -132,7 +130,7 @@ void ImageBuffer::clear()
 size_t ImageBuffer::getPixelCount() const { return static_cast<size_t>(width) * height; }
 size_t ImageBuffer::getDataSize() const { return getPixelCount() * 4; }
 
-bool ImageBuffer::savePNG(const std::string& filename) const
+bool ImageBuffer::savePNG(const std::filesystem::path& filename) const
 {
     if (!data || width <= 0 || height <= 0) return false;
 
@@ -168,12 +166,10 @@ bool ImageBuffer::savePNG(const std::string& filename) const
 
 size_t ImageBuffer::pixelOffset(int x, int y) const
 {
-    // TODO: Calculate byte offset for pixel
     return (static_cast<size_t>(y) * width + x) * 4;
 }
 
 bool ImageBuffer::inBounds(int x, int y) const
 {
-    // TODO: Check if coordinates are valid
     return x >= 0 && x < width && y >= 0 && y < height;
 }

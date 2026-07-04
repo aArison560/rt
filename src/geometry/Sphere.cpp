@@ -8,6 +8,7 @@
 #include "geometry/Sphere.hpp"
 #include "core/HitRecord.hpp"
 #include <cmath>
+#include <optional>
 
 Sphere::Sphere() : center(0, 0, 0), radius(1.0) {}
 
@@ -30,10 +31,9 @@ Sphere& Sphere::operator=(const Sphere& other)
     return *this;
 }
 
-bool Sphere::hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) const
+std::optional<HitRecord> Sphere::hit(const Ray& ray, double tMin, double tMax) const
 {
-    // Implement ray-sphere intersection
-    return computeIntersection(ray, tMin, tMax, hitRecord);
+    return computeIntersection(ray, tMin, tMax);
 }
 
 void Sphere::getBoundingBox(Vec3& minCorner, Vec3& maxCorner) const
@@ -81,7 +81,7 @@ void Sphere::getUVAt(const Vec3& point, double& u, double& v) const
     v = 1.0 - (phi) / M_PI;
 }
 
-bool Sphere::computeIntersection(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) const
+std::optional<HitRecord> Sphere::computeIntersection(const Ray& ray, double tMin, double tMax) const
 {
     Vec3 oc = ray.getOrigin() - center;
     Vec3 d = ray.getDirection();
@@ -89,33 +89,28 @@ bool Sphere::computeIntersection(const Ray& ray, double tMin, double tMax, HitRe
     double b = 2.0 * oc.dot(d);
     double c = oc.dot(oc) - radius * radius;
     double discriminant = b * b - 4.0 * a * c;
-    if (discriminant < 0.0) return false;
+    if (discriminant < 0.0) return std::nullopt;
     double sqrtd = std::sqrt(discriminant);
 
     double root = (-b - sqrtd) / (2.0 * a);
     if (root < tMin || root > tMax) {
         root = (-b + sqrtd) / (2.0 * a);
-        if (root < tMin || root > tMax) return false;
+        if (root < tMin || root > tMax) return std::nullopt;
     }
 
     Vec3 point = ray.pointAt(root);
     Vec3 outwardNormal = (point - center) / radius;
     outwardNormal.normalize();
 
-    hitRecord.setT(root);
-    hitRecord.setPoint(point);
-    hitRecord.setNormal(outwardNormal);
-    hitRecord.setMaterial(material.get());
-    // const method; cast away const to set object pointer
-    hitRecord.setObject(const_cast<Sphere*>(this));
+    HitRecord hr(root, point, outwardNormal, material, this);
 
     // Determine front face
     bool front = ray.getDirection().dot(outwardNormal) < 0.0;
-    hitRecord.setFrontFace(front);
+    hr.setFrontFace(front);
 
     double u, v;
     getUVAt(point, u, v);
-    hitRecord.setUV(u, v);
+    hr.setUV(u, v);
 
-    return true;
+    return hr;
 }

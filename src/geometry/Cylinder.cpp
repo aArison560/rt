@@ -9,6 +9,7 @@
 #include "core/HitRecord.hpp"
 #include <algorithm>
 #include <cmath>
+#include <optional>
 
 Cylinder::Cylinder() : center(0, 0, 0), axis(0, 1, 0), radius(1.0), height(2.0) {}
 
@@ -43,10 +44,10 @@ Cylinder& Cylinder::operator=(const Cylinder& other)
     return *this;
 }
 
-bool Cylinder::hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) const
+std::optional<HitRecord> Cylinder::hit(const Ray& ray, double tMin, double tMax) const
 {
     double tClosest = tMax;
-    HitRecord best;
+    std::optional<HitRecord> best;
     bool found = false;
 
     double bodyTs[2];
@@ -62,8 +63,7 @@ bool Cylinder::hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecor
         if (t < tClosest) {
             tClosest = t;
             found = true;
-            best.setT(t);
-            best.setPoint(p);
+            best.emplace(t, p, Vec3(), material, this);
         }
     }
 
@@ -73,8 +73,7 @@ bool Cylinder::hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecor
         if ((p - center).magnitudeSquared() <= radius * radius + Vec3::EPSILON) {
             tClosest = tLower;
             found = true;
-            best.setT(tLower);
-            best.setPoint(p);
+            best.emplace(tLower, p, Vec3(), material, this);
         }
     }
 
@@ -85,26 +84,25 @@ bool Cylinder::hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecor
         if ((p - capCenter).magnitudeSquared() <= radius * radius + Vec3::EPSILON) {
             tClosest = tUpper;
             found = true;
-            best.setT(tUpper);
-            best.setPoint(p);
+            best.emplace(tUpper, p, Vec3(), material, this);
         }
     }
 
-    if (found) {
-        Vec3 normal = getNormalAt(best.getPoint());
-        best.setNormal(normal);
-        best.setMaterial(material.get());
-        best.setObject(const_cast<Cylinder*>(this));
+    if (found && best) {
+        Vec3 point = best->getPoint();
+        Vec3 normal = getNormalAt(point);
+        best->setNormal(normal);
+        best->setMaterial(material);
+        best->setObject(this);
 
         double u, v;
-        getUVAt(best.getPoint(), u, v);
-        best.setUV(u, v);
+        getUVAt(point, u, v);
+        best->setUV(u, v);
 
-        best.setFrontFace(normal.dot(-ray.getDirection()) > 0.0);
-        hitRecord = best;
+        best->setFrontFace(normal.dot(-ray.getDirection()) > 0.0);
     }
 
-    return found;
+    return best;
 }
 
 void Cylinder::getBoundingBox(Vec3& minCorner, Vec3& maxCorner) const

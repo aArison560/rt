@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Vec3.hpp"
+#include <memory>
 
 class Material;
 class AObject;
@@ -31,15 +32,20 @@ public:
     HitRecord();
 
     /**
+     * @brief Destructor (defined in .cpp for shared_ptr completeness)
+     */
+    ~HitRecord();
+
+    /**
      * @brief Constructor with intersection data
      * @param t Ray parameter at intersection
      * @param point 3D point of intersection
      * @param normal Surface normal at intersection (should point away from object)
-     * @param material Pointer to material at intersection
+     * @param material Shared pointer to material at intersection
      * @param object Pointer to intersected object
      */
     HitRecord(double t, const Vec3& point, const Vec3& normal,
-              Material* material, AObject* object);
+              std::shared_ptr<Material> material, const AObject* object);
 
     /**
      * @brief Copy constructor
@@ -58,13 +64,13 @@ public:
      * @brief Check if this represents a valid hit
      * @return true if hit is valid
      */
-    bool isValid() const;
+    [[nodiscard]] bool isValid() const;
 
     /**
      * @brief Get ray parameter t at intersection
      * @return The t value
      */
-    double getT() const;
+    [[nodiscard]] double getT() const;
 
     /**
      * @brief Set ray parameter t
@@ -76,7 +82,7 @@ public:
      * @brief Get intersection point
      * @return The 3D point as Vec3
      */
-    const Vec3& getPoint() const;
+    [[nodiscard]] const Vec3& getPoint() const;
 
     /**
      * @brief Set intersection point
@@ -88,7 +94,7 @@ public:
      * @brief Get surface normal at intersection
      * @return The normal as Vec3 (should be normalized)
      */
-    const Vec3& getNormal() const;
+    [[nodiscard]] const Vec3& getNormal() const;
 
     /**
      * @brief Set surface normal
@@ -98,27 +104,27 @@ public:
 
     /**
      * @brief Get material at intersection
-     * @return Pointer to Material
+     * @return Shared pointer to Material
      */
-    Material* getMaterial() const;
+    [[nodiscard]] std::shared_ptr<Material> getMaterial() const;
 
     /**
      * @brief Set material
-     * @param material Pointer to new Material
+     * @param material Shared pointer to Material
      */
-    void setMaterial(Material* material);
+    void setMaterial(std::shared_ptr<Material> material);
 
     /**
      * @brief Get intersected object
-     * @return Pointer to AObject
+     * @return Const pointer to AObject
      */
-    AObject* getObject() const;
+    [[nodiscard]] const AObject* getObject() const;
 
     /**
      * @brief Set intersected object
-     * @param object Pointer to new AObject
+     * @param object Const pointer to AObject
      */
-    void setObject(AObject* object);
+    void setObject(const AObject* object);
 
     /**
      * @brief Get UV coordinates at intersection (if applicable)
@@ -138,7 +144,7 @@ public:
      * @brief Check if hit is on front face (ray entering object)
      * @return true if front face hit
      */
-    bool isFrontFace() const;
+    [[nodiscard]] bool isFrontFace() const;
 
     /**
      * @brief Set front face flag
@@ -150,7 +156,7 @@ public:
      * @brief Get facing normal (points toward ray origin if front, opposite if back)
      * @return The facing normal as Vec3
      */
-    Vec3 getFacingNormal() const;
+    [[nodiscard]] Vec3 getFacingNormal() const;
 
     /**
      * @brief Reset hit record to invalid state
@@ -158,12 +164,12 @@ public:
     void invalidate();
 
 private:
-    double t;           ///< Ray parameter at intersection
-    Vec3 point;         ///< 3D point of intersection
-    Vec3 normal;        ///< Surface normal (pointing outward)
-    double u, v;        ///< UV coordinates at intersection
-    Material* material; ///< Pointer to material at intersection
-    AObject* object;    ///< Pointer to intersected object
-    bool valid;         ///< Whether this hit is valid
-    bool frontFace;     ///< Whether ray hit front face of object
+    double t;                    ///< Ray parameter at intersection
+    Vec3 point;                  ///< 3D point of intersection
+    Vec3 normal;                 ///< Surface normal (pointing outward)
+    double u, v;                 ///< UV coordinates at intersection
+    std::shared_ptr<Material> material; ///< Material at intersection
+    const AObject* object;       ///< Pointer to intersected object
+    bool valid;                  ///< Whether this hit is valid
+    bool frontFace;              ///< Whether ray hit front face of object
 };

@@ -17,6 +17,7 @@
 #pragma once
 
 #include "AObject.hpp"
+#include <optional>
 
 class Cylinder : public AObject
 {
@@ -72,7 +73,7 @@ public:
      * @param hitRecord Output: intersection data if hit
      * @return true if intersection found
      */
-    bool hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) const override;
+    [[nodiscard]] std::optional<HitRecord> hit(const Ray& ray, double tMin, double tMax) const override;
 
     /**
      * @brief Get bounding box in object space
@@ -85,7 +86,7 @@ public:
      * @brief Get object type identifier
      * @return "Cylinder"
      */
-    const char* getType() const override;
+    [[nodiscard]] const char* getType() const override;
 
     /**
      * @brief Set cylinder center
@@ -97,7 +98,7 @@ public:
      * @brief Get cylinder center
      * @return Center as Vec3
      */
-    const Vec3& getCenter() const;
+    [[nodiscard]] const Vec3& getCenter() const;
 
     /**
      * @brief Set cylinder axis
@@ -109,7 +110,7 @@ public:
      * @brief Get cylinder axis
      * @return Axis as normalized Vec3
      */
-    const Vec3& getAxis() const;
+    [[nodiscard]] const Vec3& getAxis() const;
 
     /**
      * @brief Set cylinder radius
@@ -121,7 +122,7 @@ public:
      * @brief Get cylinder radius
      * @return Radius value
      */
-    double getRadius() const;
+    [[nodiscard]] double getRadius() const;
 
     /**
      * @brief Set cylinder height
@@ -133,14 +134,14 @@ public:
      * @brief Get cylinder height
      * @return Height value
      */
-    double getHeight() const;
+    [[nodiscard]] double getHeight() const;
 
     /**
      * @brief Get surface normal at point on cylinder
      * @param point Point on cylinder surface
      * @return Surface normal
      */
-    Vec3 getNormalAt(const Vec3& point) const override;
+    [[nodiscard]] Vec3 getNormalAt(const Vec3& point) const override;
 
     /**
      * @brief Get UV coordinates at point on cylinder surface
@@ -162,26 +163,26 @@ private:
      * @param tValues Array to store up to 2 t values of intersection
      * @return Number of intersections found (0, 1, or 2)
      */
-    int intersectCylinderBody(const Ray& ray, double tValues[2]) const;
+    [[nodiscard]] int intersectCylinderBody(const Ray& ray, double tValues[2]) const;
 
     /**
      * @brief Test intersection with lower end cap
      * @param ray Ray in object space
      * @return Parameter t of intersection, or -1 if no intersection
      */
-    double intersectLowerCap(const Ray& ray) const;
+    [[nodiscard]] double intersectLowerCap(const Ray& ray) const;
 
     /**
      * @brief Test intersection with upper end cap
      * @param ray Ray in object space
      * @return Parameter t of intersection, or -1 if no intersection
      */
-    double intersectUpperCap(const Ray& ray) const;
+    [[nodiscard]] double intersectUpperCap(const Ray& ray) const;
 
     /**
      * @brief Check if point is within height bounds
      * @param point Point to check
      * @return true if point's height is within [0, height]
      */
-    bool isWithinHeightBounds(const Vec3& point) const;
+    [[nodiscard]] bool isWithinHeightBounds(const Vec3& point) const;
 };

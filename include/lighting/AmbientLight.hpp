@@ -52,8 +52,8 @@ public:
     ~AmbientLight() override = default;
 
     /**
-     * @brief Get light type identifier
-     * @return "AmbientLight"
+     * @brief Get light type
+     * @return LightType::Ambient
      */
-    const char* getType() const override;
+    [[nodiscard]] LightType getLightType() const override;
 };

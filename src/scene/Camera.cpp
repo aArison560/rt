@@ -138,19 +138,32 @@ void Camera::moveDown(double distance)
     position -= upVector * distance;
 }
 
+static Vec3 rotateAroundAxis(const Vec3& v, const Vec3& axis, double angle)
+{
+    double c = std::cos(angle);
+    double s = std::sin(angle);
+    return v * c + axis.cross(v) * s + axis * (axis.dot(v)) * (1.0 - c);
+}
+
 void Camera::rotatePitch(double angleRadians)
 {
-    (void)angleRadians;
+    direction = rotateAroundAxis(direction, rightVector, angleRadians);
+    upVector = rotateAroundAxis(upVector, rightVector, angleRadians);
+    recalculateBasis();
 }
 
 void Camera::rotateYaw(double angleRadians)
 {
-    (void)angleRadians;
+    direction = rotateAroundAxis(direction, upVector, angleRadians);
+    rightVector = rotateAroundAxis(rightVector, upVector, angleRadians);
+    recalculateBasis();
 }
 
 void Camera::rotateRoll(double angleRadians)
 {
-    (void)angleRadians;
+    upVector = rotateAroundAxis(upVector, direction, angleRadians);
+    rightVector = rotateAroundAxis(rightVector, direction, angleRadians);
+    recalculateBasis();
 }
 
 void Camera::updateBasis()

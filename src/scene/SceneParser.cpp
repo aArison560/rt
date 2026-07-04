@@ -14,6 +14,8 @@
 #include "lighting/AmbientLight.hpp"
 #include "lighting/DirectionalLight.hpp"
 #include <fstream>
+#include <filesystem>
+#include <format>
 #include <sstream>
 #include <vector>
 #include <cctype>
@@ -47,16 +49,15 @@ static bool toDoubles(const std::vector<std::string>& tokens, size_t startIndex,
 }
 }
 
-SceneParser::SceneParser() : currentLine(1), currentPos(0) {}
+SceneParser::SceneParser() : currentLine(1) {}
 
 SceneParser::~SceneParser() {}
 
-bool SceneParser::parseFile(const std::string& filePath, Scene& scene)
+bool SceneParser::parseFile(const std::filesystem::path& filePath, Scene& scene)
 {
-    // TODO: Load file content and parse
     std::ifstream file(filePath);
     if (!file) {
-        reportError("Cannot open file: " + filePath);
+        reportError("Cannot open file: " + filePath.string());
         return false;
     }
     std::stringstream buffer;
@@ -67,17 +68,15 @@ bool SceneParser::parseFile(const std::string& filePath, Scene& scene)
 bool SceneParser::parseString(const std::string& content, Scene& scene)
 {
     lastError.clear();
-    this->content = content;
-    currentPos = 0;
     currentLine = 1;
     scene.clear();
-    return parse(scene);
+    return parse(content, scene);
 }
 
 const std::string& SceneParser::getLastError() const { return lastError; }
 int SceneParser::getCurrentLine() const { return currentLine; }
 
-bool SceneParser::parse(Scene& scene)
+bool SceneParser::parse(const std::string& content, Scene& scene)
 {
     std::istringstream input(content);
     std::string line;
@@ -270,127 +269,7 @@ bool SceneParser::parse(Scene& scene)
     return true;
 }
 
-void SceneParser::skipWhitespace()
-{
-    while (!isAtEnd() && std::isspace(static_cast<unsigned char>(peekChar()))) {
-        consumeChar();
-    }
-}
-
-bool SceneParser::isAtEnd() const
-{
-    return currentPos >= content.length();
-}
-
-char SceneParser::peekChar() const
-{
-    if (isAtEnd()) return '\0';
-    return content[currentPos];
-}
-
-char SceneParser::consumeChar()
-{
-    if (isAtEnd()) return '\0';
-    char c = content[currentPos++];
-    if (c == '\n') currentLine++;
-    return c;
-}
-
-bool SceneParser::parseNumber(double& value)
-{
-    skipWhitespace();
-    size_t start = currentPos;
-    while (!isAtEnd()) {
-        const char c = peekChar();
-        if (std::isdigit(static_cast<unsigned char>(c)) || c == '-' || c == '+' || c == '.' || c == 'e' || c == 'E') {
-            consumeChar();
-        } else {
-            break;
-        }
-    }
-    if (start == currentPos) {
-        return false;
-    }
-    try {
-        value = std::stod(content.substr(start, currentPos - start));
-    } catch (...) {
-        return false;
-    }
-    return true;
-}
-
-bool SceneParser::parseVec3(Vec3& point)
-{
-    // TODO: Parse three numbers as Vec3
-    double x, y, z;
-    if (!parseNumber(x) || !parseNumber(y) || !parseNumber(z)) {
-        return false;
-    }
-    point = Vec3(x, y, z);
-    return true;
-}
-
-bool SceneParser::parseAmbient(Scene& scene)
-{
-    (void)scene;
-    return true;
-}
-
-bool SceneParser::parseLight(Scene& scene)
-{
-    (void)scene;
-    return true;
-}
-
-bool SceneParser::parseSphere(Scene& scene)
-{
-    (void)scene;
-    return true;
-}
-
-bool SceneParser::parsePlane(Scene& scene)
-{
-    (void)scene;
-    return true;
-}
-
-bool SceneParser::parseCylinder(Scene& scene)
-{
-    (void)scene;
-    return true;
-}
-
-bool SceneParser::parseCone(Scene& scene)
-{
-    (void)scene;
-    return true;
-}
-
-bool SceneParser::parseCamera(Scene& scene)
-{
-    (void)scene;
-    return true;
-}
-
-bool SceneParser::parseBackground(Scene& scene)
-{
-    (void)scene;
-    return true;
-}
-
 void SceneParser::reportError(const std::string& message)
 {
-    lastError = "Line " + std::to_string(currentLine) + ": " + message;
-}
-
-bool SceneParser::matchIdentifier(const std::string& identifier)
-{
-    if (currentPos + identifier.size() > content.size()) {
-        return false;
-    }
-    if (content.compare(currentPos, identifier.size(), identifier) == 0) {
-        currentPos += identifier.size();
-        return true;
-    }
-    return false;
+    lastError = std::format("Line {}: {}", currentLine, message);
 }

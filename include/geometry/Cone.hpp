@@ -17,6 +17,7 @@
 #pragma once
 
 #include "AObject.hpp"
+#include <optional>
 
 class Cone : public AObject
 {
@@ -72,7 +73,7 @@ public:
      * @param hitRecord Output: intersection data if hit
      * @return true if intersection found
      */
-    bool hit(const Ray& ray, double tMin, double tMax, HitRecord& hitRecord) const override;
+    [[nodiscard]] std::optional<HitRecord> hit(const Ray& ray, double tMin, double tMax) const override;
 
     /**
      * @brief Get bounding box in object space
@@ -85,7 +86,7 @@ public:
      * @brief Get object type identifier
      * @return "Cone"
      */
-    const char* getType() const override;
+    [[nodiscard]] const char* getType() const override;
 
     /**
      * @brief Set cone apex
@@ -97,7 +98,7 @@ public:
      * @brief Get cone apex
      * @return Apex as Vec3
      */
-    const Vec3& getApex() const;
+    [[nodiscard]] const Vec3& getApex() const;
 
     /**
      * @brief Set cone axis
@@ -109,7 +110,7 @@ public:
      * @brief Get cone axis
      * @return Axis as normalized Vec3
      */
-    const Vec3& getAxis() const;
+    [[nodiscard]] const Vec3& getAxis() const;
 
     /**
      * @brief Set cone half-angle
@@ -121,13 +122,13 @@ public:
      * @brief Get cone half-angle
      * @return Half-angle in degrees
      */
-    double getHalfAngle() const;
+    [[nodiscard]] double getHalfAngle() const;
 
     /**
      * @brief Get cone half-angle in radians
      * @return Half-angle in radians
      */
-    double getHalfAngleRadians() const;
+    [[nodiscard]] double getHalfAngleRadians() const;
 
     /**
      * @brief Set cone height
@@ -139,14 +140,14 @@ public:
      * @brief Get cone height
      * @return Height value
      */
-    double getHeight() const;
+    [[nodiscard]] double getHeight() const;
 
     /**
      * @brief Get surface normal at point on cone
      * @param point Point on cone surface
      * @return Surface normal
      */
-    Vec3 getNormalAt(const Vec3& point) const override;
+    [[nodiscard]] Vec3 getNormalAt(const Vec3& point) const override;
 
     /**
      * @brief Get UV coordinates at point on cone surface
@@ -176,19 +177,19 @@ private:
      * @param tValues Array to store up to 2 t values
      * @return Number of intersections (0, 1, or 2)
      */
-    int intersectConeSurface(const Ray& ray, double tValues[2]) const;
+    [[nodiscard]] int intersectConeSurface(const Ray& ray, double tValues[2]) const;
 
     /**
      * @brief Test intersection with base end cap
      * @param ray Ray in object space
      * @return Parameter t of intersection, or -1 if no intersection
      */
-    double intersectBaseCap(const Ray& ray) const;
+    [[nodiscard]] double intersectBaseCap(const Ray& ray) const;
 
     /**
      * @brief Check if point is within height bounds
      * @param point Point to check
      * @return true if point's height is within [0, height]
      */
-    bool isWithinHeightBounds(const Vec3& point) const;
+    [[nodiscard]] bool isWithinHeightBounds(const Vec3& point) const;
 };
