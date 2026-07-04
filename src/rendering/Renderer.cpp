@@ -21,7 +21,11 @@ static thread_local std::uniform_real_distribution<double> tlDist(0.0, 1.0);
 
 Renderer::Renderer() : maxRecursionDepth(4), shadowSamples(8), shadowsEnabled(true),
                        reflectionsEnabled(true), refractionsEnabled(true),
-                       samplesPerPixel(4), cancelled(false), lastObjectVersion(0) {}
+                       samplesPerPixel(4), cancelled(false), lastObjectVersion(0)
+{
+    unsigned int numThreads = std::max(1u, std::thread::hardware_concurrency());
+    threadPool = std::make_unique<ThreadPool>(numThreads);
+}
 
 Renderer::~Renderer() {}
 
@@ -37,21 +41,23 @@ bool Renderer::render(const Scene& scene, int width, int height, unsigned char* 
         lastObjectVersion = currentVersion;
     }
 
-    unsigned int numThreads = std::max(1u, std::thread::hardware_concurrency());
-    int stripHeight = height / numThreads;
+    unsigned int numThreads = threadPool->getThreadCount();
+    if (numThreads == 0) {
+        // No workers available, render on the calling thread
+        return renderRegion(scene, width, height, 0, 0, width, height, pixelBuffer);
+    }
 
-    std::vector<std::thread> threads;
+    int stripHeight = height / static_cast<int>(numThreads);
+
     for (unsigned int i = 0; i < numThreads; ++i) {
         int startY = static_cast<int>(i) * stripHeight;
         int regionH = (i == numThreads - 1) ? height - startY : stripHeight;
-        threads.emplace_back([this, &scene, width, height, startY, regionH, pixelBuffer]() {
+        threadPool->enqueue([this, &scene, width, height, startY, regionH, pixelBuffer]() {
             (void)renderRegion(scene, width, height, 0, startY, width, regionH, pixelBuffer);
         });
     }
 
-    for (auto& t : threads) {
-        t.join();
-    }
+    threadPool->waitAll();
 
     return !cancelled;
 }

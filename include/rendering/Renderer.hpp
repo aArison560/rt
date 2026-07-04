@@ -24,8 +24,10 @@
 #include "lighting/ALight.hpp"
 #include "core/Material.hpp"
 #include "rendering/BVH.hpp"
+#include "rendering/ThreadPool.hpp"
 #include <atomic>
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <vector>
 
@@ -160,6 +162,7 @@ private:
     int samplesPerPixel;    ///< Anti-aliasing samples per pixel
     std::atomic<bool> cancelled; ///< Whether render was cancelled
     std::unique_ptr<BVHNode> bvhRoot; ///< BVH acceleration structure
+    std::unique_ptr<ThreadPool> threadPool; ///< Reusable thread pool for parallel rendering
     uint64_t lastObjectVersion; ///< Last seen Scene::objectVersion (to avoid unnecessary BVH rebuilds)
 
     /**
