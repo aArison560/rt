@@ -20,7 +20,7 @@ static thread_local std::uniform_real_distribution<double> tlDist(0.0, 1.0);
 }
 
 Renderer::Renderer() : maxRecursionDepth(4), shadowSamples(8), shadowsEnabled(true),
-                       reflectionsEnabled(true), refractionsEnabled(false),
+                       reflectionsEnabled(true), refractionsEnabled(true),
                        samplesPerPixel(4), cancelled(false), lastObjectVersion(0) {}
 
 Renderer::~Renderer() {}
