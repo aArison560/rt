@@ -148,8 +148,41 @@ Vec3 Texture::sample(double u, double v) const
 
 Vec3 Texture::sampleFiltered(double u, double v) const
 {
-    // TODO: Bilinear filtering
-    return sample(u, v);
+    clampUV(u, v);
+
+    if (!valid || width == 0 || height == 0)
+        return Vec3();
+
+    // Convert UV to floating-point pixel coordinates
+    double fx = u * static_cast<double>(width);
+    double fy = v * static_cast<double>(height);
+
+    // Clamp to the last pixel boundary to avoid out-of-bounds
+    fx = std::clamp(fx, 0.0, static_cast<double>(width - 1));
+    fy = std::clamp(fy, 0.0, static_cast<double>(height - 1));
+
+    int ix = static_cast<int>(fx);
+    int iy = static_cast<int>(fy);
+    double tx = fx - static_cast<double>(ix);
+    double ty = fy - static_cast<double>(iy);
+
+    // If exactly on a pixel boundary, fall back to nearest-neighbor
+    if (tx < Vec3::EPSILON && ty < Vec3::EPSILON)
+        return getPixel(ix, iy);
+
+    int ix1 = std::min(ix + 1, width - 1);
+    int iy1 = std::min(iy + 1, height - 1);
+
+    // Sample the four neighboring pixels
+    Vec3 c00 = getPixel(ix, iy);
+    Vec3 c10 = getPixel(ix1, iy);
+    Vec3 c01 = getPixel(ix, iy1);
+    Vec3 c11 = getPixel(ix1, iy1);
+
+    // Bilinear interpolation: lerp along X then Y
+    Vec3 top = c00.lerp(c10, tx);
+    Vec3 bot = c01.lerp(c11, tx);
+    return top.lerp(bot, ty);
 }
 
 int Texture::getWidth() const { return width; }
