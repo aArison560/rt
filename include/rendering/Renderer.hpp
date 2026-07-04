@@ -26,6 +26,7 @@
 #include "rendering/BVH.hpp"
 #include "rendering/ThreadPool.hpp"
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -153,6 +154,24 @@ public:
      */
     [[nodiscard]] bool isCancelled() const;
 
+    /**
+     * @brief Enable/disable profiling output after each render
+     * @param enabled Whether to print profiling data
+     */
+    void setProfilingEnabled(bool enabled);
+
+    /**
+     * @brief Check if profiling is enabled
+     * @return true if profiling enabled
+     */
+    [[nodiscard]] bool getProfilingEnabled() const;
+
+    /**
+     * @brief Get last render time in milliseconds
+     * @return Render duration in ms
+     */
+    [[nodiscard]] double getLastRenderTimeMs() const;
+
 private:
     int maxRecursionDepth;  ///< Maximum recursion depth
     int shadowSamples;      ///< Number of shadow ray samples per light
@@ -165,6 +184,19 @@ private:
     std::unique_ptr<ThreadPool> threadPool; ///< Reusable thread pool for parallel rendering
     uint64_t lastObjectVersion; ///< Last seen Scene::objectVersion (to avoid unnecessary BVH rebuilds)
 
+    // --- Profiling ---
+    bool profilingEnabled;                                      ///< Whether to print profiling data
+    mutable double renderTimeMs;                                ///< Last render duration (ms)
+    mutable std::atomic<uint64_t> bvhTestCount;                 ///< BVH intersection tests
+    mutable std::atomic<uint64_t> shadowRayCount;               ///< Shadow rays cast
+    mutable std::chrono::steady_clock::time_point renderStartTime; ///< Render start timestamp
+
+    /**
+     * @brief Minimum accumulated contribution weight before ray termination
+     * Rays whose contribution falls below this threshold are terminated early.
+     */
+    static constexpr double MIN_CONTRIBUTION = 0.01;
+
     /**
      * @brief Trace a ray through the scene
      * @param ray The ray to trace
@@ -172,10 +204,11 @@ private:
      * @param depth Current recursion depth
      * @param tMin Minimum ray parameter
      * @param tMax Maximum ray parameter
+     * @param contributionWeight Accumulated weight of this ray (1.0 = full contribution)
      * @return Color at ray endpoint as Vec3 (RGB in range 0-1)
      */
     [[nodiscard]] Vec3 trace(const Ray& ray, const Scene& scene, int depth,
-              double tMin, double tMax) const;
+              double tMin, double tMax, double contributionWeight) const;
 
     /**
      * @brief Find closest intersection of ray with scene
@@ -240,6 +273,16 @@ private:
      */
     Vec3 calculateSpecular(const HitRecord& hitRecord, const ALight& light,
                           const Vec3& lightDir, const Vec3& viewDir, double shadow) const;
+
+    /**
+     * @brief Record render duration and optionally print profiling data
+     */
+    void recordRenderTime();
+
+    /**
+     * @brief Print profiling data to stdout
+     */
+    void reportProfiling() const;
 
     /**
      * @brief Convert color to 8-bit RGBA format

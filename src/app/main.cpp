@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <string>
 #include <memory>
+#include <vector>
 #include "scene/Scene.hpp"
 #include "scene/Camera.hpp"
 #include "rendering/Renderer.hpp"
@@ -89,29 +90,39 @@ int main(int argc, char* argv[])
     int width = DEFAULT_WIDTH;
     int height = DEFAULT_HEIGHT;
 
-    // Parse arguments
-    if (argc > 1) {
-        if (std::string(argv[1]) == "--help" || std::string(argv[1]) == "-h") {
+    // Check for --profile flag before parsing positional arguments
+    bool profilingEnabled = false;
+    std::vector<std::string> positionalArgs;
+    for (int i = 1; i < argc; ++i) {
+        std::string arg(argv[i]);
+        if (arg == "--help" || arg == "-h") {
             printUsage(argv[0]);
             return 0;
         }
-        sceneFile = argv[1];
+        if (arg == "--profile") {
+            profilingEnabled = true;
+        } else {
+            positionalArgs.push_back(arg);
+        }
     }
-    
-    if (argc > 2) {
+
+    // Parse positional arguments
+    if (positionalArgs.size() >= 1) {
+        sceneFile = positionalArgs[0];
+    }
+    if (positionalArgs.size() >= 2) {
         try {
-            width = std::stoi(argv[2]);
+            width = std::stoi(positionalArgs[1]);
         } catch (...) {
-            std::cerr << "Invalid width: " << argv[2] << std::endl;
+            std::cerr << "Invalid width: " << positionalArgs[1] << std::endl;
             return 1;
         }
     }
-    
-    if (argc > 3) {
+    if (positionalArgs.size() >= 3) {
         try {
-            height = std::stoi(argv[3]);
+            height = std::stoi(positionalArgs[2]);
         } catch (...) {
-            std::cerr << "Invalid height: " << argv[3] << std::endl;
+            std::cerr << "Invalid height: " << positionalArgs[2] << std::endl;
             return 1;
         }
     }
@@ -135,6 +146,7 @@ int main(int argc, char* argv[])
     std::cout << std::format("Window initialized: {}x{}", width, height) << std::endl;
 
     Renderer renderer;
+    renderer.setProfilingEnabled(profilingEnabled);
     renderer.setMaxRecursionDepth(4);
     renderer.setShadowsEnabled(true);
     renderer.setReflectionsEnabled(true);

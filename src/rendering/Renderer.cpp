@@ -10,7 +10,10 @@
 #include "lighting/PointLight.hpp"
 #include "lighting/DirectionalLight.hpp"
 #include <algorithm>
+#include <chrono>
 #include <cmath>
+#include <format>
+#include <iostream>
 #include <random>
 #include <thread>
 
@@ -21,7 +24,9 @@ static thread_local std::uniform_real_distribution<double> tlDist(0.0, 1.0);
 
 Renderer::Renderer() : maxRecursionDepth(4), shadowSamples(8), shadowsEnabled(true),
                        reflectionsEnabled(true), refractionsEnabled(true),
-                       samplesPerPixel(4), cancelled(false), lastObjectVersion(0)
+                       samplesPerPixel(4), cancelled(false), lastObjectVersion(0),
+                       profilingEnabled(false), renderTimeMs(0.0),
+                       bvhTestCount(0), shadowRayCount(0)
 {
     unsigned int numThreads = std::max(1u, std::thread::hardware_concurrency());
     threadPool = std::make_unique<ThreadPool>(numThreads);
@@ -32,6 +37,9 @@ Renderer::~Renderer() {}
 bool Renderer::render(const Scene& scene, int width, int height, unsigned char* pixelBuffer)
 {
     cancelled = false;
+    bvhTestCount.store(0, std::memory_order_relaxed);
+    shadowRayCount.store(0, std::memory_order_relaxed);
+    renderStartTime = std::chrono::steady_clock::now();
 
     // Rebuild BVH only if the scene objects have changed since last render
     uint64_t currentVersion = scene.getObjectVersion();
@@ -44,7 +52,9 @@ bool Renderer::render(const Scene& scene, int width, int height, unsigned char* 
     unsigned int numThreads = threadPool->getThreadCount();
     if (numThreads == 0) {
         // No workers available, render on the calling thread
-        return renderRegion(scene, width, height, 0, 0, width, height, pixelBuffer);
+        bool ok = renderRegion(scene, width, height, 0, 0, width, height, pixelBuffer);
+        recordRenderTime();
+        return ok;
     }
 
     int stripHeight = height / static_cast<int>(numThreads);
@@ -58,6 +68,7 @@ bool Renderer::render(const Scene& scene, int width, int height, unsigned char* 
     }
 
     threadPool->waitAll();
+    recordRenderTime();
 
     return !cancelled;
 }
@@ -102,7 +113,7 @@ bool Renderer::renderRegion(const Scene& scene, int width, int height,
                             static_cast<double>(x) + offsetX,
                             static_cast<double>(y) + offsetY,
                             width, height);
-                        accumulatedColor += trace(ray, scene, 0, 1e-4, 1e30);
+                        accumulatedColor += trace(ray, scene, 0, 1e-4, 1e30, 1.0);
                     }
 
                     Vec3 color = accumulatedColor / static_cast<double>(samplesPerPixel);
@@ -138,6 +149,36 @@ int Renderer::getSamplesPerPixel() const { return samplesPerPixel; }
 void Renderer::cancel() { cancelled = true; }
 bool Renderer::isCancelled() const { return cancelled; }
 
+void Renderer::setProfilingEnabled(bool enabled) { profilingEnabled = enabled; }
+bool Renderer::getProfilingEnabled() const { return profilingEnabled; }
+double Renderer::getLastRenderTimeMs() const { return renderTimeMs; }
+
+void Renderer::recordRenderTime()
+{
+    auto end = std::chrono::steady_clock::now();
+    renderTimeMs = std::chrono::duration<double, std::milli>(end - renderStartTime).count();
+    if (profilingEnabled) {
+        reportProfiling();
+    }
+}
+
+void Renderer::reportProfiling() const
+{
+    double timeMs = renderTimeMs;
+    uint64_t bvhCount = bvhTestCount.load(std::memory_order_relaxed);
+    uint64_t shadowCount = shadowRayCount.load(std::memory_order_relaxed);
+
+    std::cout << std::format(
+        "[Profile] Render: {:.1f} ms | BVH tests: {} | Shadow rays: {} | Total rays: {}\n",
+        timeMs, bvhCount, shadowCount, bvhCount + shadowCount);
+
+    if (timeMs > 0.0) {
+        double raysPerSec = static_cast<double>(bvhCount + shadowCount) / (timeMs / 1000.0);
+        std::cout << std::format(
+            "[Profile] Throughput: {:.0f} rays/sec\n", raysPerSec);
+    }
+}
+
 static double schlickFresnel(double cosTheta, double n1, double n2)
 {
     double r0 = (n1 - n2) / (n1 + n2);
@@ -146,8 +187,12 @@ static double schlickFresnel(double cosTheta, double n1, double n2)
 }
 
 Vec3 Renderer::trace(const Ray& ray, const Scene& scene, int depth,
-                    double tMin, double tMax) const
+                    double tMin, double tMax, double contributionWeight) const
 {
+    // Early termination: if this ray's contribution is negligible, stop recursing
+    if (contributionWeight < MIN_CONTRIBUTION && depth > 0)
+        return Vec3(0, 0, 0);
+
     auto record = castRay(ray, scene, tMin, tMax);
     if (!record) {
         return scene.getBackgroundColor();
@@ -156,54 +201,58 @@ Vec3 Renderer::trace(const Ray& ray, const Scene& scene, int depth,
     Vec3 color = calculateLighting(*record, viewDir, scene, depth);
     const Material* mat = record->getMaterial().get();
 
-if (mat) {
-            Vec3 point = record->getPoint();
-            Vec3 normal = record->getNormal();
+    if (mat) {
+        Vec3 point = record->getPoint();
+        Vec3 normal = record->getNormal();
 
-            double reflect = mat->getReflectivity();
-            double refract = mat->getTransparency();
+        double reflect = mat->getReflectivity();
+        double refract = mat->getTransparency();
 
-            // Fresnel for dielectrics (transparent materials)
-            if (refract > 0.0 && (reflectionsEnabled || refractionsEnabled) && depth < maxRecursionDepth) {
-                double cosTheta = std::abs(viewDir.dot(normal));
-                double n1 = 1.0;
-                double n2 = record->isFrontFace() ? mat->getRefractiveIndex() : 1.0;
-                double fresnel = schlickFresnel(cosTheta, n1, n2);
-                reflect = fresnel;
-            }
+        // Fresnel for dielectrics (transparent materials)
+        if (refract > 0.0 && (reflectionsEnabled || refractionsEnabled) && depth < maxRecursionDepth) {
+            double cosTheta = std::abs(viewDir.dot(normal));
+            double n1 = 1.0;
+            double n2 = record->isFrontFace() ? mat->getRefractiveIndex() : 1.0;
+            double fresnel = schlickFresnel(cosTheta, n1, n2);
+            reflect = fresnel;
+        }
 
-            // Reflection
-            if (reflectionsEnabled && reflect > 0.0 && depth < maxRecursionDepth) {
-                double rrReflect = reflect;
-                if (depth >= 3 && rrReflect < 0.25) {
-                    if (tlDist(tlRng) >= rrReflect) {
-                        rrReflect = 0.0;
-                    } else {
-                        rrReflect = 1.0;
-                    }
-                }
-                if (rrReflect > 0.0) {
-                    Vec3 reflectedDir = ray.getDirection().reflect(normal);
-                    Vec3 reflectedOrigin = point + normal * Vec3::EPSILON;
-                    Ray reflectedRay(reflectedOrigin, reflectedDir);
-                    Vec3 reflectedColor = trace(reflectedRay, scene, depth + 1, 1e-4, 1e30);
-                    color += reflectedColor * rrReflect;
+        // Reflection
+        if (reflectionsEnabled && reflect > 0.0 && depth < maxRecursionDepth) {
+            double rrReflect = reflect;
+            // Russian Roulette at high depth
+            if (depth >= 3 && rrReflect < 0.25) {
+                if (tlDist(tlRng) >= rrReflect) {
+                    rrReflect = 0.0;
+                } else {
+                    rrReflect = 1.0;
                 }
             }
+            double newWeight = contributionWeight * rrReflect;
+            if (newWeight >= MIN_CONTRIBUTION && rrReflect > 0.0) {
+                Vec3 reflectedDir = ray.getDirection().reflect(normal);
+                Vec3 reflectedOrigin = point + normal * Vec3::EPSILON;
+                Ray reflectedRay(reflectedOrigin, reflectedDir);
+                Vec3 reflectedColor = trace(reflectedRay, scene, depth + 1,
+                    1e-4, 1e30, newWeight);
+                color += reflectedColor * rrReflect;
+            }
+        }
 
-            // Refraction (only for transparent materials, weighted by (1 - Fresnel))
-            if (refractionsEnabled && refract > 0.0 && depth < maxRecursionDepth) {
-                double rrTrans = refract * (1.0 - reflect);
-                if (rrTrans <= 0.0) {
-                    // skip
-                } else if (depth >= 3 && rrTrans < 0.25) {
+        // Refraction (only for transparent materials, weighted by (1 - Fresnel))
+        if (refractionsEnabled && refract > 0.0 && depth < maxRecursionDepth) {
+            double rrTrans = refract * (1.0 - reflect);
+            if (rrTrans > 0.0) {
+                // Russian Roulette at high depth
+                if (depth >= 3 && rrTrans < 0.25) {
                     if (tlDist(tlRng) >= rrTrans) {
                         rrTrans = 0.0;
                     } else {
                         rrTrans = 1.0;
                     }
                 }
-                if (rrTrans > 0.0) {
+                double newWeight = contributionWeight * rrTrans;
+                if (newWeight >= MIN_CONTRIBUTION && rrTrans > 0.0) {
                     Vec3 refractedDir;
                     double ratio;
                     Vec3 refractionNormal;
@@ -217,12 +266,14 @@ if (mat) {
                     if (ray.getDirection().refract(refractionNormal, ratio, refractedDir)) {
                         Vec3 refractedOrigin = point - normal * Vec3::EPSILON;
                         Ray refractedRay(refractedOrigin, refractedDir);
-                        Vec3 refractedColor = trace(refractedRay, scene, depth + 1, 1e-4, 1e30);
+                        Vec3 refractedColor = trace(refractedRay, scene, depth + 1,
+                            1e-4, 1e30, newWeight);
                         color += refractedColor * rrTrans;
                     }
                 }
             }
         }
+    }
 
     color.x = std::clamp(color.x, 0.0, 1.0);
     color.y = std::clamp(color.y, 0.0, 1.0);
@@ -232,6 +283,8 @@ if (mat) {
 
 std::optional<HitRecord> Renderer::castRay(const Ray& ray, const Scene& scene, double tMin, double tMax) const
 {
+    bvhTestCount.fetch_add(1, std::memory_order_relaxed);
+
     if (bvhRoot) {
         return bvhRoot->hit(ray, tMin, tMax);
     }
@@ -263,6 +316,7 @@ double Renderer::calculateShadow(const Vec3& hitPoint, const ALight& light,
 
         if (shadowSamples <= 1) {
             Ray shadowRay(hitPoint + dir * 1e-4, dir);
+            shadowRayCount.fetch_add(1, std::memory_order_relaxed);
             if (castRay(shadowRay, scene, 1e-4, dist - 1e-4)) {
                 return 0.0;
             }
@@ -288,6 +342,7 @@ double Renderer::calculateShadow(const Vec3& hitPoint, const ALight& light,
             Vec3 sampleDir = toSample / sampleDist;
 
             Ray shadowRay(hitPoint + sampleDir * 1e-4, sampleDir);
+            shadowRayCount.fetch_add(1, std::memory_order_relaxed);
             if (!castRay(shadowRay, scene, 1e-4, sampleDist - 1e-4)) {
                 ++visible;
             }
@@ -300,6 +355,7 @@ double Renderer::calculateShadow(const Vec3& hitPoint, const ALight& light,
 
         if (shadowSamples <= 1) {
             Ray shadowRay(hitPoint + dir * 1e-4, dir);
+            shadowRayCount.fetch_add(1, std::memory_order_relaxed);
             if (castRay(shadowRay, scene, 1e-4, 1e30)) {
                 return 0.0;
             }
@@ -325,6 +381,7 @@ double Renderer::calculateShadow(const Vec3& hitPoint, const ALight& light,
             jittered.normalize();
 
             Ray shadowRay(hitPoint + jittered * 1e-4, jittered);
+            shadowRayCount.fetch_add(1, std::memory_order_relaxed);
             if (!castRay(shadowRay, scene, 1e-4, 1e30)) {
                 ++visible;
             }
