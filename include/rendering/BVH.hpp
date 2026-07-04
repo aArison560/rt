@@ -19,6 +19,7 @@ struct AABB
     AABB(const AABB& a, const AABB& b);
 
     void expand(const AABB& other);
+    [[nodiscard]] double surfaceArea() const;
     int longestAxis() const;
     Vec3 centroid() const;
     bool hit(const Ray& ray, double tMin, double tMax) const;
