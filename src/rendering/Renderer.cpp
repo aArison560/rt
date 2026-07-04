@@ -79,33 +79,44 @@ bool Renderer::renderRegion(const Scene& scene, int width, int height,
 
     const Camera& camera = scene.getCamera();
 
-    for (int y = y0; y < y1; ++y) {
+    // Process the region in 32×32 tiles for better cache locality
+    constexpr int TILE_SIZE = 32;
+
+    for (int ty = y0; ty < y1; ty += TILE_SIZE) {
         if (cancelled)
             return false;
 
-        for (int x = x0; x < x1; ++x) {
-            Vec3 accumulatedColor(0, 0, 0);
+        int tileEndY = std::min(ty + TILE_SIZE, y1);
 
-            for (int s = 0; s < samplesPerPixel; ++s) {
-                double offsetX = tlDist(tlRng) - 0.5;
-                double offsetY = tlDist(tlRng) - 0.5;
-                const Ray ray = camera.generateRay(
-                    static_cast<double>(x) + offsetX,
-                    static_cast<double>(y) + offsetY,
-                    width, height);
-                accumulatedColor += trace(ray, scene, 0, 1e-4, 1e30);
+        for (int tx = x0; tx < x1; tx += TILE_SIZE) {
+            int tileEndX = std::min(tx + TILE_SIZE, x1);
+
+            for (int y = ty; y < tileEndY; ++y) {
+                for (int x = tx; x < tileEndX; ++x) {
+                    Vec3 accumulatedColor(0, 0, 0);
+
+                    for (int s = 0; s < samplesPerPixel; ++s) {
+                        double offsetX = tlDist(tlRng) - 0.5;
+                        double offsetY = tlDist(tlRng) - 0.5;
+                        const Ray ray = camera.generateRay(
+                            static_cast<double>(x) + offsetX,
+                            static_cast<double>(y) + offsetY,
+                            width, height);
+                        accumulatedColor += trace(ray, scene, 0, 1e-4, 1e30);
+                    }
+
+                    Vec3 color = accumulatedColor / static_cast<double>(samplesPerPixel);
+
+                    unsigned char r, g, b, a;
+                    colorToRGBA(color, r, g, b, a);
+
+                    const size_t index = (static_cast<size_t>(y) * width + x) * 4;
+                    pixelBuffer[index + 0] = r;
+                    pixelBuffer[index + 1] = g;
+                    pixelBuffer[index + 2] = b;
+                    pixelBuffer[index + 3] = a;
+                }
             }
-
-            Vec3 color = accumulatedColor / static_cast<double>(samplesPerPixel);
-
-            unsigned char r, g, b, a;
-            colorToRGBA(color, r, g, b, a);
-
-            const size_t index = (static_cast<size_t>(y) * width + x) * 4;
-            pixelBuffer[index + 0] = r;
-            pixelBuffer[index + 1] = g;
-            pixelBuffer[index + 2] = b;
-            pixelBuffer[index + 3] = a;
         }
     }
 
