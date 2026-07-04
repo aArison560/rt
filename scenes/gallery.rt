@@ -1,0 +1,99 @@
+# =============================================================================
+# GALLERY — Art Gallery with Dramatic Lighting
+# Framed panels · Spotlighting · Reflective floor · Museum atmosphere
+# =============================================================================
+
+bg 0.04 0.04 0.06
+A 0.08 0.08 0.1
+
+# Spotlights
+L  0.0  8.0  0.0   1.0  0.95  0.85  0.9
+L  3.0  6.0  -2.0  0.9  0.85  0.75  0.6
+L -3.0  6.0  -2.0  0.75 0.8   0.9   0.6
+
+c 0.0 2.0 8.0  0.0 0.2 -1.0  0.0 1.0 0.0  45.0
+
+# ===== ARCHITECTURE =====
+
+# Floor — polished dark marble
+pl 0.0 -2.0 0.0  0.0 1.0 0.0
+material 0.08 0.08 0.1  0.3 0.4 0.05  32.0  0.4 0.15
+
+# Back wall — dark grey
+pl 0.0 0.0 -8.0  0.0 0.0 1.0
+material 0.18 0.18 0.22  0.85 0.4 0.0  2.0  0.0 0.5
+
+# Left wall — warm dark red
+pl -5.0 0.0 0.0  1.0 0.0 0.0
+material 0.25 0.1 0.1  0.85 0.4 0.0  2.0  0.0 0.5
+
+# Right wall — warm dark blue
+pl 5.0 0.0 0.0  -1.0 0.0 0.0
+material 0.1 0.1 0.22  0.85 0.4 0.0  2.0  0.0 0.5
+
+# ===== CEILING LIP (light border) =====
+pl 0.0 3.0 0.0  0.0 -1.0 0.0
+material 0.15 0.14 0.13  0.85 0.3 0.0  2.0  0.0 0.6
+
+# ===== FRAMED ART — Back Wall =====
+
+# Painting 1: Bold red abstract — center frame
+pl -0.0 0.0 -7.8  0.0 0.0 1.0
+material 0.9 0.2 0.15  0.2 0.6 0.2  8.0  0.0 0.4
+
+# Painting 2: Cool blue abstract — left
+pl -2.5 0.0 -7.8  0.0 0.0 1.0
+material 0.15 0.3 0.85  0.2 0.6 0.2  8.0  0.0 0.4
+
+# Painting 3: Golden abstract — right
+pl 2.5 0.0 -7.8  0.0 0.0 1.0
+material 0.9 0.75 0.2  0.2 0.6 0.2  8.0  0.0 0.4
+
+# ===== GALLERY PEDESTALS =====
+
+# Center pedestal (tall cylinder)
+cy 0.0 -1.8 -3.0  0.0 1.0 0.0  0.4 0.8
+material 0.2 0.2 0.22  0.2 0.5 0.1  16.0  0.1 0.3
+
+# Sculpture on center pedestal (sphere — bust)
+sp 0.0 0.0 -3.0  0.5
+material 0.8 0.75 0.7  0.15 0.4 0.4  32.0  0.25 0.2
+
+# Left pedestal
+cy -3.0 -1.5 -3.0  0.0 1.0 0.0  0.3 1.2
+material 0.22 0.2 0.18  0.2 0.5 0.1  16.0  0.1 0.3
+
+# Vase on left pedestal (cylinder)
+cy -3.0 -0.5 -3.0  0.0 1.0 0.0  0.2 1.0
+material 0.6 0.3 0.15  0.15 0.4 0.4  64.0  0.3 0.12
+
+# Right pedestal
+cy 3.0 -1.5 -3.0  0.0 1.0 0.0  0.3 1.2
+material 0.22 0.2 0.18  0.2 0.5 0.1  16.0  0.1 0.3
+
+# Modern art on right pedestal (cone + sphere)
+co 3.0 -0.2 -3.0  0.0 1.0 0.0  15.0 1.0
+material 0.2 0.6 0.6  0.15 0.3 0.6  96.0  0.5 0.08
+
+sp 3.0 0.5 -3.0  0.3
+material 0.9 0.6 0.3  0.1 0.2 0.8  128.0  0.7 0.04
+
+# ===== FLOOR SCULPTURES =====
+
+# Large metallic ring (cylinder lying on its side)
+cy -1.0 -1.5 -5.0  1.0 0.0 0.0  0.8 0.2
+material 0.6 0.6 0.65  0.1 0.2 0.8  256.0  0.7 0.03
+
+# Small glowing orb
+sp 1.5 -1.7 -5.0  0.25
+material 0.95 0.9 0.4  0.1 0.2 0.9  128.0  0.65 0.05
+
+# ===== SIDE WALL ART =====
+
+# Left wall frame
+pl -4.8 0.5 -3.0  1.0 0.0 0.0
+material 0.3 0.7 0.3  0.2 0.5 0.2  8.0  0.0 0.4
+
+# Right wall frame
+pl 4.8 0.5 -3.0  -1.0 0.0 0.0
+material 0.7 0.3 0.7  0.2 0.5 0.2  8.0  0.0 0.4

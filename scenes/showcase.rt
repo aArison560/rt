@@ -1,0 +1,67 @@
+# =============================================================================
+# SHOWCASE — Full Ray Tracing Demo
+# Reflections · Glass · Metals · Glossy · Multiple Lights
+# =============================================================================
+
+# bg 0.05 0.06 0.08
+bg 0 0 0
+# A 0.1 0.1 0.12
+A 0 0 0
+
+# Three lights for rich illumination
+L  6.0  8.0  4.0  1.0  0.95  0.85  1.2
+L -5.0  6.0  5.0  0.7  0.75  1.0   0.6
+L  0.0  3.0  -2.0  0.3  0.3   0.4   0.3
+
+c 0.0 2.5 11.0  0.0 0.3 -1.0  0.0 1.0 0.0  42.0
+
+# ===== ENVIRONMENT =====
+
+# Floor — polished dark wood
+pl 0.0 -2.0 0.0  0.0 1.0 0.0
+material 0.25 0.15 0.08  0.3 0.5 0.05  16.0  0.35 0.25
+
+# Back wall — soft gradient-like grey
+pl 0.0 0.0 -12.0  0.0 0.0 1.0
+material 0.35 0.35 0.4  0.8 0.5 0.0  2.0  0.0 0.5
+
+# ===== CENTERPIECE: Large chrome sphere (perfect mirror) =====
+sp 0.0 0.0 -1.0  1.8
+material 0.85 0.85 0.88  0.1 0.1 0.9  256.0  0.95 0.02
+
+# ===== LEFT SIDE: Glass sphere (refraction + reflection) =====
+sp -3.5 0.5 -0.5  1.2
+material 0.95 0.98 1.0   0.1 0.0 0.95  64.0  0.0 0.05
+
+# ===== RIGHT SIDE: Metallic gold sphere =====
+sp 3.2 -0.2 -1.5  1.0
+material 0.9 0.7 0.15   0.15 0.3 0.7  128.0  0.55 0.08
+
+# ===== FRONT LEFT: Rough clay sphere (Cook-Torrance matte) =====
+sp -2.0 -0.8  1.5  0.7
+material 0.75 0.35 0.25  0.2 0.6 0.1  4.0  0.0 0.65
+
+# ===== FRONT RIGHT: Glossy jade sphere =====
+sp 2.2 -0.5  2.0  0.6
+material 0.2 0.6 0.4   0.15 0.3 0.5  96.0  0.35 0.12
+
+# ===== REAR LEFT: Tall cylinder (brass) =====
+cy -2.5 -1.5 -5.0  0.0 1.0 0.0  0.4 2.5
+material 0.8 0.6 0.2   0.2 0.3 0.5  64.0  0.5 0.15
+
+# ===== REAR RIGHT: Cone (emerald) =====
+co 3.0 -1.8 -6.0  0.0 1.0 0.0  28.0 2.0
+material 0.1 0.6 0.3   0.15 0.3 0.4  48.0  0.3 0.2
+
+# ===== FLOOR ORBS (variety of glossy/matte) =====
+sp -1.5 -1.7 -4.0  0.35
+material 0.9 0.3 0.3   0.8 0.6 0.0  8.0   0.0 0.5
+
+sp 1.2 -1.7 -3.5  0.3
+material 0.3 0.3 0.9   0.8 0.5 0.1  32.0  0.0 0.3
+
+sp 0.5 -1.75 -6.0  0.25
+material 0.95 0.9 0.1   0.8 0.7 0.0  4.0   0.0 0.7
+
+sp -0.8 -1.75 -7.0  0.2
+material 0.2 0.9 0.8   0.8 0.5 0.0  16.0  0.0 0.4
