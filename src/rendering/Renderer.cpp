@@ -476,17 +476,24 @@ Vec3 Renderer::calculateLighting(const HitRecord& hitRecord, const Vec3& rayDir,
 Vec3 Renderer::calculateAmbient(const Material* material,
                                 const Scene& scene) const
 {
-    Vec3 ambientColor(0.0, 0.0, 0.0);
-    if (material) {
-        ambientColor = material->getColor() * material->getAmbient() * scene.getAmbientMultiplier();
-    }
-    // Also include ambient lights present in scene
+    if (!material) return Vec3(0.0, 0.0, 0.0);
+
+    // Fallback defaults if no AmbientLight object is present
+    Vec3 ambientLightColor(1.0, 1.0, 1.0);
+    double ambientIntensity = scene.getAmbientMultiplier();
+
+    // Override with actual AmbientLight objects if present in the scene
     for (const auto& lp : scene.getLights()) {
         if (lp->getLightType() == LightType::Ambient) {
-            ambientColor = ambientColor + lp->getColor() * lp->getIntensity();
+            ambientLightColor = lp->getColor();
+            ambientIntensity = lp->getIntensity();
         }
     }
-    return ambientColor;
+
+    // Standard Phong: materialColor * Ka * lightColor * lightIntensity
+    Vec3 result = material->getColor() * material->getAmbient();
+    result = result.componentMult(ambientLightColor);
+    return result * ambientIntensity;
 }
 
 Vec3 Renderer::calculateDiffuse(const HitRecord& hitRecord, const ALight& light,

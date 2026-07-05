@@ -127,6 +127,7 @@ bool SceneParser::parse(const std::string& content, Scene& scene)
                 scene.setAmbientMultiplier(v[0]);
             } else if (v.size() == 3) {
                 scene.addLight(std::make_shared<AmbientLight>(Vec3(v[0], v[1], v[2]), 1.0));
+                scene.setAmbientMultiplier(1.0);
             } else {
                 reportError("A expects 1 or 3 values");
                 return false;
