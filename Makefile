@@ -4,7 +4,11 @@
 CXX := g++
 CXXFLAGS := -std=c++23 -Wall -Wextra -Werror -O2 -fPIC -march=native -pthread
 CXXFLAGS_TEST := -std=c++23 -O2 -fPIC -pthread
-LDFLAGS := -lSDL2 -lm -lpng -ljpeg -pthread
+CXXFLAGS_TEST += -I/usr/include/imgui -I/usr/include/imgui/backends -I/usr/include/SDL2 -I/usr/include/stb
+
+# ImGui flags (also add SDL2 include path for imgui backends)
+CXXFLAGS += -I/usr/include/imgui -I/usr/include/imgui/backends -I/usr/include/SDL2 -I/usr/include/stb
+LDFLAGS := -lSDL2 -lm -lpng -ljpeg -pthread -limgui -lstb
 
 # Directories
 SRC_DIR := src

@@ -135,6 +135,40 @@ bool Renderer::renderRegion(const Scene& scene, int width, int height,
     return true;
 }
 
+PickResult Renderer::pickObject(const Scene& scene, double screenX, double screenY,
+                                 int screenWidth, int screenHeight) const
+{
+    PickResult result{};
+    result.hit = false;
+    result.objectIndex = 0;
+    result.distance = 0.0;
+
+    const Camera& camera = scene.getCamera();
+    Ray ray = camera.generateRay(screenX, screenY, screenWidth, screenHeight);
+
+    auto hitRecord = castRay(ray, scene, 1e-4, 1e30);
+    if (!hitRecord) {
+        return result;
+    }
+
+    result.hit = true;
+    result.point = hitRecord->getPoint();
+    result.normal = hitRecord->getNormal();
+    result.distance = hitRecord->getT();
+
+    // Find the object index
+    const AObject* hitObj = hitRecord->getObject();
+    const auto& objects = scene.getObjects();
+    for (size_t i = 0; i < objects.size(); ++i) {
+        if (objects[i].get() == hitObj) {
+            result.objectIndex = i;
+            break;
+        }
+    }
+
+    return result;
+}
+
 void Renderer::setMaxRecursionDepth(int depth) { maxRecursionDepth = depth; }
 int Renderer::getMaxRecursionDepth() const { return maxRecursionDepth; }
 void Renderer::setShadowSamples(int samples) { shadowSamples = samples; }

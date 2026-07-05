@@ -1,6 +1,6 @@
 /**
  * @file EventHandler.cpp
- * @author RT Team - Dev C (Renderer)  
+ * @author RT Team - Dev C (Renderer)
  * @date 2026-04-01
  * @brief EventHandler implementation
  */
@@ -9,9 +9,17 @@
 #include "scene/Camera.hpp"
 #include <SDL2/SDL.h>
 
-EventHandler::EventHandler() : cameraControl(nullptr), cameraMoveSpeed(0.5), 
-                               cameraRotateSpeed(0.05), windowCloseRequested(false),
-                               windowResized(false), newWindowWidth(0), newWindowHeight(0) {}
+EventHandler::EventHandler()
+    : cameraControl(nullptr)
+    , cameraMoveSpeed(0.5)
+    , cameraRotateSpeed(0.05)
+    , windowCloseRequested(false)
+    , windowResized(false)
+    , newWindowWidth(0)
+    , newWindowHeight(0)
+    , cameraControlEnabled(true)
+{
+}
 
 EventHandler::~EventHandler()
 {
@@ -22,6 +30,11 @@ bool EventHandler::pollEvents()
     windowResized = false;
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
+        // Forward event to ImGui callback first (before internal processing)
+        if (sdlEventCallback) {
+            sdlEventCallback(event);
+        }
+
         switch (event.type) {
             case SDL_QUIT:
                 windowCloseRequested = true;
@@ -32,6 +45,11 @@ bool EventHandler::pollEvents()
             case SDL_KEYDOWN:
                 if (keyPressCallback) {
                     keyPressCallback(event.key.keysym.sym);
+                }
+                break;
+            case SDL_MOUSEBUTTONDOWN:
+                if (mouseClickCallback) {
+                    mouseClickCallback(event.button.x, event.button.y, event.button.button);
                 }
                 if (event.key.keysym.sym == SDLK_ESCAPE) {
                     windowCloseRequested = true;
@@ -70,6 +88,8 @@ void EventHandler::onQuit(QuitCallback callback) { quitCallback = callback; }
 void EventHandler::onKeyPress(KeyPressCallback callback) { keyPressCallback = callback; }
 void EventHandler::onKeyRelease(KeyReleaseCallback callback) { keyReleaseCallback = callback; }
 void EventHandler::onExpose(ExposeCallback callback) { exposeCallback = callback; }
+void EventHandler::onSDLEvent(SDLEventCallback callback) { sdlEventCallback = callback; }
+void EventHandler::onMouseClick(MouseClickCallback callback) { mouseClickCallback = callback; }
 
 void EventHandler::setupCameraControls(Camera* camera, double moveSpeed, double rotateSpeed)
 {
@@ -106,9 +126,19 @@ bool EventHandler::getNewWindowSize(int& width, int& height) const
     return false;
 }
 
+void EventHandler::setCameraControlEnabled(bool enabled)
+{
+    cameraControlEnabled = enabled;
+}
+
+bool EventHandler::getCameraControlEnabled() const
+{
+    return cameraControlEnabled;
+}
+
 void EventHandler::processKeyboardInput()
 {
-    if (!cameraControl) {
+    if (!cameraControl || !cameraControlEnabled) {
         return;
     }
 

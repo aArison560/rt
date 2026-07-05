@@ -27,6 +27,7 @@
 #include "geometry/Plane.hpp"
 #include "lighting/PointLight.hpp"
 #include "lighting/AmbientLight.hpp"
+#include "gui/GuiManager.hpp"
 
 // Default constants
 constexpr int DEFAULT_WIDTH = 1280;
@@ -164,7 +165,26 @@ int main(int argc, char* argv[])
     EventHandler eventHandler;
     eventHandler.setupCameraControls(&scene.getCamera(), 0.5, 0.05);
 
+    // Setup GUI manager
+    GuiManager guiManager(&window, &renderer, &eventHandler);
+    guiManager.setScene(&scene);
+
+    // Handle mouse clicks for object picking
+    eventHandler.onMouseClick([&](int mouseX, int mouseY, int button) {
+        if (button == SDL_BUTTON_LEFT) {
+            guiManager.onMouseClick(mouseX, mouseY);
+            needsRedraw = true;
+        }
+    });
+
+    // Initialize ImGui (also sets up the SDL event callback internally)
+    if (!guiManager.initialize()) {
+        std::cerr << "Warning: Failed to initialize GUI overlay (continuing without)\n";
+    }
+
     std::cout << "Starting render loop...\n";
+    std::cout << "Controls: WASD=move, Q/E=up/down, Arrows=rotate, "
+              << "S=screenshot, R=re-render, H=toggle UI\n";
 
     eventHandler.onKeyPress([&](int key) {
         if (key == 's' || key == 'S') {
@@ -178,16 +198,35 @@ int main(int argc, char* argv[])
         if (key == 'r' || key == 'R') {
             needsRedraw = true;
         }
+        if (key == 'h' || key == 'H') {
+            guiManager.toggleVisibility();
+            std::cout << "GUI " << (guiManager.isVisible() ? "shown" : "hidden") << std::endl;
+        }
     });
 
     auto oldCamPos = scene.getCamera().getPosition();
     auto oldCamDir = scene.getCamera().getDirection();
 
     while (running) {
+        // Disable camera controls when ImGui wants keyboard input
+        eventHandler.setCameraControlEnabled(!guiManager.wantsCaptureKeyboard());
+
         // Process events
         if (eventHandler.pollEvents()) {
             running = false;
             break;
+        }
+
+        // Begin ImGui frame (must be before any SDL_Renderer operations)
+        guiManager.beginFrame();
+
+        // Build GUI panels
+        guiManager.render();
+
+        // Check if GUI requested a re-render
+        if (guiManager.needsRedraw()) {
+            needsRedraw = true;
+            guiManager.clearRedrawFlag();
         }
 
         // Detect camera movement from WASD/arrows → re-render
@@ -217,6 +256,11 @@ int main(int argc, char* argv[])
             running = false;
             break;
         }
+
+        // Render ImGui overlay on top of the ray traced image
+        guiManager.renderOverlay();
+
+        // Present the final frame (raytracing + GUI overlay)
         window.present();
 
         // Check for window resize
@@ -234,6 +278,7 @@ int main(int argc, char* argv[])
     }
 
     std::cout << "Shutting down...\n";
+    guiManager.shutdown();
     window.close();
     
     return 0;

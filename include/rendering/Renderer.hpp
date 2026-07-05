@@ -31,6 +31,18 @@
 #include <memory>
 #include <optional>
 #include <vector>
+#include <cstddef>
+
+/**
+ * @brief Result of a ray-picking operation
+ */
+struct PickResult {
+    bool hit;                          ///< Whether an object was hit
+    size_t objectIndex;                ///< Index of hit object in Scene
+    Vec3 point;                        ///< World-space intersection point
+    Vec3 normal;                       ///< Surface normal at intersection
+    double distance;                   ///< Distance from camera to hit
+};
 
 class Renderer
 {
@@ -82,6 +94,18 @@ public:
      * @return Maximum depth
      */
     [[nodiscard]] int getMaxRecursionDepth() const;
+
+    /**
+     * @brief Pick an object at screen coordinates (ray-picking)
+     * @param scene The scene to test against
+     * @param screenX X pixel coordinate (0 to width-1)
+     * @param screenY Y pixel coordinate (0 to height-1)
+     * @param screenWidth Viewport width in pixels
+     * @param screenHeight Viewport height in pixels
+     * @return PickResult with hit information
+     */
+    [[nodiscard]] PickResult pickObject(const Scene& scene, double screenX, double screenY,
+                                        int screenWidth, int screenHeight) const;
 
     /**
      * @brief Set number of shadow ray samples per light

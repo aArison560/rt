@@ -1,471 +1,655 @@
-# RT — Proposition d'Améliorations
+# RT — Interface Interactive & Contrôles UI
 
-> **Date**: 4 juillet 2026
-> **Version analysée**: Branche `main` — toutes les fonctionnalités de base implémentées
+> **Date**: 5 juillet 2026
+> **Auteur**: Buffy (Codebuff)
+
+---
+
+Ce document détaille les propositions d'ajout d'une **interface utilisateur interactive** (boutons, panneaux, sliders) au raytracer RT, actuellement limité aux contrôles clavier (WASD + touches).
 
 ---
 
 ## Table des matières
 
-1. [Priorité Haute — Corrections & Bugs](#1-priorité-haute--corrections--bugs)
-2. [Performance & Optimisation](#2-performance--optimisation)
-3. [Rendu & Éclairage Avancés](#3-rendu--éclairage-avancés)
-4. [Textures & Matériaux](#4-textures--matériaux)
-5. [Tests & Qualité](#5-tests--qualité)
-6. [Features Interactives](#6-features-interactives)
-7. [Architecture & Refactoring](#7-architecture--refactoring)
-8. [Documentation](#8-documentation)
-9. [Roadmap Suggérée](#9-roadmap-suggérée)
+1. [Approche technique recommandée](#1-approche-technique-recommandée)
+2. [Panneau de création d'objets](#2-panneau-de-création-dobjets)
+3. [Sélection & manipulation d'objets](#3-sélection--manipulation-dobjets)
+4. [Contrôles de rendu en temps réel](#4-contrôles-de-rendu-en-temps-réel)
+5. [Gestion des lumières](#5-gestion-des-lumières)
+6. [Scene Explorer (liste d'objets)](#6-scene-explorer-liste-dobjets)
+7. [Sauvegarde / Chargement de scène](#7-sauvegarde--chargement-de-scène)
+8. [Debug Visualizations](#8-debug-visualizations)
+9. [Fonctionnalités bonus "cool"](#9-fonctionnalités-bonus-cool)
+10. [Workflow utilisateur complet](#10-workflow-utilisateur-complet)
+11. [Roadmap d'implémentation](#11-roadmap-dimplémentation)
 
 ---
 
-## 1. Priorité Haute — Corrections & Bugs
+## 1. Approche technique recommandée
 
-### 1.1 `AObject::getWorldBoundingBox()` — BOX NON TRANSFORMÉE
+### ❌ Ne pas faire : UI en SDL2 pur
 
-**Fichier**: `src/geometry/AObject.cpp` — ligne 71-73
+Coder des boutons, sliders et fenêtres avec les primitives SDL2 (`SDL_RenderFillRect`, `SDL_RenderDrawLine`, etc.) est :
 
-```cpp
-void AObject::getWorldBoundingBox(Vec3& minCorner, Vec3& maxCorner) const
-{
-    // TODO: Transform bounding box to world space
-    getBoundingBox(minCorner, maxCorner);
-}
+- Extrêmement laborieux (chaque widget = ~50-100 lignes)
+- Difficile à maintenir (layout, redimensionnement, z-ordering)
+- Pauvre en fonctionnalités (pas de color picker, pas de drag & drop)
+
+### ✅ Recommandation : Dear ImGui
+
+**[Dear ImGui](https://github.com/ocornut/imgui)** est une bibliothèque C++ de GUI **immediate-mode**, standard de facto pour les outils de rendu et de game dev.
+
+| Critère | SDL2 pur | Dear ImGui |
+|---------|----------|------------|
+| Code pour un bouton | ~50 lignes | **1 ligne** `if (ImGui::Button(...))` |
+| Slider | ~80 lignes | **1 ligne** `ImGui::SliderFloat(...)` |
+| Color picker | ~200 lignes | **1 ligne** `ImGui::ColorEdit3(...)` |
+| Redimensionnement / Layout | À coder soi-même | **Automatique** |
+| Thème / Style | Rien | **Intégré** |
+| Support clavier/souris | À gérer | **Automatique** |
+| Fenêtres flottantes | Non | **Oui** |
+
+**Intégration** avec le projet existant :
+
+```
+src/app/main.cpp:
+  1. Initialiser ImGui après SDL_Init
+  2. Créer texture ImGui dans le renderer SDL
+  3. Dans la boucle loop : ImGui_ImplSDL2_NewFrame() → ImGui::NewFrame()
+  4. Rendre l'interface utilisateur (boutons, fenêtres)
+  5. ImGui::Render() → SDL_RenderPresent()
 ```
 
-**Problème**: La BVH utilise `getWorldBoundingBox()` pour construire sa hiérarchie. Si un objet a une transformation (rotation, translation, scale), la bounding box renvoyée est en *object space* et non en *world space*. Cela peut :
-- Faire échouer la BVH (intersections AABB-ray incorrectes)
-- Provoquer des trous visuels ou des objets invisibles dans certains cas
+Le rendu raytracing reste inchangé. ImGui s'affiche en **overlay** par-dessus l'image. Aucune modification du pipeline de rendu nécessaire.
 
-**Solution**: Transformer les 8 coins de la bounding box par la matrice de transformation de l'objet, puis calculer la bounding box englobante résultante.
-
-### 1.2 `Texture::sampleFiltered()` — FILTRAGE BILINÉAIRE NON IMPLÉMENTÉ
-
-**Fichier**: `src/rendering/Texture.cpp` — ligne 141-144
-
-```cpp
-Vec3 Texture::sampleFiltered(double u, double v) const
-{
-    // TODO: Bilinear filtering
-    return sample(u, v);
-}
-```
-
-**Problème**: Appelé mais retombe sur l'échantillonnage nearest-neighbor, ce qui donne un aspect pixelisé sur les textures vues de près ou en biais.
-
-**Solution**: Implémenter le bilinear filtering : interpoler entre les 4 pixels voisins en fonction des coordonnées UV fractionnaires.
-
-### 1.3 Pas de support JPEG chargé
-
-**Problème**: `libjpeg-dev` est listé comme dépendance et linké (`-ljpeg`), mais `Texture::load()` ne contient que le chargement PNG. Le JPEG n'est pas supporté dans les faits.
-
-**Solution**: Ajouter une branche de chargement JPEG dans `Texture::load()` utilisant la libjpeg.
-
-### 1.4 `Renderer::castRay()` — BVH sans fallback cohérent
-
-**Fichier**: `src/rendering/Renderer.cpp`
-
-Si `bvhRoot` est nul (premier appel avant construction), le code itère sur tous les objets. Mais si la BVH est construite puis les objets de la scène changent (via l'API `removeObject`), la BVH n'est pas reconstruite automatiquement.
-
-**Solution**: Ajouter un mécanisme d'invalidation de la BVH quand la scène est modifiée.
-
-### 1.5 `refractionsEnabled = false` par défaut
-
-**Fichier**: `src/rendering/Renderer.cpp` — constructeur
-
-Bien que `main.cpp` active les réfractions, le constructeur de `Renderer` les désactive par défaut. Toute instanciation directe du renderer aura les réfractions désactivées sans le savoir.
+**Dépendances à ajouter** :
+- `imgui` (bibliothèque header-only ou fichiers .cpp)
+- `imgui/backends/imgui_impl_sdl2.h` (backend SDL2)
+- `imgui/backends/imgui_impl_sdlrenderer.h` (backend SDL_Renderer)
 
 ---
 
-## 2. Performance & Optimisation
+## 2. Panneau de création d'objets
 
-### 2.1 BVH — Surface Area Heuristic (SAH)
+Un volet latéral (ou fenêtre flottante) avec des **boutons** pour spawner des primitives dans la scène.
 
-**Actuel**: Partitionnement par médiane des centroïdes (median split).
+### Maquette conceptuelle
 
-**Amélioration**: Implémenter le **Surface Area Heuristic (SAH)** qui choisit le plan de coupe minimisant le coût attendu de traversée. Peut réduire le nombre d'intersections rayon/objet de 20-40%.
-
-```cpp
-// Au lieu de nth_element median split, évaluer plusieurs candidats
-// et choisir celui qui minimise : cost = C_trav + C_isect * (SA_left * N_left + SA_right * N_right) / SA_parent
+```
+┌─── Create Object ───────┐
+│                         │
+│  ┌──────────────────┐   │
+│  │  🟠 Sphere       │   │
+│  └──────────────────┘   │
+│  ┌──────────────────┐   │
+│  │  🔵 Plane        │   │
+│  └──────────────────┘   │
+│  ┌──────────────────┐   │
+│  │  🟢 Cylinder     │   │
+│  └──────────────────┘   │
+│  ┌──────────────────┐   │
+│  │  🔺 Cone         │   │
+│  └──────────────────┘   │
+└─────────────────────────┘
 ```
 
-### 2.2 Thread Pool persistant
+### Interactions
 
-**Actuel**: `Renderer::render()` crée des `std::thread` à chaque frame et les détruit.
+| Bouton | Action |
+|--------|--------|
+| **Sphere** | Crée une sphère à la position du focus caméra, rayon = 1.0 |
+| **Plane** | Crée un plan horizontal à y=0 |
+| **Cylinder** | Crée un cylindre, hauteur=2.0, rayon=0.5 |
+| **Cone** | Crée un cône, hauteur=2.0, halfAngle=25° |
 
-```cpp
-std::vector<std::thread> threads;
-for (...) {
-    threads.emplace_back([...] { ... });
-}
-for (auto& t : threads) t.join();
+### Après clic — Panneau de paramètres
+
+Un sous-panneau s'ouvre pour régler finement l'objet avant validation :
+
+```
+┌─── Edit Sphere ────────────┐
+│ Name: [Sphere_4          ] │
+│                            │
+│ ── Position ────────────── │
+│ X: [ 0.00]  Y: [ 1.50]    │
+│ Z: [-3.00]                 │
+│                            │
+│ ── Geometry ────────────── │
+│ Radius: [──●──────────] 1.0│
+│                            │
+│ ── Material ────────────── │
+│ Color:  [■───────────────] │
+│ Ambient:  [──●──────────]  │
+│ Diffuse:  [─────●───────]  │
+│ Specular: [──●──────────]  │
+│ Shininess:[─────●───────]  │
+│ Reflect:  [─────────────]  │
+│                            │
+│  [✕ Cancel] [✓ Confirm]   │
+└────────────────────────────┘
 ```
 
-**Amélioration**: Créer un **thread pool** réutilisable initialisé une fois. Évite le coût de création/destruction de threads (~1-5ms par frame). Utiliser `std::jthread` (C++20) ou une queue de tâches atomique.
+### Comportement
 
-### 2.3 SIMD pour Vec3
-
-**Actuel**: Opérations scalaires sur `double x, y, z`.
-
-**Amélioration**: Utiliser les intrinsics SSE/AVX pour paralléliser :
-- Produit scalaire : `_mm_dp_pd`
-- Addition, multiplication component-wise
-- Normalisation
-
-Alternative pragmatique : utiliser `__attribute__((vector_size(32)))` (GCC/Clang) pour l'auto-vectorisation.
-
-### 2.4 Coherence mémoire du framebuffer
-
-**Actuel**: Accès à `pixelBuffer[index]` dans une boucle imbriquée.
-
-**Amélioration**: Traiter le framebuffer par tuiles (tiling) de 32×32 pixels pour améliorer la localité du cache CPU. Particulièrement bénéfique avec le multithreading (évite le cache bouncing entre threads).
-
-### 2.5 Early ray termination par threshold
-
-**Actuel**: Russian Roulette pour les rayons de profondeur ≥ 3 (seuil 0.25).
-
-**Amélioration**: Ajouter un **seuil de contribution cumulative** : si la contribution d'un rayon à la couleur finale devient négligeable (< 0.01), le terminer plus tôt. Économise des appels récursifs inutiles.
-
-### 2.6 Profilage intégré
-
-**Manque**: Aucune instrumentation de performance. Impossible de savoir où le temps est passé sans outil externe.
-
-**Solution**: Ajouter un système de profilage simple avec des `std::chrono` et des compteurs :
-- Temps total de rendu par frame
-- Nombre d'intersections BVH testées
-- Nombre de rayons d'ombre lancés
-- Affichage optionnel (`--profile`)
+- **Re-render automatique** après confirmation
+- L'objet est ajouté au `Scene::objects` via `addObject()`
+- La **BVH** est automatiquement invalidée et reconstruite au prochain render
 
 ---
 
-## 3. Rendu & Éclairage Avancés
+## 3. Sélection & manipulation d'objets
 
-### 3.1 Lumières surfaciques (Area Lights)
+Cliquer sur le rendu pour sélectionner un objet, puis éditer ses propriétés.
 
-**Actuel**: Seulement des lumières ponctuelles et directionnelles.
+### Ray-picking
 
-**Ajout**: Créer une classe `AreaLight` héritant de `ALight` :
-- Une géométrie rectangulaire ou sphérique qui émet de la lumière
-- Échantillonnage de plusieurs points sur la surface pour l'éclairage
-- Ombres douces naturelles (plus réalistes que le jittering actuel)
+Implémentation de la sélection par clic :
 
-```cpp
-class AreaLight : public ALight {
-    Vec3 position;
-    Vec3 uAxis, vAxis;  // Vecteurs définissant la surface
-    int samples;         // Nombre d'échantillons
-};
+1. Au clic, calculer les coordonnées UV de la souris dans l'image
+2. Lancer un rayon de la caméra à travers ce pixel via `Camera::generateRay()`
+3. Utiliser `Renderer::castRay()` existant pour trouver l'intersection la plus proche
+4. Récupérer l'objet intersecté depuis le `HitRecord`
+
+### Panneau d'édition
+
+```
+┌─── Selected: Sphere #3 ────┐
+│                             │
+│ ── Transform ────────────── │
+│ X: [─●───────────────] 0.0 │
+│ Y: [───●─────────────] 1.5 │
+│ Z: [─────●───────────] -3.0│
+│                             │
+│ ┌────────────────────────┐  │
+│ │ 📐 Rotation            │  │
+│ │ Rx: [──●──] Ry: [──●──]│  │
+│ │ Rz: [──●──]            │  │
+│ └────────────────────────┘  │
+│                             │
+│ ── Material ─────────────── │
+│ Color:      [■───────────]  │
+│ Shininess:  [──────●────]   │
+│ Reflectivity:[──────────]0  │
+│ Transparency:[──────────]0  │
+│                             │
+│ ┌────────────────────────┐  │
+│ │  🔄 Duplicate  ❌ Delete│  │
+│ └────────────────────────┘  │
+└────────────────────────────┘
 ```
 
-### 3.2 Microfacet BRDF (Cook-Torrance)
+### Contrôles clavier pour l'objet sélectionné
 
-**Actuel**: Phong specular basique.
+| Touche | Action |
+|--------|--------|
+| **G** | "Grab" — activer le déplacement à la souris |
+| **R** | "Rotate" — activer la rotation |
+| **S** | "Scale" — activer le redimensionnement |
+| **Suppr** | Supprimer l'objet |
+| **Ctrl+D** | Dupliquer l'objet |
 
-**Amélioration**: Remplacer la composante spéculaire par un modèle **Cook-Torrance** avec :
-- Distribution GGX (Trowbridge-Reitz)
-- Fonction de masquage/ombrage Smith
-- Terme de Fresnel (Schlick, déjà présent pour les diélectriques)
+### Gizmo 3D
 
-Résultat : reflets plus réalistes, aspect métal/plastique plus convaincant.
-
-### 3.3 Ombres douces — Échantillonnage stratifié
-
-**Actuel**: `shadowSamples` avec jittering uniforme aléatoire.
-
-**Amélioration**: Utiliser un **échantillonnage stratifié** (Hammersley, Sobol) pour une meilleure distribution spatiale. Moins de bruit pour le même nombre d'échantillons.
-
-### 3.4 Glossy reflections
-
-**Actuel**: Les réflexions sont parfaitement mirror-like.
-
-**Ajout**: Permettre des réflexions **glossy** (floues) en jitterant la direction réfléchie en fonction d'un paramètre de rugosité du matériau.
-
-```cpp
-// Dans le matériau
-Vec3 roughness;  // 0 = mirror, 1 = diffuse reflection
-```
-
-### 3.5 Tone mapping ACES
-
-**Actuel**: Reinhard tone mapping (correct mais basique).
-
-**Amélioration**: Implémenter le **ACES Filmic Tone Mapping** pour une meilleure préservation des hautes lumières et un aspect plus cinématographique.
-
-```cpp
-static float acesToneMap(float c) {
-    return (c * (2.51f * c + 0.03f)) / (c * (2.43f * c + 0.59f) + 0.14f);
-}
-```
-
-### 3.6 Post-processing
-
-**Ajout**: Pipeline de post-processing simple :
-- **Bloom** : Détection des zones très lumineuses, flou gaussien, addition
-- **Vignette** : Assombrissement progressif des bords
-- **Color grading** : LUT (look-up table) pour appliquer des filtres
+Optionnel mais impressionnant : afficher un **gizmo** (manipulateur 3D) sur l'objet sélectionné, avec des flèches pour translater/rotation/scale directionnel.
 
 ---
 
-## 4. Textures & Matériaux
+## 4. Contrôles de rendu en temps réel
 
-### 4.1 Textures procedurales
+Un panneau pour modifier les paramètres de rendu sans redémarrer.
 
-**Ajout**: Générer des textures à la volée sans fichier image :
-- **Checker pattern** : Damier classique
-- **Marble** : Bruit de Perlin
-- **Wood** : Anneaux concentriques bruités
-- **Noise** : Perlin/Simplex noise
-
-```cpp
-class ProceduralTexture : public Texture {
-    Vec3 sample(double u, double v) const override;
-};
+```
+┌─── Render Settings ────────┐
+│                             │
+│ Samples per pixel           │
+│ [│││││││──────]  8         │
+│                             │
+│ Max recursion depth         │
+│ [││││─────────]  4         │
+│                             │
+│ ── Toggles ─────────────── │
+│ ☑ Shadows                  │
+│ ☑ Reflections              │
+│ ☑ Refractions              │
+│ ☐ Anti-aliasing            │
+│ ☑ Soft shadows             │
+│                             │
+│ ── Quality Presets ─────── │
+│ [Draft] [Medium] [High]    │
+│                             │
+│ Render time: 1.24s         │
+│ ┌────────────────────────┐  │
+│ │  🅁 Re-render Now      │  │
+│ └────────────────────────┘  │
+└────────────────────────────┘
 ```
 
-### 4.2 Normal mapping
+### Rendu progressif
 
-**Actuel**: Les textures ne sont utilisées que pour la couleur.
+Amélioration couplée : au lieu d'un render complet bloquant, afficher les pixels **au fur et à mesure** :
 
-**Ajout**: Charger des **normal maps** et les utiliser pour perturber la normale de surface lors du calcul d'éclairage.
+1. **Pass 1** : 1 échantillon/pixel → image instantanée mais bruitée
+2. **Pass 2** : 4 échantillons/pixel → raffinage
+3. **Pass N** : jusqu'au nombre configuré
 
-```cpp
-void Material::setNormalMap(Texture* normalMap);
-// Dans Renderer::calculateLighting():
-Vec3 perturbedNormal = sampleNormalMap(hitRecord.getUV());
+L'utilisateur voit la scène immédiatement et peut interagir sans attendre.
+
+### Touches de raccourci
+
+| Touche | Action |
+|--------|--------|
+| **1-8** | Changer samplesPerPixel (1 = 1 sample, 8 = 64 samples) |
+| **-** | Réduire profondeur de récursion |
+| **=** | Augmenter profondeur de récursion |
+| **F11** | Plein écran |
+| **H** | Afficher/masquer l'interface (toggle HUD) |
+
+---
+
+## 5. Gestion des lumières
+
+Panneau dédié pour visualiser et modifier les sources lumineuses.
+
+```
+┌─── Lights ──────────────────┐
+│                              │
+│ 💡 Ambient                    │
+│    Intensity: [───●─────] 0.2│
+│    Color: [■───────────────] │
+│                              │
+│ 💡 Point Light #1            │
+│ ☑ Active                     │
+│    Position:                 │
+│    X: [ 5.00] Y: [ 5.00]    │
+│    Z: [ 5.00]                │
+│    Intensity: [─────●───] 1.0│
+│    Color: [■───────────────] │
+│    Attenuation:              │
+│    Constant: [──●────]       │
+│    Linear:   [────●──]       │
+│    Quadratic:[──────●]       │
+│    ┌────────────────────┐    │
+│    │  ❌ Remove Light   │    │
+│    └────────────────────┘    │
+│                              │
+│ 💡 Directional Light #2      │
+│ ☑ Active                     │
+│    Direction:                │
+│    Dx: [ 1.00] Dy: [ 1.00]  │
+│    Dz: [ 0.50]               │
+│    Intensity: [───●────] 0.8 │
+│                              │
+│ ┌─────────────────────────┐  │
+│ │  ✚ Add Point Light     │  │
+│ └─────────────────────────┘  │
+│ ┌─────────────────────────┐  │
+│ │  ✚ Add Directional     │  │
+│ └─────────────────────────┘  │
+└─────────────────────────────┘
 ```
 
-### 4.3 Displacement mapping (optionnel)
+### Icônes dans le viewport (optionnel)
 
-Déplacer réellement la géométrie le long de la normale en fonction d'une texture de hauteur. Plus coûteux mais plus précis que le normal mapping.
-
-### 4.4 Skybox / Environment lighting
-
-**Ajout**: Charger un environnement HDR (cubemap ou equirectangular) pour :
-- L'éclairage ambiant directionnel (IBL — Image Based Lighting)
-- Le reflet du ciel dans les surfaces réfléchissantes
-- Fond de scène plus riche que la couleur unie actuelle
+Afficher de petites **icônes lumineuses** (●) dans le rendu à la position des lumières ponctuelles, pour savoir où elles se trouvent visuellement.
 
 ---
 
-## 5. Tests & Qualité
+## 6. Scene Explorer (liste d'objets)
 
-### 5.1 Couverture de tests — GAP CRITIQUE
+Un **outline** affichant tous les objets et lumières de la scène dans une arborescence.
 
-**Actuel**: 13 tests, seulement Cylinder et Cone.
-
-**Tests à ajouter impérativement** :
-
-| Module | Tests suggérés |
-|--------|---------------|
-| **Vec3** | Opérateurs arithmétiques, dot, cross, normalize, reflect, refract |
-| **Ray** | pointAt(), constructeurs |
-| **Matrix4x4** | Multiplication, inverse, determinant, rotations, perspective |
-| **Sphere** | Intersection (devant, derrière, tangent), normale, UV |
-| **Plane** | Intersection, normale, distanceTo() |
-| **Cylinder** | Corps + caps, normales (body + caps) |
-| **Cone** | Surface + base cap, normales |
-| **Camera** | generateRay() pour différents pixels |
-| **SceneParser** | Chaque directive, erreurs, edge cases |
-| **Material** | getters/setters, texture attachment |
-| **Renderer** | Calculs lighting (ambient, diffuse, specular) |
-| **BVH** | Construction, intersection AABB |
-| **Transform** | Composition, inverse |
-
-### 5.2 Tests de performance
-
-Ajouter des tests de performance basiques :
-- `make benchmark` qui chronomètre le rendu de scènes de référence
-- Détection de régressions de performance
-
-### 5.3 Tests de fuites mémoire
-
-Le projet exige zéro fuite mémoire. Ajouter au pipeline de test :
-```bash
-valgrind --leak-check=full --error-exitcode=1 ./rt_test
+```
+┌── Scene Explorer ──────────┐
+│                            │
+│ 🔍 [Filter objects...   ]  │
+│                            │
+│ 📦 Objects (4)             │
+│  ├─ 👁 🟠 Sphere          │
+│  │    └─ material: red    │
+│  ├─ 👁 🔵 Plane           │
+│  │    └─ material: grey   │
+│  ├─ 👁 🟢 Cylinder       │
+│  │    └─ material: blue   │
+│  └─ 👁 🔺 Cone           │
+│       └─ material: green  │
+│                            │
+│ 💡 Lights (3)              │
+│  ├─ 🟡 Ambient            │
+│  ├─ 🟡 Point Light #1     │
+│  └─ 🟡 Directional #1     │
+│                            │
+│ ┌────────────────────────┐ │
+│ │  +  ─  ↻  ↑  ↓        │ │
+│ └────────────────────────┘ │
+└────────────────────────────┘
 ```
 
-### 5.4 Tests d'intégration
+### Interactions
 
-Tester des scènes `.rt` complètes :
-- Charger une scène → vérifier le nombre d'objets/lumières
-- Vérifier que le rendu ne crashe pas
-- Comparer visuellement (snapshot diff) pour détecter les régressions
+| Élément | Action |
+|---------|--------|
+| **👁️** | Afficher/masquer l'objet sans le supprimer |
+| **Clic sur nom** | Sélectionner l'objet + ouvre le panneau d'édition |
+| **↑ / ↓** | Réordonner les objets (ordre de rendu) |
+| **➕** | Menu contextuel pour créer un objet |
+| **➖** | Supprimer l'objet sélectionné |
+| **↻** | Renommer l'objet |
+| **Drag & drop** | Réorganiser la liste (si supporté par ImGui) |
+| **Clic droit** | Menu contextuel : Dupliquer, Supprimer, Rename |
 
----
+### Informations affichées
 
-## 6. Features Interactives
-
-### 6.1 Rendu progressif
-
-**Actuel**: Rendu complet → affichage → mise à jour après camera movement.
-
-**Amélioration**: Afficher les pixels au fur et à mesure :
-1. Premier passage : 1 échantillon/pixel (instantané)
-2. Raffiner progressivement avec plus d'échantillons
-3. L'utilisateur voit la scène immédiatement, même floutée
-
-### 6.2 Sélection & inspection d'objets
-
-**Ajout**: Cliquer sur un objet pour voir ses propriétés :
-- Type d'objet, matériau, transformation
-- Distance, normale au point cliqué
-- Afficher en overlay dans une console ou le titre de la fenêtre
-
-### 6.3 Ajustement en temps réel
-
-**Ajout**: Modifier les paramètres de rendu sans redémarrer :
-- `1-8` : Changer samplesPerPixel
-- `[ ]` : Augmenter/réduire la profondeur de récursion
-- `M` : Activer/désactiver les matériaux
-- `L` : Activer/désactiver les lumières individuelles
-
-### 6.4 Mode wireframe / Debug
-
-**Ajout**: Modes d'affichage pour debug :
-- Normales : couleur basée sur la normale
-- UVs : visualisation des coordonnées de texture
-- BVH : affichage des bounding boxes
-- Profondeur : distance de l'objet le plus proche (z-buffer)
+- Type d'objet avec icône (🟠 Sphere, 🔵 Plane, 🟢 Cylinder, 🔺 Cone)
+- Nom de l'objet
+- Aperçu du matériau (cercle coloré)
+- Badge si l'objet est masqué
 
 ---
 
-## 7. Architecture & Refactoring
+## 7. Sauvegarde / Chargement de scène
 
-### 7.1 Supprimer le code mort et les TODO
+Permet de ne pas perdre les modifications interactives.
 
-Rechercher et traiter tous les `TODO` et `(void)` casts dans le code :
-
-| Fichier | TODO / Problème |
-|---------|----------------|
-| `src/geometry/AObject.cpp:72` | Transform bounding box to world space |
-| `src/rendering/Texture.cpp:143` | Bilinear filtering |
-| `src/platform/Window.cpp:116` | Set vertical sync |
-| `src/app/main.cpp:42` | createDefaultScene() est un stub |
-| `src/rendering/Renderer.cpp:201` | `(void)depth` inutile |
-
-### 7.2 Remplacer `static_cast` par `dynamic_cast` ou `std::visit`
-
-**Actuel**: `const PointLight& pl = static_cast<const PointLight&>(light);`
-
-**Risque**: Si le type réel ne correspond pas (erreur de programmation), undefined behavior.
-
-**Solution**: Utiliser `dynamic_cast` avec vérification, ou mieux, utiliser le polymorphisme :
-- Ajouter des méthodes virtuelles à `ALight` pour éviter les casts
-- Ou utiliser `std::variant<PointLight, DirectionalLight, AmbientLight>` avec `std::visit`
-
-### 7.3 `try/catch(...)` trop large
-
-**Problème**: Plusieurs endroits utilisent `catch (...) { ... }` pour la normalisation. Cela attrape toutes les exceptions, y compris les erreurs graves.
-
-**Solution**: Lancer des exceptions spécifiques (`std::domain_error`) et les attraper sélectivement.
-
-### 7.4 Const-correctness
-
-Vérifier que toutes les méthodes qui ne modifient pas l'objet sont marquées `const`. La plupart le sont déjà, mais quelques cas restants :
-- `getUVAt()` est `const` dans les objets → vérifier la cohérence
-- `material->getTexture()` retourne un pointeur non-const → pourrait être `const Texture*`
-
-### 7.5 Utilisation de `std::span` (C++20)
-
-Remplacer les pointeurs nus + taille par `std::span` :
-```cpp
-// Au lieu de :
-bool render(const Scene& scene, int width, int height, unsigned char* pixelBuffer);
-// Utiliser :
-bool render(const Scene& scene, std::span<unsigned char> pixelBuffer);
+```
+┌─── File ────────────────────┐
+│                              │
+│  💾 Save Scene               │
+│  📂 Load Scene…              │
+│  🆕 New Scene                │
+│  ────────────────────────    │
+│  📸 Export Screenshot        │
+│  📽 Export PNG Sequence      │
+└──────────────────────────────┘
 ```
 
-### 7.6 Factory pour les objets
+### Détail des actions
 
-Créer un pattern Factory pour la création d'objets depuis le parser, plutôt qu'un long if/else chain. Plus facile à étendre.
+| Action | Description |
+|--------|-------------|
+| **Save Scene** | Sérialise la scène actuelle au format `.rt` — régénère le fichier avec tous les objets, lumières, matériaux et position caméra |
+| **Load Scene…** | Ouvre un file dialog → parse le fichier `.rt` via `SceneParser` → remplace la scène actuelle |
+| **New Scene** | Réinitialise la scène avec les valeurs par défaut (camera + lumière ambiante) |
+| **Export Screenshot** | Sauvegarde le framebuffer en PNG (utilise `ImageBuffer::savePNG()` existant) |
+| **Export PNG Sequence** | Pour animations : exporte chaque frame re-rendue en PNG numéroté |
 
-```cpp
-class ObjectFactory {
-    static std::shared_ptr<AObject> create(const std::string& type, const std::vector<double>& params);
-};
+### Sauvegarde automatique (optionnel)
+
+- Auto-save toutes les 60 secondes dans un fichier `.rt.autosave`
+- Récupération en cas de crash
+
+---
+
+## 8. Debug Visualizations
+
+Des modes d'affichage pour le développement, activables d'un clic.
+
+```
+┌─── Debug Visualizations ────┐
+│                              │
+│  [Normals] [UV] [BVH]       │
+│  [Depth]  [Wireframe]       │
+│                              │
+│  ── Overlay ────────────── │
+│  ☑ FPS counter: 24.5        │
+│  ☐ Render time              │
+│  ☐ Ray count                │
+│  ☐ BVH stats                │
+└──────────────────────────────┘
+```
+
+### Modes de visualisation
+
+| Mode | Description | Résultat visuel |
+|------|-------------|-----------------|
+| **Normals** | Couleur = direction de la normale | Rendu arc-en-ciel |
+| **UV** | Visualisation des coordonnées UV | Quadrillage UV |
+| **BVH** | Affiche les AABB (bounding boxes) | Boîtes filaires superposées |
+| **Depth** | Carte de profondeur (near→far = blanc→noir) | Z-buffer |
+| **Wireframe** | Grille et axes de référence | Grille au sol |
+
+### Overlay d'informations
+
+Affichage en HUD (toujours visible ou toggle) :
+
+```
+RT v1.0  |  1920×1080  |  FPS: 24.5
+Render: 1.24s  |  Rays: 2,457,600
+Objects: 4  |  Lights: 3  |  Samples: 8
+Camera: (0.0, 1.5, 8.0)  →  (0.0, -0.2, -1.0)
 ```
 
 ---
 
-## 8. Documentation
+## 9. Fonctionnalités bonus "cool"
 
-### 8.1 README.md amélioré
+Des idées supplémentaires pour impressionner.
 
-- Ajouter des captures d'écran des scènes d'exemple
-- Diagramme d'architecture (rendu pipeline)
-- Tableau des performances (taille × nombre d'objets × temps)
-- Section "Contributing" pour les nouveaux développeurs
+### 9.1 Camera selfie
 
-### 8.2 Wiki / Pages GitHub
+Bouton qui **place automatiquement la caméra face à l'objet sélectionné** :
 
-- Tutoriel "Créer votre première scène .rt"
-- Référence complète du format de fichier
-- Exemples avancés (réflexions, réfractions, textures)
+```
+Sélectionner un objet → clic droit → "Frame Object"
+→ La caméra se déplace pour centrer l'objet dans le viewport
+→ Re-render automatique
+```
 
-### 8.3 Doxygen — Compléter les exceptions
+### 9.2 Animation path
 
-Beaucoup de méthodes lancent `std::runtime_error` mais les Doxygen comments ne documentent pas les `@throws` ou `@exception`.
+Enregistrer une séquence de positions caméra et générer une animation :
+
+```
+┌─── Animation ─────────────┐
+│                            │
+│  [●] Keyframe 1            │
+│  [ ] Keyframe 2            │
+│  [ ] Keyframe 3            │
+│                            │
+│  ┌──────────────────────┐  │
+│  │  ● Record Keyframe   │  │ ← enregistre position actuelle
+│  └──────────────────────┘  │
+│  [▶ Preview Animation]    │
+│  [📽 Export Frames]       │ → exporte PNG sequence
+│  Frames:[100]  FPS:[24]   │
+└────────────────────────────┘
+```
+
+### 9.3 Material presets
+
+Banque de matériaux pré-définis applicables d'un clic :
+
+```
+┌─── Material Presets ───────┐
+│  [🔴 Red Plastic]          │
+│  [🟢 Green Rubber]         │
+│  [🔵 Blue Metallic]        │
+│  [⚪ Mirror]               │
+│  [🔮 Glass]                │
+│  [🏆 Gold]                 │
+│  [🌊 Water]                │
+│  [🌑 Matte Black]          │
+│                            │
+│  ┌──────────────────────┐  │
+│  │  + Save Current as…  │  │
+│  └──────────────────────┘  │
+└────────────────────────────┘
+```
+
+### 9.4 Color picker avec preview en temps réel
+
+Pour les matériaux et lumières :
+
+```
+Color: [■─────────────────────]
+       │   ┌─────────────┐   │
+       │   │ ●           │   │
+       │   │   ■■■■■■■   │   │
+       │   │   ■■■■■■■   │   │
+       │   │   ■■■■■■■   │   │
+       │   └─────────────┘   │
+       │ R: [128] G:[64] B:[255]│
+       └────────────────────────┘
+```
+
+### 9.5 Render queue
+
+Lancer le rendu de plusieurs scènes `.rt` en séquence :
+
+```
+┌─── Render Queue ──────────┐
+│  [scenes/default.rt]  ✅   │
+│  [scenes/complex.rt]  ✅   │
+│  [scenes/gallery.rt]  ⏳   │
+│  [scenes/showcase.rt] ⏳   │
+│  [scenes/still_life.rt]⏳  │
+│                            │
+│  [▶ Start Batch Render]    │
+│  Progress: ██░░░░░ 25%     │
+└────────────────────────────┘
+```
+
+### 9.6 Material preview sphere
+
+Un petit rendu en temps réel d'une sphère avec le matériau actuel :
+
+```
+┌─── Material Preview ──────┐
+│  ┌──────────────────────┐  │
+│  │                      │  │
+│  │    [●] ← rendered   │  │
+│  │     sphere with      │  │
+│  │    current material  │  │
+│  │                      │  │
+│  └──────────────────────┘  │
+│  Color: [■──────────────] │
+│  Roughness: [───●───────] │
+└────────────────────────────┘
+```
+
+### 9.7 Éditeur de scène visuel
+
+Déplacer les objets directement dans la vue 3D :
+
+- **Click + drag** sur un objet (avec ray-picking) pour le déplacer
+- **Molette** pour zoomer sur l'objet sélectionné
+- **Shift + click** pour sélection multiple
+- **Ctrl+Z** pour undo la dernière action
 
 ---
 
-## 9. Roadmap Suggérée
+## 10. Workflow utilisateur complet
 
-### Phase A — Corrections urgentes (1-2 jours)
-| # | Tâche | Priorité |
-|---|-------|----------|
-| 1 | Corriger `getWorldBoundingBox` (world-space) | 🔴 Critique |
-| 2 | Implémenter `Texture::sampleFiltered` (bilinéaire) | 🟡 Haute |
-| 3 | Tests de base (Vec3, Ray, Sphere, Plane) | 🟡 Haute |
-| 4 | Ajouter JPEG loading dans Texture | 🟡 Haute |
+Exemple de session utilisateur typique avec toutes ces fonctionnalités :
 
-### Phase B — Performance (2-3 jours)
-| # | Tâche | Priorité |
-|---|-------|----------|
-| 5 | SAH BVH | 🟢 Moyenne |
-| 6 | Thread pool permanent | 🟢 Moyenne |
-| 7 | Profilage intégré | 🟢 Moyenne |
-| 8 | Tiling du framebuffer | 🔵 Basse |
-
-### Phase C — Rendu avancé (3-5 jours)
-| # | Tâche | Priorité |
-|---|-------|----------|
-| 9 | Microfacet BRDF (Cook-Torrance) | 🟢 Moyenne |
-| 10 | Textures procédurales | 🟢 Moyenne |
-| 11 | Normal mapping | 🟢 Moyenne |
-| 12 | Area lights | 🔵 Basse |
-
-### Phase D — Polish (2-3 jours)
-| # | Tâche | Priorité |
-|---|-------|----------|
-| 13 | Refactoring `static_cast` → polymorphisme | 🟢 Moyenne |
-| 14 | Traiter tous les TODO restants | 🟢 Moyenne |
-| 15 | Documentation et Doxygen | 🟢 Moyenne |
-| 16 | Rendu progressif | 🔵 Basse |
+```
+1. Lancer ./rt → la scène s'affiche
+2. Ajuster la caméra avec WASD (comportement existant)
+3. Cliquer sur le panneau "Create" → "Sphere"
+4. Régler le rayon et la couleur dans le panneau d'édition
+5. Cliquer "Confirm" → la sphère apparaît automatiquement
+6. Cliquer sur la sphère dans le rendu → elle se sélectionne
+7. Utiliser le slider de position pour la déplacer
+8. Ajouter une Point Light depuis le panneau Lights
+9. Augmenter samplesPerPixel à 16 pour un rendu plus propre
+10. Appliquer le preset "Glass" au matériau
+11. Sauvegarder la scène → fichier .rt généré
+12. Exporter une capture d'écran en PNG
+```
 
 ---
 
-## Résumé des forces actuelles
+## 11. Roadmap d'implémentation
 
-- ✅ Architecture modulaire propre (6 modules bien séparés)
-- ✅ Documentation Doxygen exhaustive
-- ✅ Multithreading natif opérationnel
-- ✅ BVH acceleration structure
-- ✅ Anti-aliasing par échantillonnage
-- ✅ Ombres douces configurables
-- ✅ Réflexions et réfractions récursives
-- ✅ Tone mapping (Reinhard) + sRGB encoding
-- ✅ Smart pointers partout (`shared_ptr`, `unique_ptr`)
-- ✅ Bonne gestion des edge cases (division par zéro, normalisation)
+### Phase 1 — Fondation (2-3 jours)
 
-## Métriques du projet
+| # | Tâche | Détails |
+|---|-------|---------|
+| 1 | Intégrer Dear ImGui | Ajouter les sources, Makefile, initialisation SDL2 |
+| 2 | Hello World overlay | Afficher "Hello RT" dans une fenêtre ImGui |
+| 3 | Raccourci H toggle | Afficher/masquer l'interface |
 
-| Métrique | Valeur |
-|----------|--------|
-| Fichiers source | ~30 (15 headers + 15 implémentations) |
-| Lignes de code estimées | ~6000-7000 |
-| Tests unitaires | 13 (Cylinder + Cone) |
-| Scènes d'exemple | 8 |
-| Dépendances | SDL2, libpng, libjpeg |
-| Langage | C++23 |
-| Bugs connus | `getWorldBoundingBox` (TODO), bilinear filtering (TODO) |
+### Phase 2 — Panneaux essentiels (3-4 jours)
+
+| # | Tâche | Détails |
+|---|-------|---------|
+| 4 | Render Settings panel | Toggle shadows/reflections, samples slider |
+| 5 | Info overlay | FPS, render time, objects count |
+| 6 | Bouton Re-render | Forcer un re-render depuis l'UI |
+
+### Phase 3 — Création d'objets (2-3 jours)
+
+| # | Tâche | Détails |
+|---|-------|---------|
+| 7 | Boutons Sphere/Plane/Cylinder/Cone | Création avec paramètres par défaut |
+| 8 | Panneau paramètres | Position, rayon, hauteur |
+| 9 | Re-render automatique après création |
+
+### Phase 4 — Sélection & édition (3-4 jours)
+
+| # | Tâche | Détails |
+|---|-------|---------|
+| 10 | Ray-picking au clic | Sélection d'objet via intersection rayon |
+| 11 | Panneau d'édition | Position, matériau, couleur |
+| 12 | Suppression d'objet | Depuis le panneau d'édition |
+
+### Phase 5 — Gestion de scène (2-3 jours)
+
+| # | Tâche | Détails |
+|---|-------|---------|
+| 13 | Scene Explorer | Liste arborescente des objets |
+| 14 | Save/Load | Export/import de fichiers .rt |
+| 15 | Duplicate object | Copie d'objet avec offset |
+
+### Phase 6 — Polish (3-5 jours)
+
+| # | Tâche | Détails |
+|---|-------|---------|
+| 16 | Debug views | Normals, UV, BVH, Depth |
+| 17 | Material presets | Banque de matériaux prédéfinis |
+| 18 | Gizmo 3D | Manipulateur translation/rotation |
+| 19 | Rendu progressif | Affichage immédiat + raffinage |
+| 20 | Material preview | Petite sphère preview en temps réel |
+| 21 | Color picker | Avec preview interactive |
+
+---
+
+## Notes techniques
+
+### Architecture
+
+- **ImGui** s'intègre comme **overlay** — ne modifie pas le pipeline de rendu
+- Les modifications de scène (add/remove/edit object) passent par l'API `Scene` existante
+- La BVH est invalidée et reconstruite automatiquement via le mécanisme `objectVersion`
+- Les contrôles clavier existants (WASD, ESC) restent inchangés
+- L'interface est **optionnelle** — le programme fonctionne sans (comportement actuel)
+
+### Fichiers à créer
+
+```
+src/gui/
+├── GuiManager.cpp         # Initialisation et rendu ImGui
+├── GuiManager.hpp         # Header
+├── panels/
+│   ├── RenderSettingsPanel.cpp
+│   ├── ObjectCreationPanel.cpp
+│   ├── ObjectEditPanel.cpp
+│   ├── SceneExplorerPanel.cpp
+│   ├── LightPanel.cpp
+│   └── DebugPanel.cpp
+└── presets/
+    └── MaterialPresets.cpp  # Banque de matériaux
+```
+
+### Makefile
+
+```makefile
+# À ajouter
+IMGUI_DIR = lib/imgui
+IMGUI_SRCS = $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_draw.cpp \
+             $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp \
+             $(IMGUI_DIR)/backends/imgui_impl_sdl2.cpp \
+             $(IMGUI_DIR)/backends/imgui_impl_sdlrenderer.cpp
+
+# Linker
+LDFLAGS += -limgui  # ou inclure les sources directement
+```
