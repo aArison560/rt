@@ -2,8 +2,7 @@
 # File: scenes/complex_demo.rt
 
 # Ambient multipler for fine-tuning
-# A 0.4 0.4 0.4
-A 0
+A 0.4 0.4 0.4
 
 # Multiple light sources for rich shadows
 L 8.0 8.0 8.0 1.0 1.0 0.9 1.0

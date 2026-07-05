@@ -7,10 +7,8 @@
 # ============================================
 
 # --- Ambiance générale ---
-# bg 0.04 0.05 0.11          # Ciel bleu-nuit profond, crépuscule avancé
-bg 0 0 0
-# A 0.08 0.08 0.13           # Ambiante froide et douce
-A 0
+bg 0.04 0.05 0.11          # Ciel bleu-nuit profond, crépuscule avancé
+A 0.08 0.08 0.13           # Ambiante froide et douce
 
 # --- Éclairages ---
 directional 0.35 -0.35 -0.15 1.0 0.55 0.25 0.55   # Dernière lumière chaude du soleil couchant

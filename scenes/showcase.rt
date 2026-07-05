@@ -3,10 +3,8 @@
 # Reflections · Glass · Metals · Glossy · Multiple Lights
 # =============================================================================
 
-# bg 0.05 0.06 0.08
-bg 0 0 0
-# A 0.1 0.1 0.12
-A 0 0 0
+bg 0.05 0.06 0.08
+A 0.1 0.1 0.12
 
 # Three lights for rich illumination
 L  6.0  8.0  4.0  1.0  0.95  0.85  1.2

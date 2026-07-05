@@ -276,9 +276,6 @@ Vec3 Renderer::trace(const Ray& ray, const Scene& scene, int depth,
         }
     }
 
-    color.x = std::clamp(color.x, 0.0, 1.0);
-    color.y = std::clamp(color.y, 0.0, 1.0);
-    color.z = std::clamp(color.z, 0.0, 1.0);
     return color;
 }
 
@@ -464,11 +461,6 @@ Vec3 Renderer::calculateLighting(const HitRecord& hitRecord, const Vec3& rayDir,
             color += diff + spec;
         }
     }
-
-    // Clamp to [0,1]
-    color.x = std::clamp(color.x, 0.0, 1.0);
-    color.y = std::clamp(color.y, 0.0, 1.0);
-    color.z = std::clamp(color.z, 0.0, 1.0);
 
     return color;
 }

@@ -1,0 +1,71 @@
+# ============================================
+# Scène RT : "Grotte aux cristaux luminescents"
+# Une caverne sombre et humide, percée de cristaux
+# bioluminescents cyan, magenta et or, avec
+# stalactites, stalagmites et colonnes de quartz.
+# Ambiance opposée à la clairière : intérieur,
+# obscurité totale, couleurs saturées néon.
+# ============================================
+
+# --- Ambiance générale ---
+bg 0.02 0.01 0.05          # Noir violacé, quasi obscurité totale
+A 0.05 0.02 0.08           # Ambiante très faible, teintée violet
+
+# --- Éclairages ---
+directional 0.1 -1.0 0.05 0.6 0.7 0.9 0.25   # Filet de lumière bleutée venant d'une faille lointaine
+
+# Lumières des cristaux (chacune posée juste devant sa sphère)
+L -3.0 -0.5 -2.0 0.3 0.9 1.0 1.0    # Lueur cyan
+L 3.2 -0.8 -1.0 1.0 0.2 0.9 0.9     # Lueur magenta
+L 0.5 -1.3 2.0 1.0 0.8 0.3 0.7      # Lueur dorée
+
+# --- Caméra ---
+c 0.0 1.5 9.0 0.0 0.3 -1.0 0.0 1.0 0.0 50.0
+
+# --- Sol rocheux humide ---
+pl 0.0 -2.0 0.0 0.0 1.0 0.0
+material 0.05 0.05 0.06 0.2 0.3 0.1 8.0 0.05
+
+# --- Plafond de la caverne ---
+pl 0.0 6.0 0.0 0.0 -1.0 0.0
+material 0.04 0.04 0.05 0.2 0.2 0.0 4.0 0.0
+
+# --- Paroi du fond ---
+pl 0.0 0.0 -15.0 0.0 0.0 1.0
+material 0.03 0.02 0.05 0.15 0.1 0.0 2.0 0.0
+
+# --- Cristal cyan (amas principal, gauche) ---
+sp -3.0 -0.5 -3.0 1.0
+material 0.2 0.9 1.0 0.6 0.4 0.9 96.0 0.5
+
+# --- Cristal magenta (droite) ---
+sp 3.2 -0.8 -2.0 0.8
+material 0.95 0.2 0.85 0.6 0.4 0.9 96.0 0.5
+
+# --- Cristal doré (premier plan, petit) ---
+sp 0.5 -1.3 1.0 0.5
+material 1.0 0.8 0.2 0.6 0.4 0.8 64.0 0.3
+
+# --- Stalactites (pointe vers le bas, suspendues au plafond) ---
+co -1.5 2.0 -5.0 0.0 1.0 0.0 8.0 3.5
+material 0.3 0.28 0.32 0.2 0.4 0.2 8.0 0.05
+
+co 1.8 1.5 -4.0 0.0 1.0 0.0 6.0 3.0
+material 0.32 0.3 0.34 0.2 0.4 0.2 8.0 0.05
+
+co 4.0 2.2 -6.0 0.0 1.0 0.0 7.0 4.0
+material 0.28 0.26 0.3 0.2 0.4 0.2 8.0 0.05
+
+# --- Stalagmites (pointe vers le haut, montant du sol) ---
+co -2.0 0.5 -1.5 0.0 -1.0 0.0 9.0 2.5
+material 0.3 0.28 0.32 0.2 0.4 0.2 8.0 0.05
+
+co 2.5 -0.2 0.0 0.0 -1.0 0.0 7.0 1.8
+material 0.32 0.3 0.34 0.2 0.4 0.2 8.0 0.05
+
+# --- Colonnes de quartz translucide ---
+cy -4.5 0.0 -7.0 0.0 1.0 0.0 0.35 4.0
+material 0.5 0.7 0.9 0.3 0.3 0.7 64.0 0.35
+
+cy 4.8 0.5 -8.0 0.0 1.0 0.0 0.4 5.0
+material 0.7 0.5 0.9 0.3 0.3 0.7 64.0 0.35
