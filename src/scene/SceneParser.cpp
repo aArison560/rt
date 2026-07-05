@@ -124,6 +124,7 @@ bool SceneParser::parse(const std::string& content, Scene& scene)
         if (id == "A") {
             if (v.size() == 1) {
                 scene.addLight(std::make_shared<AmbientLight>(Vec3(1.0, 1.0, 1.0), v[0]));
+                scene.setAmbientMultiplier(v[0]);
             } else if (v.size() == 3) {
                 scene.addLight(std::make_shared<AmbientLight>(Vec3(v[0], v[1], v[2]), 1.0));
             } else {

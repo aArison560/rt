@@ -101,7 +101,13 @@ const Vec3& Scene::getBackgroundColor() const { return backgroundColor; }
 
 void Scene::clearObjects() { objects.clear(); ++objectVersion; }
 void Scene::clearLights() { lights.clear(); }
-void Scene::clear() { clearObjects(); clearLights(); }
+void Scene::clear()
+{
+    clearObjects();
+    clearLights();
+    backgroundColor = Vec3(0.1, 0.1, 0.1);
+    ambientMultiplier = 1.0;
+}
 
 const std::string& Scene::getName() const { return name; }
 void Scene::setName(const std::string& name) { this->name = name; }
