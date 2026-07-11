@@ -1,0 +1,53 @@
+# ============================================
+# Scène RT : "Grotte Hyperbolique"
+# Une cavité voûtée avec des structures hyperboliques
+# bioluminescentes synergisant avec les autres objets.
+# ============================================
+
+# --- Ambiance générale ---
+bg 0.05 0.02 0.08          # Noir profond avec légère teinte violette
+A 0.08 0.05 0.12           # Réverbération ambiante chaude et riche
+
+# --- Éclairages lumineux ---
+directional 0.0 -0.8 0.05 0.9 0.8 0.95 0.25    # Lumière dominante chaude et orientée
+
+# Lumière vive centrale
+L 0.0 0.5 2.0 1.0 0.9 0.7 1.2             # Lumière ponctuelle blanche chaude
+# Lumière bleutée vive près du hyperboloid
+L 0.0 0.3 1.5 0.3 0.6 1.0 0.9            # Accentuation cyan
+
+# --- Caméra (cadrage 720x480, ratio 1.5:1) ---
+c 0.0 1.0 10.0 0.0 0.2 -1.0 0.0 1.0 0.0 50.0
+
+# --- Hyperboloid principal (voûte centrale) ---
+h 0.0 -1.0 -4.0 0.0 1.0 0.0 0.8 1.0 1.0 1.0 1.0 1.0 -1.0 0.0 0.0 0.0 0.0
+material 0.2 0.6 0.8 0.1 0.5 0.8 32.0 0.2
+
+# --- Structure hyperbolique secondaire ---
+h -2.5 0.8 -6.0 0.0 1.0 0.0 0.6 0.8 0.8 0.8 0.8 0.6 -0.8 0.0 0.0 0.2 0.0
+material 0.8 0.4 0.2 0.1 0.4 0.6 16.0 0.15
+
+# --- Le sol (plane pour ancrer la scène) ---
+pl 0.0 -2.5 0.0 0.0 1.0 0.0
+material 0.05 0.05 0.06 0.2 0.3 0.1 8.0 0.05
+
+# --- Strix d'ambiance ---
+sp 1.5 -0.8 -8.0 0.4
+material 0.9 0.92 0.85 0.1 0.05 0.04 128.0 0.5
+
+sp -1.2 1.2 -9.0 0.3
+material 0.3 0.8 0.9 0.1 0.2 0.4 64.0 0.3
+
+# --- Voûte hyperbolique avec ancres (échos) ---
+cy -4.5 0.0 -7.0 0.0 1.0 0.0 0.35 1.5
+material 0.4 0.4 0.4 0.2 0.2 0.2 4.0 0.0
+
+cy 4.8 0.5 -8.0 0.0 1.0 0.0 0.4 1.2
+material 0.4 0.4 0.4 0.2 0.2 0.2 4.0 0.0
+
+# --- Mur de scène ---
+pl -6.0 0.0 -10.0 1.0 0.0 0.0
+material 0.1 0.1 0.15 0.1 0.05 0.02 2.0 0.0
+
+pl 6.0 0.0 -10.0 -1.0 0.0 0.0
+material 0.1 0.1 0.15 0.1 0.05 0.02 2.0 0.0

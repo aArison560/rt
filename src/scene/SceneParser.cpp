@@ -10,6 +10,7 @@
 #include "geometry/Plane.hpp"
 #include "geometry/Cylinder.hpp"
 #include "geometry/Cone.hpp"
+#include "geometry/Hyperboloid.hpp"
 #include "lighting/PointLight.hpp"
 #include "lighting/AmbientLight.hpp"
 #include "lighting/DirectionalLight.hpp"
@@ -238,6 +239,24 @@ bool SceneParser::parse(const std::string& content, Scene& scene)
                 Vec3(v[3], v[4], v[5]),
                 v[6],
                 v[7]
+            );
+            scene.addObject(lastObject);
+            continue;
+        }
+
+        if (id == "h") {
+            if (v.size() < 10) {
+                reportError("h expects at least 10 values: cx cy cz ax ay az a b c d e f g h i");
+                return false;
+            }
+            double coeffs[10];
+            for (int i = 0; i < 10; ++i) {
+                coeffs[i] = v[i];
+            }
+            lastObject = std::make_shared<Hyperboloid>(
+                Vec3(v[0], v[1], v[2]),
+                Vec3(v[3], v[4], v[5]),
+                coeffs
             );
             scene.addObject(lastObject);
             continue;
