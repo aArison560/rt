@@ -6,6 +6,7 @@
  */
 
 #include "core/Material.hpp"
+#include <algorithm>
 
 Material::Material() : color(1, 1, 1), ambient(0.1), diffuse(0.7), specular(0.2), 
                        shininess(32.0), roughness(0.3), reflectivity(0.0), 

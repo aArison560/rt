@@ -1,14 +1,19 @@
 # Ray Tracer (RT) - Makefile
-# C++23 project with SDL2, libpng, libjpeg
+# C++23 project with SDL2, libpng, libjpeg + microui (C)
 
 CXX := g++
+CC := gcc
 CXXFLAGS := -std=c++23 -Wall -Wextra -Werror -O2 -fPIC -march=native -pthread
+CFLAGS := -std=c11 -Wall -Wextra -Werror -O2 -fPIC -march=native -pthread
 CXXFLAGS_TEST := -std=c++23 -O2 -fPIC -pthread
-CXXFLAGS_TEST += -I/usr/include/imgui -I/usr/include/imgui/backends -I/usr/include/SDL2 -I/usr/include/stb
+CFLAGS_TEST := -std=c11 -O2 -fPIC -pthread
 
-# ImGui flags (also add SDL2 include path for imgui backends)
-CXXFLAGS += -I/usr/include/imgui -I/usr/include/imgui/backends -I/usr/include/SDL2 -I/usr/include/stb
-LDFLAGS := -lSDL2 -lm -lpng -ljpeg -pthread -limgui -lstb
+# microui: pure C, no external deps
+CXXFLAGS += -I/usr/include/SDL2
+CFLAGS += -I/usr/include/SDL2 -Iinclude
+CXXFLAGS_TEST += -I/usr/include/SDL2
+CFLAGS_TEST += -I/usr/include/SDL2 -Iinclude
+LDFLAGS := -lSDL2 -lm -lpng -ljpeg -pthread
 
 # Directories
 SRC_DIR := src
@@ -21,23 +26,30 @@ BIN_DIR := .
 TARGET := $(BIN_DIR)/rt
 TARGET_TEST := $(BIN_DIR)/rt_test
 
-# Source files
+# C++ source files
 SOURCES := $(shell find $(SRC_DIR) -name '*.cpp' | sort)
 MAIN_SRC := src/app/main.cpp
 LIB_SRCS := $(filter-out $(MAIN_SRC), $(SOURCES))
 TEST_SRCS := $(sort $(LIB_SRCS) $(shell find tests -name '*.cpp'))
-OBJECTS := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SOURCES))
+
+# C source files (microui)
+C_SOURCES := $(shell find $(SRC_DIR) -name '*.c' | sort)
+
+# Object files
+OBJECTS := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SOURCES)) \
+           $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(C_SOURCES))
 
 OBJECTS_TEST := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR_TEST)/%.o, $(LIB_SRCS)) \
+                $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR_TEST)/%.o, $(C_SOURCES)) \
                 $(patsubst tests/%.cpp, $(OBJ_DIR_TEST)/%.o, $(filter tests/%.cpp, $(TEST_SRCS)))
 
 # Progress tracking
-TOTAL_OBJS := $(words $(SOURCES))
+TOTAL_OBJS := $(words $(OBJECTS))
 TOTAL_TEST_OBJS := $(words $(OBJECTS_TEST))
 COUNTER_FILE := $(OBJ_DIR)/.counter
 COUNTER_FILE_TEST := $(OBJ_DIR_TEST)/.counter
 $(shell rm -f $(COUNTER_FILE) $(COUNTER_FILE_TEST))
-HEADERS := $(shell find $(INC_DIR) -name '*.hpp' | sort)
+HEADERS := $(shell find $(INC_DIR) -name '*.hpp' -o -name '*.h' | sort)
 
 # Include path
 CXXFLAGS += -I$(INC_DIR)
@@ -55,6 +67,17 @@ $(TARGET): $(OBJECTS)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXFLAGS) -c $< -o $@
+	@count=$$(cat $(COUNTER_FILE) 2>/dev/null || echo 0); \
+	count=$$((count + 1)); \
+	echo $$count > $(COUNTER_FILE); \
+	pct=$$((count * 100 / $(TOTAL_OBJS))); \
+	filled=$$((pct / 2)); \
+	bar=""; i=0; while [ $$i -lt $$filled ]; do bar="$$bar#"; i=$$((i + 1)); done; \
+	printf "\rCompilation [%-50s] %3d/%d (%3d%%)" "$$bar" $$count $(TOTAL_OBJS) $$pct
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
+	@mkdir -p $(dir $@)
+	@$(CC) $(CFLAGS) -c $< -o $@
 	@count=$$(cat $(COUNTER_FILE) 2>/dev/null || echo 0); \
 	count=$$((count + 1)); \
 	echo $$count > $(COUNTER_FILE); \
@@ -85,6 +108,17 @@ $(TARGET_TEST): $(OBJECTS_TEST)
 $(OBJ_DIR_TEST)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXFLAGS_TEST) -I$(INC_DIR) -c $< -o $@
+	@count=$$(cat $(COUNTER_FILE_TEST) 2>/dev/null || echo 0); \
+	count=$$((count + 1)); \
+	echo $$count > $(COUNTER_FILE_TEST); \
+	pct=$$((count * 100 / $(TOTAL_TEST_OBJS))); \
+	filled=$$((pct / 2)); \
+	bar=""; i=0; while [ $$i -lt $$filled ]; do bar="$$bar#"; i=$$((i + 1)); done; \
+	printf "\rCompilation test [%-50s] %3d/%d (%3d%%)" "$$bar" $$count $(TOTAL_TEST_OBJS) $$pct
+
+$(OBJ_DIR_TEST)/%.o: $(SRC_DIR)/%.c $(HEADERS)
+	@mkdir -p $(dir $@)
+	@$(CC) $(CFLAGS_TEST) -I$(INC_DIR) -c $< -o $@
 	@count=$$(cat $(COUNTER_FILE_TEST) 2>/dev/null || echo 0); \
 	count=$$((count + 1)); \
 	echo $$count > $(COUNTER_FILE_TEST); \

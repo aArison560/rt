@@ -2,13 +2,12 @@
  * @file GuiManager.cpp
  * @author RT Team - Dev C
  * @date 2026-07-05
- * @brief GuiManager implementation
+ * @brief GuiManager implementation using microui
  */
 
 #include "gui/GuiManager.hpp"
-#include <imgui.h>
-#include "backends/imgui_impl_sdl2.h"
-#include "backends/imgui_impl_sdlrenderer2.h"
+#include "gui/microui.h"
+#include "gui/r_render.h"
 #include <SDL2/SDL.h>
 #include "geometry/Sphere.hpp"
 #include "geometry/Plane.hpp"
@@ -16,6 +15,7 @@
 #include "geometry/Cone.hpp"
 #include <format>
 #include <iostream>
+#include <cstring>
 
 GuiManager::GuiManager(Window* win, Renderer* rend, EventHandler* evtHandler)
     : window(win)
@@ -25,6 +25,7 @@ GuiManager::GuiManager(Window* win, Renderer* rend, EventHandler* evtHandler)
     , visible(true)
     , initialized(false)
     , redrawRequested(false)
+    , muCtx(nullptr)
     , lastPerformanceCounter(SDL_GetPerformanceCounter())
     , frameCount(0)
     , fps(60.0f)
@@ -62,45 +63,75 @@ bool GuiManager::initialize()
         return true;
     }
 
-    // Check that we have the required SDL2 objects
-    SDL_Window* sdlWindow = window->getSDLWindow();
     SDL_Renderer* sdlRenderer = window->getSDLRenderer();
-    if (!sdlWindow || !sdlRenderer) {
+    if (!sdlRenderer) {
         return false;
     }
 
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
+    muCtx = new mu_Context;
+    mu_init(muCtx);
 
-    // Forward SDL events to ImGui before EventHandler processes them
-    eventHandler->onSDLEvent([](const SDL_Event& event) {
-        ImGui_ImplSDL2_ProcessEvent(&event);
+    if (!r_init(muCtx, sdlRenderer)) {
+        delete muCtx;
+        muCtx = nullptr;
+        return false;
+    }
+
+    /* Forward SDL events to microui before EventHandler processes them */
+    eventHandler->onSDLEvent([this](const SDL_Event& event) {
+        if (!muCtx) return;
+        switch (event.type) {
+            case SDL_MOUSEMOTION:
+                mu_input_mousemove(muCtx, event.motion.x, event.motion.y);
+                break;
+            case SDL_MOUSEBUTTONDOWN:
+                if (event.button.button == SDL_BUTTON_LEFT)
+                    mu_input_mousedown(muCtx, event.button.x, event.button.y, MU_MOUSE_LEFT);
+                else if (event.button.button == SDL_BUTTON_RIGHT)
+                    mu_input_mousedown(muCtx, event.button.x, event.button.y, MU_MOUSE_RIGHT);
+                else if (event.button.button == SDL_BUTTON_MIDDLE)
+                    mu_input_mousedown(muCtx, event.button.x, event.button.y, MU_MOUSE_MIDDLE);
+                break;
+            case SDL_MOUSEBUTTONUP:
+                if (event.button.button == SDL_BUTTON_LEFT)
+                    mu_input_mouseup(muCtx, event.button.x, event.button.y, MU_MOUSE_LEFT);
+                else if (event.button.button == SDL_BUTTON_RIGHT)
+                    mu_input_mouseup(muCtx, event.button.x, event.button.y, MU_MOUSE_RIGHT);
+                else if (event.button.button == SDL_BUTTON_MIDDLE)
+                    mu_input_mouseup(muCtx, event.button.x, event.button.y, MU_MOUSE_MIDDLE);
+                break;
+            case SDL_MOUSEWHEEL:
+                mu_input_scroll(muCtx, 0, event.wheel.y);
+                break;
+            case SDL_KEYDOWN:
+                if (event.key.keysym.sym == SDLK_LSHIFT || event.key.keysym.sym == SDLK_RSHIFT)
+                    mu_input_keydown(muCtx, MU_KEY_SHIFT);
+                else if (event.key.keysym.sym == SDLK_LCTRL || event.key.keysym.sym == SDLK_RCTRL)
+                    mu_input_keydown(muCtx, MU_KEY_CTRL);
+                else if (event.key.keysym.sym == SDLK_LALT || event.key.keysym.sym == SDLK_RALT)
+                    mu_input_keydown(muCtx, MU_KEY_ALT);
+                else if (event.key.keysym.sym == SDLK_BACKSPACE)
+                    mu_input_keydown(muCtx, MU_KEY_BACKSPACE);
+                else if (event.key.keysym.sym == SDLK_RETURN)
+                    mu_input_keydown(muCtx, MU_KEY_RETURN);
+                break;
+            case SDL_KEYUP:
+                if (event.key.keysym.sym == SDLK_LSHIFT || event.key.keysym.sym == SDLK_RSHIFT)
+                    mu_input_keyup(muCtx, MU_KEY_SHIFT);
+                else if (event.key.keysym.sym == SDLK_LCTRL || event.key.keysym.sym == SDLK_RCTRL)
+                    mu_input_keyup(muCtx, MU_KEY_CTRL);
+                else if (event.key.keysym.sym == SDLK_LALT || event.key.keysym.sym == SDLK_RALT)
+                    mu_input_keyup(muCtx, MU_KEY_ALT);
+                else if (event.key.keysym.sym == SDLK_BACKSPACE)
+                    mu_input_keyup(muCtx, MU_KEY_BACKSPACE);
+                else if (event.key.keysym.sym == SDLK_RETURN)
+                    mu_input_keyup(muCtx, MU_KEY_RETURN);
+                break;
+            case SDL_TEXTINPUT:
+                mu_input_text(muCtx, event.text.text);
+                break;
+        }
     });
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.IniFilename = nullptr;
-
-    // Setup style
-    ImGui::StyleColorsDark();
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.FrameRounding = 4.0f;
-    style.WindowRounding = 6.0f;
-    style.GrabRounding = 4.0f;
-    style.ScrollbarRounding = 4.0f;
-    style.WindowBorderSize = 1.0f;
-    style.FrameBorderSize = 0.0f;
-
-    // Setup platform/renderer backends
-    if (!ImGui_ImplSDL2_InitForSDLRenderer(sdlWindow, sdlRenderer)) {
-        ImGui::DestroyContext();
-        return false;
-    }
-    if (!ImGui_ImplSDLRenderer2_Init(sdlRenderer)) {
-        ImGui_ImplSDL2_Shutdown();
-        ImGui::DestroyContext();
-        return false;
-    }
 
     initialized = true;
     return true;
@@ -111,67 +142,63 @@ void GuiManager::shutdown()
     if (!initialized) {
         return;
     }
-    ImGui_ImplSDLRenderer2_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
+    if (muCtx) {
+        delete muCtx;
+        muCtx = nullptr;
+    }
     initialized = false;
 }
 
 void GuiManager::beginFrame()
 {
-    if (!initialized || !visible) {
+    if (!initialized || !visible || !muCtx) {
         return;
     }
-
-    ImGui_ImplSDLRenderer2_NewFrame();
-    ImGui_ImplSDL2_NewFrame();
-    ImGui::NewFrame();
-
+    mu_begin(muCtx);
     updateFPS();
 }
 
 void GuiManager::render()
 {
-    if (!initialized || !visible) {
+    if (!initialized || !visible || !muCtx) {
         return;
     }
 
-    // Main panels
     buildToolbar();
     buildRenderSettingsPanel();
     buildInfoOverlay();
-
-    // Phase 3: Object creation
     buildObjectCreationPanel();
-
-    // Phase 4: Object selection & editing
     buildObjectEditPanel();
 }
 
 void GuiManager::renderOverlay()
 {
-    if (!initialized || !visible) {
+    if (!initialized || !visible || !muCtx) {
         return;
     }
 
-    ImGui::Render();
-    ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
+    mu_end(muCtx);
+
+    SDL_Renderer* sdlRenderer = window->getSDLRenderer();
+    if (sdlRenderer) {
+        r_render(muCtx, sdlRenderer);
+    }
 }
 
 bool GuiManager::wantsCaptureKeyboard() const
 {
-    if (!initialized || !visible) {
+    if (!initialized || !visible || !muCtx) {
         return false;
     }
-    return ImGui::GetIO().WantCaptureKeyboard;
+    return muCtx->focus != 0;
 }
 
 bool GuiManager::wantsCaptureMouse() const
 {
-    if (!initialized || !visible) {
+    if (!initialized || !visible || !muCtx) {
         return false;
     }
-    return ImGui::GetIO().WantCaptureMouse;
+    return muCtx->focus != 0 || muCtx->hover != 0;
 }
 
 bool GuiManager::isVisible() const
@@ -204,7 +231,6 @@ void GuiManager::onMouseClick(int mouseX, int mouseY)
     if (!initialized || !visible || !scene) {
         return;
     }
-    // Don't pick if ImGui is using the mouse (e.g. dragging a slider)
     if (wantsCaptureMouse()) {
         return;
     }
@@ -218,17 +244,13 @@ void GuiManager::onMouseClick(int mouseX, int mouseY)
     PickResult result = renderer->pickObject(*scene, mouseX, mouseY, winW, winH);
     if (result.hit) {
         hasSelection = true;
-        editModified = false; // Reset edit flag when selecting a new object
+        editModified = false;
         selectedObject = result.objectIndex;
-
-        // Close the creation panel when selecting an object
         showCreatePanel = false;
 
-        // Load current properties into edit state
         if (selectedObject < scene->getObjectCount()) {
             auto obj = scene->getObject(selectedObject);
             auto mat = obj->getMaterial();
-            // Read position from transform
             editPosition = obj->getTransform().getTranslation();
             if (mat) {
                 editColor = mat->getColor();
@@ -240,12 +262,13 @@ void GuiManager::onMouseClick(int mouseX, int mouseY)
             }
         }
     } else {
-        // Clicking empty space deselects
         hasSelection = false;
     }
 }
 
-// ---- Private helpers ----
+/* ========================================================================= */
+/* Private helpers                                                           */
+/* ========================================================================= */
 
 void GuiManager::updateFPS()
 {
@@ -264,166 +287,153 @@ void GuiManager::updateFPS()
 
 void GuiManager::buildToolbar()
 {
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(ImVec2(viewport->Pos.x + viewport->Size.x * 0.5f - 200.0f,
-                                   viewport->Pos.y + 8.0f),
-                            ImGuiCond_Always);
-    ImGui::SetNextWindowBgAlpha(0.6f);
+    int w = window->getWidth();
+    int tw = 400;
+    int tx = (w - tw) / 2;
 
-    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar
-                           | ImGuiWindowFlags_NoResize
-                           | ImGuiWindowFlags_AlwaysAutoResize
-                           | ImGuiWindowFlags_NoMove
-                           | ImGuiWindowFlags_NoScrollbar;
-
-    if (ImGui::Begin("##Toolbar", nullptr, flags)) {
-        ImGui::Text("RT");
-        ImGui::SameLine();
-        ImGui::Text("|");
-        ImGui::SameLine();
-
-        if (ImGui::Button("Rerender")) {
-            redrawRequested = true;
-        }
-        ImGui::SameLine();
-        ImGui::Text("|");
-        ImGui::SameLine();
-
-        // Toggle create panel
-        if (ImGui::Button(showCreatePanel ? "Close Create" : "+ Create")) {
-            showCreatePanel = !showCreatePanel;
-        }
-        ImGui::SameLine();
-        ImGui::Text("|");
-        ImGui::SameLine();
-        ImGui::TextDisabled("H: hide | Click obj: select");
+    if (!mu_begin_window_ex(muCtx, "##Toolbar", mu_rect(tx, 4, tw, 28),
+            MU_OPT_NOTITLE | MU_OPT_NORESIZE | MU_OPT_NOSCROLL | MU_OPT_NOCLOSE)) {
+        return;
     }
-    ImGui::End();
+
+    int cols[] = {30, 8, 80, 8, 100, 8, 90};
+    mu_layout_row(muCtx, 7, cols, 0);
+
+    mu_label(muCtx, "RT");
+    mu_label(muCtx, "|");
+    if (mu_button(muCtx, "Rerender")) {
+        redrawRequested = true;
+    }
+    mu_label(muCtx, "|");
+    if (mu_button(muCtx, showCreatePanel ? "Close Create" : "+ Create")) {
+        showCreatePanel = !showCreatePanel;
+    }
+    mu_label(muCtx, "|");
+    mu_label(muCtx, "H: hide");
+
+    mu_end_window(muCtx);
 }
 
 void GuiManager::buildRenderSettingsPanel()
 {
-    ImGui::SetNextWindowPos(ImVec2(10.0f, 50.0f), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(280.0f, 0.0f), ImGuiCond_FirstUseEver);
+    int pw = 240;
 
-    if (!ImGui::Begin("Render Settings", nullptr, ImGuiWindowFlags_NoFocusOnAppearing)) {
-        ImGui::End();
+    if (!mu_begin_window(muCtx, "Render Settings", mu_rect(8, 34, pw, 300))) {
         return;
     }
 
-    int samples = renderer->getSamplesPerPixel();
-    if (ImGui::SliderInt("Samples", &samples, 1, 64, "%d spp")) {
-        renderer->setSamplesPerPixel(samples);
-        redrawRequested = true;
-    }
-    if (ImGui::IsItemHovered()) {
-        ImGui::BeginTooltip();
-        ImGui::Text("Number of rays per pixel");
-        ImGui::Text("Higher = smoother but slower");
-        ImGui::EndTooltip();
-    }
+    int pw2 = -muCtx->style->padding * 2;
+    int c2[] = {pw2, 70};
+    mu_layout_row(muCtx, 2, c2, 0);
 
-    int depth = renderer->getMaxRecursionDepth();
-    if (ImGui::SliderInt("Max Depth", &depth, 1, 16, "%d bounces")) {
-        renderer->setMaxRecursionDepth(depth);
-        redrawRequested = true;
-    }
-    if (ImGui::IsItemHovered()) {
-        ImGui::BeginTooltip();
-        ImGui::Text("Max bounces for reflections/refractions");
-        ImGui::EndTooltip();
-    }
-
-    ImGui::SeparatorText("Toggles");
-
-    bool shadows = renderer->getShadowsEnabled();
-    if (ImGui::Checkbox("Shadows", &shadows)) {
-        renderer->setShadowsEnabled(shadows);
+    /* Samples */
+    mu_label(muCtx, "Samples");
+    mu_Real samplesR = (mu_Real)renderer->getSamplesPerPixel();
+    if (mu_slider(muCtx, &samplesR, 1.0f, 64.0f)) {
+        renderer->setSamplesPerPixel((int)samplesR);
         redrawRequested = true;
     }
 
-    bool reflections = renderer->getReflectionsEnabled();
-    if (ImGui::Checkbox("Reflections", &reflections)) {
-        renderer->setReflectionsEnabled(reflections);
+    /* Max Depth */
+    mu_label(muCtx, "Max Depth");
+    mu_Real depthR = (mu_Real)renderer->getMaxRecursionDepth();
+    if (mu_slider(muCtx, &depthR, 1.0f, 16.0f)) {
+        renderer->setMaxRecursionDepth((int)depthR);
         redrawRequested = true;
     }
 
-    bool refractions = renderer->getRefractionsEnabled();
-    if (ImGui::Checkbox("Refractions", &refractions)) {
-        renderer->setRefractionsEnabled(refractions);
+    /* Toggles */
+    mu_label(muCtx, "--- Toggles ---");
+
+    int shadows = renderer->getShadowsEnabled() ? 1 : 0;
+    if (mu_checkbox(muCtx, "Shadows", &shadows)) {
+        renderer->setShadowsEnabled(shadows != 0);
         redrawRequested = true;
     }
 
-    ImGui::Separator();
-
-    int shadowSamples = renderer->getShadowSamples();
-    if (ImGui::SliderInt("Shadow Samples", &shadowSamples, 1, 32, "%d")) {
-        renderer->setShadowSamples(shadowSamples);
-        redrawRequested = true;
-    }
-    if (ImGui::IsItemHovered()) {
-        ImGui::BeginTooltip();
-        ImGui::Text("Number of light samples for soft shadows");
-        ImGui::EndTooltip();
-    }
-
-    ImGui::Dummy(ImVec2(0.0f, 4.0f));
-    if (ImGui::Button("Re-render Scene", ImVec2(-1.0f, 32.0f))) {
+    int reflections = renderer->getReflectionsEnabled() ? 1 : 0;
+    if (mu_checkbox(muCtx, "Reflections", &reflections)) {
+        renderer->setReflectionsEnabled(reflections != 0);
         redrawRequested = true;
     }
 
+    int refractions = renderer->getRefractionsEnabled() ? 1 : 0;
+    if (mu_checkbox(muCtx, "Refractions", &refractions)) {
+        renderer->setRefractionsEnabled(refractions != 0);
+        redrawRequested = true;
+    }
+
+    /* Shadow Samples */
+    mu_label(muCtx, "Shadow Smp");
+    mu_Real shadowSamplesR = (mu_Real)renderer->getShadowSamples();
+    if (mu_slider(muCtx, &shadowSamplesR, 1.0f, 32.0f)) {
+        renderer->setShadowSamples((int)shadowSamplesR);
+        redrawRequested = true;
+    }
+
+    /* Re-render button */
+    int c3[] = {-1};
+    mu_layout_row(muCtx, 1, c3, 28);
+    if (mu_button(muCtx, "Re-render Scene")) {
+        redrawRequested = true;
+    }
+
+    /* Render time */
     double renderTime = renderer->getLastRenderTimeMs();
     if (renderTime > 0.0) {
-        ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f),
-                          "Last render: %.1f ms", renderTime);
+        char buf[64];
+        snprintf(buf, sizeof(buf), "Last render: %.1f ms", renderTime);
+        mu_label(muCtx, buf);
     }
 
-    ImGui::End();
+    mu_end_window(muCtx);
 }
 
 void GuiManager::buildInfoOverlay()
 {
-    ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowBgAlpha(0.45f);
-
-    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar
-                           | ImGuiWindowFlags_NoResize
-                           | ImGuiWindowFlags_AlwaysAutoResize
-                           | ImGuiWindowFlags_NoMove
-                           | ImGuiWindowFlags_NoFocusOnAppearing;
-
-    if (ImGui::Begin("##InfoOverlay", nullptr, flags)) {
-        ImGui::Text("RT - Ray Tracer");
-        ImGui::Separator();
-        ImGui::Text("FPS: %.1f  (%.1f ms)", fps, frameTimeMs);
-
-        double renderTime = renderer->getLastRenderTimeMs();
-        if (renderTime > 0.0) {
-            ImGui::Text("Render: %.1f ms", renderTime);
-        }
-
-        if (scene) {
-            ImGui::Text("Objects: %zu", scene->getObjectCount());
-            ImGui::Text("Lights:  %zu", scene->getLightCount());
-            if (!scene->getName().empty()) {
-                ImGui::Text("Scene: %s", scene->getName().c_str());
-            }
-        }
-
-        // Show selected object info
-        if (hasSelection && scene && selectedObject < scene->getObjectCount()) {
-            ImGui::Separator();
-            auto obj = scene->getObject(selectedObject);
-            ImGui::TextColored(ImVec4(0.3f, 0.8f, 1.0f, 1.0f),
-                              "Selected: %s #%zu", obj->getType(), selectedObject);
-        }
-
-        ImGui::Separator();
-        ImGui::Text("%d spp | depth %d", renderer->getSamplesPerPixel(),
-                    renderer->getMaxRecursionDepth());
-        ImGui::Text("%dx%d", window->getWidth(), window->getHeight());
+    if (!mu_begin_window_ex(muCtx, "##Info", mu_rect(8, 270, 220, 0),
+            MU_OPT_NOTITLE | MU_OPT_NORESIZE | MU_OPT_NOSCROLL | MU_OPT_NOCLOSE)) {
+        return;
     }
-    ImGui::End();
+
+    int c2[] = {-1};
+    mu_layout_row(muCtx, 1, c2, 0);
+    mu_label(muCtx, "RT - Ray Tracer");
+
+    char buf[128];
+    snprintf(buf, sizeof(buf), "FPS: %.1f  (%.1f ms)", fps, frameTimeMs);
+    mu_label(muCtx, buf);
+
+    double renderTime = renderer->getLastRenderTimeMs();
+    if (renderTime > 0.0) {
+        snprintf(buf, sizeof(buf), "Render: %.1f ms", renderTime);
+        mu_label(muCtx, buf);
+    }
+
+    if (scene) {
+        snprintf(buf, sizeof(buf), "Objects: %zu", scene->getObjectCount());
+        mu_label(muCtx, buf);
+        snprintf(buf, sizeof(buf), "Lights: %zu", scene->getLightCount());
+        mu_label(muCtx, buf);
+        if (!scene->getName().empty()) {
+            snprintf(buf, sizeof(buf), "Scene: %s", scene->getName().c_str());
+            mu_label(muCtx, buf);
+        }
+    }
+
+    if (hasSelection && scene && selectedObject < scene->getObjectCount()) {
+        auto obj = scene->getObject(selectedObject);
+        snprintf(buf, sizeof(buf), "Selected: %s #%zu", obj->getType(), selectedObject);
+        mu_label(muCtx, buf);
+    }
+
+    snprintf(buf, sizeof(buf), "%d spp | depth %d",
+             renderer->getSamplesPerPixel(), renderer->getMaxRecursionDepth());
+    mu_label(muCtx, buf);
+    snprintf(buf, sizeof(buf), "%dx%d", window->getWidth(), window->getHeight());
+    mu_label(muCtx, buf);
+
+    mu_end_window(muCtx);
 }
 
 void GuiManager::buildObjectCreationPanel()
@@ -432,64 +442,111 @@ void GuiManager::buildObjectCreationPanel()
         return;
     }
 
-    ImGui::SetNextWindowPos(ImVec2(310.0f, 50.0f), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(300.0f, 0.0f), ImGuiCond_FirstUseEver);
-
-    if (!ImGui::Begin("Create Object", &showCreatePanel, ImGuiWindowFlags_NoFocusOnAppearing)) {
-        ImGui::End();
+    if (!mu_begin_window(muCtx, "Create Object", mu_rect(300, 34, 280, 320))) {
         return;
     }
 
-    // Object type selector
+    /* Object type selector */
     const char* types[] = { "Sphere", "Plane", "Cylinder", "Cone" };
-    ImGui::Combo("Type", &newObjectType, types, IM_ARRAYSIZE(types));
-
-    ImGui::SeparatorText("Position");
-    float posF[3] = { (float)newObjectPos.x, (float)newObjectPos.y, (float)newObjectPos.z };
-    if (ImGui::DragFloat3("Position", posF, 0.1f, -20.0f, 20.0f, "%.2f")) {
-        newObjectPos = Vec3(posF[0], posF[1], posF[2]);
+    int c1[] = {70, -1};
+    mu_layout_row(muCtx, 2, c1, 0);
+    mu_label(muCtx, "Type");
+    if (mu_button(muCtx, types[newObjectType])) {
+        newObjectType = (newObjectType + 1) % 4;
     }
 
-    // Type-specific parameters
-    float radiusF = (float)newObjectRadius;
-    float heightF = (float)newObjectHeight;
-    float halfAngleF = (float)newObjectHalfAngle;
-
-    if (newObjectType == 0) { // Sphere
-        if (ImGui::DragFloat("Radius", &radiusF, 0.05f, 0.1f, 10.0f, "%.2f"))
-            newObjectRadius = radiusF;
-    } else if (newObjectType == 2) { // Cylinder
-        if (ImGui::DragFloat("Radius", &radiusF, 0.05f, 0.1f, 10.0f, "%.2f"))
-            newObjectRadius = radiusF;
-        if (ImGui::DragFloat("Height", &heightF, 0.05f, 0.1f, 20.0f, "%.2f"))
-            newObjectHeight = heightF;
-    } else if (newObjectType == 3) { // Cone
-        if (ImGui::DragFloat("Height", &heightF, 0.05f, 0.1f, 20.0f, "%.2f"))
-            newObjectHeight = heightF;
-        if (ImGui::DragFloat("Half Angle", &halfAngleF, 1.0f, 1.0f, 89.0f, "%.0f deg"))
-            newObjectHalfAngle = halfAngleF;
+    /* Position */
+    mu_label(muCtx, "--- Position ---");
+    int c2[] = {30, -1};
+    mu_layout_row(muCtx, 2, c2, 0);
+    mu_label(muCtx, "X");
+    mu_Real posx = (mu_Real)newObjectPos.x;
+    if (mu_slider(muCtx, &posx, -20.0f, 20.0f)) {
+        newObjectPos.x = posx;
+    }
+    mu_label(muCtx, "Y");
+    mu_Real posy = (mu_Real)newObjectPos.y;
+    if (mu_slider(muCtx, &posy, -20.0f, 20.0f)) {
+        newObjectPos.y = posy;
+    }
+    mu_label(muCtx, "Z");
+    mu_Real posz = (mu_Real)newObjectPos.z;
+    if (mu_slider(muCtx, &posz, -20.0f, 20.0f)) {
+        newObjectPos.z = posz;
     }
 
-    ImGui::SeparatorText("Material");
-    float color[3] = { (float)newObjectColor.x, (float)newObjectColor.y, (float)newObjectColor.z };
-    if (ImGui::ColorEdit3("Color", color, ImGuiColorEditFlags_NoInputs)) {
-        newObjectColor = Vec3(color[0], color[1], color[2]);
+    /* Type-specific parameters */
+    if (newObjectType == 0) { /* Sphere */
+        mu_label(muCtx, "Radius");
+        mu_Real r = (mu_Real)newObjectRadius;
+        if (mu_slider(muCtx, &r, 0.1f, 10.0f)) {
+            newObjectRadius = r;
+        }
+    } else if (newObjectType == 2) { /* Cylinder */
+        mu_label(muCtx, "Radius");
+        mu_Real r = (mu_Real)newObjectRadius;
+        if (mu_slider(muCtx, &r, 0.1f, 10.0f)) {
+            newObjectRadius = r;
+        }
+        mu_label(muCtx, "Height");
+        mu_Real h = (mu_Real)newObjectHeight;
+        if (mu_slider(muCtx, &h, 0.1f, 20.0f)) {
+            newObjectHeight = h;
+        }
+    } else if (newObjectType == 3) { /* Cone */
+        mu_label(muCtx, "Height");
+        mu_Real h = (mu_Real)newObjectHeight;
+        if (mu_slider(muCtx, &h, 0.1f, 20.0f)) {
+            newObjectHeight = h;
+        }
+        mu_label(muCtx, "Half Angle");
+        mu_Real ha = (mu_Real)newObjectHalfAngle;
+        if (mu_slider(muCtx, &ha, 1.0f, 89.0f)) {
+            newObjectHalfAngle = ha;
+        }
     }
-    float shinyF = (float)newObjectShininess;
-    if (ImGui::DragFloat("Shininess", &shinyF, 0.5f, 0.0f, 256.0f, "%.1f"))
-        newObjectShininess = shinyF;
-    float reflF = (float)newObjectReflectivity;
-    if (ImGui::DragFloat("Reflectivity", &reflF, 0.01f, 0.0f, 1.0f, "%.2f"))
-        newObjectReflectivity = reflF;
 
-    ImGui::Separator();
+    /* Material */
+    mu_label(muCtx, "--- Material ---");
 
-    // Create button
-    if (ImGui::Button("Create Object", ImVec2(-1.0f, 32.0f))) {
+    int c3[] = {30, -1};
+    mu_layout_row(muCtx, 2, c3, 0);
+    mu_label(muCtx, "R");
+    mu_Real cr = (mu_Real)newObjectColor.x;
+    if (mu_slider(muCtx, &cr, 0.0f, 1.0f)) {
+        newObjectColor.x = cr;
+    }
+    mu_label(muCtx, "G");
+    mu_Real cg = (mu_Real)newObjectColor.y;
+    if (mu_slider(muCtx, &cg, 0.0f, 1.0f)) {
+        newObjectColor.y = cg;
+    }
+    mu_label(muCtx, "B");
+    mu_Real cb = (mu_Real)newObjectColor.z;
+    if (mu_slider(muCtx, &cb, 0.0f, 1.0f)) {
+        newObjectColor.z = cb;
+    }
+
+    mu_label(muCtx, "Shininess");
+    mu_Real sh = (mu_Real)newObjectShininess;
+    if (mu_slider(muCtx, &sh, 0.0f, 256.0f)) {
+        newObjectShininess = sh;
+    }
+
+    mu_label(muCtx, "Reflect.");
+    mu_Real rf = (mu_Real)newObjectReflectivity;
+    if (mu_slider(muCtx, &rf, 0.0f, 1.0f)) {
+        newObjectReflectivity = rf;
+    }
+
+    /* Create button */
+    int c4[] = {-1};
+    mu_layout_row(muCtx, 1, c4, 28);
+    if (mu_button(muCtx, "Create Object")) {
         createObject();
     }
 
-    ImGui::End();
+    mu_end_window(muCtx);
 }
 
 void GuiManager::buildObjectEditPanel()
@@ -500,83 +557,123 @@ void GuiManager::buildObjectEditPanel()
 
     auto obj = scene->getObject(selectedObject);
 
-    ImGui::SetNextWindowPos(ImVec2(310.0f, 50.0f), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(300.0f, 0.0f), ImGuiCond_FirstUseEver);
+    char title[64];
+    snprintf(title, sizeof(title), "Edit %s #%zu", obj->getType(), selectedObject);
 
-    std::string title = std::format("Edit {} #{}", obj->getType(), selectedObject);
-    if (!ImGui::Begin(title.c_str(), nullptr, ImGuiWindowFlags_NoFocusOnAppearing)) {
-        ImGui::End();
+    if (!mu_begin_window(muCtx, title, mu_rect(300, 34, 280, 340))) {
         return;
     }
 
-    // Show object type and index
-    ImGui::Text("Type: %s", obj->getType());
-    ImGui::Text("Index: %zu", selectedObject);
-    ImGui::Separator();
+    char buf[128];
+    int c1[] = {-1};
+    mu_layout_row(muCtx, 1, c1, 0);
 
-    // --- Position ---
-    ImGui::SeparatorText("Transform");
-    float posF[3] = { (float)editPosition.x, (float)editPosition.y, (float)editPosition.z };
-    if (ImGui::DragFloat3("Position", posF, 0.1f, -20.0f, 20.0f, "%.2f")) {
-        editPosition = Vec3(posF[0], posF[1], posF[2]);
+    snprintf(buf, sizeof(buf), "Type: %s", obj->getType());
+    mu_label(muCtx, buf);
+    snprintf(buf, sizeof(buf), "Index: %zu", selectedObject);
+    mu_label(muCtx, buf);
+
+    /* Position */
+    mu_label(muCtx, "--- Transform ---");
+    int c2[] = {30, -1};
+    mu_layout_row(muCtx, 2, c2, 0);
+
+    mu_label(muCtx, "X");
+    mu_Real posx = (mu_Real)editPosition.x;
+    if (mu_slider(muCtx, &posx, -20.0f, 20.0f)) {
+        editPosition.x = posx;
+        editModified = true;
+    }
+    mu_label(muCtx, "Y");
+    mu_Real posy = (mu_Real)editPosition.y;
+    if (mu_slider(muCtx, &posy, -20.0f, 20.0f)) {
+        editPosition.y = posy;
+        editModified = true;
+    }
+    mu_label(muCtx, "Z");
+    mu_Real posz = (mu_Real)editPosition.z;
+    if (mu_slider(muCtx, &posz, -20.0f, 20.0f)) {
+        editPosition.z = posz;
         editModified = true;
     }
 
-    // --- Material ---
-    ImGui::SeparatorText("Material");
-    float col[3] = { (float)editColor.x, (float)editColor.y, (float)editColor.z };
-    if (ImGui::ColorEdit3("Color", col, ImGuiColorEditFlags_NoInputs)) {
-        editColor = Vec3(col[0], col[1], col[2]);
+    /* Material */
+    mu_label(muCtx, "--- Material ---");
+
+    mu_label(muCtx, "R");
+    mu_Real cr = (mu_Real)editColor.x;
+    if (mu_slider(muCtx, &cr, 0.0f, 1.0f)) {
+        editColor.x = cr;
+        editModified = true;
+    }
+    mu_label(muCtx, "G");
+    mu_Real cg = (mu_Real)editColor.y;
+    if (mu_slider(muCtx, &cg, 0.0f, 1.0f)) {
+        editColor.y = cg;
+        editModified = true;
+    }
+    mu_label(muCtx, "B");
+    mu_Real cb = (mu_Real)editColor.z;
+    if (mu_slider(muCtx, &cb, 0.0f, 1.0f)) {
+        editColor.z = cb;
         editModified = true;
     }
 
-    float ambF = (float)editAmbient;
-    float diffF = (float)editDiffuse;
-    float specF = (float)editSpecular;
-    float shinyF = (float)editShininess;
-    float reflF = (float)editReflectivity;
+    mu_label(muCtx, "Ambient");
+    mu_Real amb = (mu_Real)editAmbient;
+    if (mu_slider(muCtx, &amb, 0.0f, 1.0f)) {
+        editAmbient = amb;
+        editModified = true;
+    }
+    mu_label(muCtx, "Diffuse");
+    mu_Real diff = (mu_Real)editDiffuse;
+    if (mu_slider(muCtx, &diff, 0.0f, 1.0f)) {
+        editDiffuse = diff;
+        editModified = true;
+    }
+    mu_label(muCtx, "Specular");
+    mu_Real spec = (mu_Real)editSpecular;
+    if (mu_slider(muCtx, &spec, 0.0f, 1.0f)) {
+        editSpecular = spec;
+        editModified = true;
+    }
+    mu_label(muCtx, "Shininess");
+    mu_Real sh = (mu_Real)editShininess;
+    if (mu_slider(muCtx, &sh, 0.0f, 256.0f)) {
+        editShininess = sh;
+        editModified = true;
+    }
+    mu_label(muCtx, "Reflect.");
+    mu_Real rf = (mu_Real)editReflectivity;
+    if (mu_slider(muCtx, &rf, 0.0f, 1.0f)) {
+        editReflectivity = rf;
+        editModified = true;
+    }
 
-    if (ImGui::DragFloat("Ambient", &ambF, 0.01f, 0.0f, 1.0f, "%.2f")) {
-        editAmbient = ambF; editModified = true;
-    }
-    if (ImGui::DragFloat("Diffuse", &diffF, 0.01f, 0.0f, 1.0f, "%.2f")) {
-        editDiffuse = diffF; editModified = true;
-    }
-    if (ImGui::DragFloat("Specular", &specF, 0.01f, 0.0f, 1.0f, "%.2f")) {
-        editSpecular = specF; editModified = true;
-    }
-    if (ImGui::DragFloat("Shininess", &shinyF, 0.5f, 0.0f, 256.0f, "%.1f")) {
-        editShininess = shinyF; editModified = true;
-    }
-    if (ImGui::DragFloat("Reflectivity", &reflF, 0.01f, 0.0f, 1.0f, "%.2f")) {
-        editReflectivity = reflF; editModified = true;
-    }
-
-    // Apply button
-    ImGui::Dummy(ImVec2(0.0f, 4.0f));
+    /* Apply button */
+    int c3[] = {-1};
+    mu_layout_row(muCtx, 1, c3, 28);
     if (editModified) {
-        if (ImGui::Button("Apply Changes", ImVec2(-1.0f, 32.0f))) {
+        if (mu_button(muCtx, "Apply Changes")) {
             applyEditToObject();
             editModified = false;
         }
     } else {
-        ImGui::TextDisabled("(modify values above to apply)");
+        mu_label(muCtx, "(modify values above to apply)");
     }
 
-    // Delete button
-    ImGui::Dummy(ImVec2(0.0f, 8.0f));
-    ImGui::Separator();
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.6f, 0.15f, 0.15f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
-    if (ImGui::Button("Delete Object", ImVec2(-1.0f, 32.0f))) {
+    /* Delete button */
+    mu_label(muCtx, "");
+    int c4[] = {-1};
+    mu_layout_row(muCtx, 1, c4, 28);
+    if (mu_button(muCtx, "Delete Object")) {
         if (scene->removeObject(obj)) {
             hasSelection = false;
             redrawRequested = true;
         }
     }
-    ImGui::PopStyleColor(2);
 
-    ImGui::End();
+    mu_end_window(muCtx);
 }
 
 void GuiManager::createObject()
@@ -585,9 +682,9 @@ void GuiManager::createObject()
 
     auto mat = std::make_shared<Material>(
         newObjectColor,
-        0.1,     // ambient
-        0.7,     // diffuse
-        0.2,     // specular
+        0.1,
+        0.7,
+        0.2,
         newObjectShininess
     );
     mat->setReflectivity(newObjectReflectivity);
@@ -595,22 +692,22 @@ void GuiManager::createObject()
     std::shared_ptr<AObject> obj;
 
     switch (newObjectType) {
-        case 0: { // Sphere
+        case 0: {
             obj = std::make_shared<Sphere>(newObjectPos, newObjectRadius, mat);
             break;
         }
-        case 1: { // Plane
+        case 1: {
             obj = std::make_shared<Plane>(newObjectPos, Vec3(0.0, 1.0, 0.0), mat);
             break;
         }
-        case 2: { // Cylinder
+        case 2: {
             obj = std::make_shared<Cylinder>(
                 newObjectPos, Vec3(0.0, 1.0, 0.0),
                 newObjectRadius, newObjectHeight, mat
             );
             break;
         }
-        case 3: { // Cone
+        case 3: {
             Vec3 apex = newObjectPos + Vec3(0.0, newObjectHeight, 0.0);
             obj = std::make_shared<Cone>(
                 apex, Vec3(0.0, -1.0, 0.0),
@@ -639,7 +736,6 @@ void GuiManager::applyEditToObject()
     auto obj = scene->getObject(selectedObject);
     auto mat = obj->getMaterial();
 
-    // Update material
     if (mat) {
         mat->setColor(editColor);
         mat->setShininess(editShininess);
@@ -649,7 +745,6 @@ void GuiManager::applyEditToObject()
         mat->setSpecular(editSpecular);
     }
 
-    // Update position via transform
     Transform t;
     t.translate(editPosition);
     obj->setTransform(t);
