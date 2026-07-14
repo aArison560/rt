@@ -152,7 +152,7 @@ static void create_font_texture(void) {
     for (int y = 0; y < FONT_H; y++) {
       unsigned char row = glyph[y];
       for (int x = 0; x < FONT_W; x++) {
-        if (row & (1 << x)) {
+        if (row & (128 >> x)) {
           int px = ch * FONT_W + x;
           Uint32 *pixels = (Uint32 *)((char *)surface->pixels + y * surface->pitch);
           pixels[px] = 0xFFFFFFFF;
