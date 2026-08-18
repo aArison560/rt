@@ -16,6 +16,7 @@
 #include <memory>
 #include <vector>
 #include "scene/Scene.hpp"
+#include "scene/ManageFile.hpp"
 #include "scene/Camera.hpp"
 #include "rendering/Renderer.hpp"
 #include "platform/Window.hpp"
@@ -107,6 +108,18 @@ int main(int argc, char* argv[])
         }
     }
 
+    // manage error
+    try
+    {
+        ManageFile fl(argc, argv);
+        fl.checkErrorFile();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return (-1);
+    }
+    exit(-1);
     // Parse positional arguments
     if (positionalArgs.size() >= 1) {
         sceneFile = positionalArgs[0];

@@ -3,17 +3,17 @@
 
 CXX := g++
 CC := gcc
-CXXFLAGS := -std=c++23 -Wall -Wextra -Werror -O2 -fPIC -march=native -pthread
-CFLAGS := -std=c11 -Wall -Wextra -Werror -O2 -fPIC -march=native -pthread
-CXXFLAGS_TEST := -std=c++23 -O2 -fPIC -pthread
-CFLAGS_TEST := -std=c11 -O2 -fPIC -pthread
+CXXFLAGS := -std=c++23 -Wall -Wextra -Werror -O2 -fPIC -march=native -pthread -g
+CFLAGS := -std=c11 -Wall -Wextra -Werror -O2 -fPIC -march=native -pthread -g
+CXXFLAGS_TEST := -std=c++23 -O2 -fPIC -pthread -g
+CFLAGS_TEST := -std=c11 -O2 -fPIC -pthread -g
 
 # microui: pure C, no external deps
-CXXFLAGS += -I/usr/include/SDL2
-CFLAGS += -I/usr/include/SDL2 -Iinclude
-CXXFLAGS_TEST += -I/usr/include/SDL2
-CFLAGS_TEST += -I/usr/include/SDL2 -Iinclude
-LDFLAGS := -lSDL2 -lm -lpng -ljpeg -pthread
+CXXFLAGS += -I/usr/include/SDL2 -g
+CFLAGS += -I/usr/include/SDL2 -Iinclude -g
+CXXFLAGS_TEST += -I/usr/include/SDL2 -g
+CFLAGS_TEST += -I/usr/include/SDL2 -Iinclude -g
+LDFLAGS := -lSDL2 -lm -lpng -ljpeg -pthread -g
 
 # Directories
 SRC_DIR := src
