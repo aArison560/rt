@@ -1,0 +1,33 @@
+# Simple scene with two spheres and basic lighting
+# File: scenes/simple_spheres.rt
+
+# Ambient light (global illumination)
+A 0.3 0.3 0.3
+
+# Point light 1 - warm light from upper right
+L 5.0 5.0 5.0 0.8 0.8 0.7 1.0
+
+# Point light 2 - cool light from upper left
+L -5.0 6.0 4.0 0.6 0.6 0.9 0.7
+
+# Camera definition
+c 0.0 1.5 8.0 0.0 0.0 0.0 0.0 1.0 0.0 50.0
+
+# Background color (RGB)
+bg 0.1 0.15 0.2
+
+# Red matte sphere
+sp 0.0 0.0 -3.0 1.5
+material 0.9 0.2 0.2 0.8 0.3 0.05 32.0 0.0
+
+# Blue reflective sphere
+sp 2.5 0.0 -4.0 1.0
+material 0.2 0.3 0.9 0.8 0.5 0.3 16.0 0.7
+
+# Yellow less reflective sphere
+sp -2.5 0.0 -5.0 0.8
+material 0.9 0.9 0.2 0.9 0.4 0.1 8.0 0.3
+
+# White diffuse floor plane
+pl 0.0 -1.5 0.0 0.0 1.0 0.0
+material 0.9 0.9 0.9 0.8 0.7 0.0 4.0 0.0

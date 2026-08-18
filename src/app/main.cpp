@@ -116,10 +116,9 @@ int main(int argc, char* argv[])
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
         return (-1);
     }
-    exit(-1);
+
     // Parse positional arguments
     if (positionalArgs.size() >= 1) {
         sceneFile = positionalArgs[0];

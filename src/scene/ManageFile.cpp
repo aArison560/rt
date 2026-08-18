@@ -142,8 +142,13 @@ void    ManageFile::checkErrorFile( void )
         buff = "";
     }
     if (std::size(scene) == 0)
-        throw std::logic_error("Empty file...");
-    this->verifyElem(scene);
+    {
+        std::cerr << "Empty file..." << std::endl;
+        throw std::logic_error("");
+
+    }
+    if (!this->verifyElem(scene))
+        throw std::invalid_argument("");
 }
 
 ManageFile::~ManageFile( void )
