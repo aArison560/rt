@@ -1,4 +1,5 @@
-#include "scene/ManageFile.hpp"
+// #include "scene/ManageFile.hpp"
+#include "../../include/scene/ManageFile.hpp"
 
 ManageFile::ManageFile( int argc, char **argv )
 {
@@ -39,9 +40,9 @@ bool ManageFile::rgbAllValueIsRight(std::string key, std::vector<float> vec)
         return false;
     if (key == "A")
     {
-        if (std::size(vec) == 3 && !this->valueRbgIsRight(vec.at(0), vec.at(1), vec.at(2)))
+        if (vec.size() == 3 && !this->valueRbgIsRight(vec.at(0), vec.at(1), vec.at(2)))
             return false;
-        else if (std::size(vec) == 1 && !this->valueRbgIsRight(vec.at(0), 0.0f, 0.0f))
+        else if (vec.size() == 1 && !this->valueRbgIsRight(vec.at(0), 0.0f, 0.0f))
             return false;
     }
     if ((key == "L" || key == "directional") && (!this->valueRbgIsRight(vec.at(3), vec.at(4), vec.at(5)) \
@@ -141,7 +142,7 @@ void    ManageFile::checkErrorFile( void )
             scene.push_back(buff);
         buff = "";
     }
-    if (std::size(scene) == 0)
+    if (scene.size() == 0)
     {
         std::cerr << "Empty file..." << std::endl;
         throw std::logic_error("");

@@ -10,13 +10,13 @@
  */
 
 #include <iostream>
-#include <format>
+// #include <format>
 #include <filesystem>
 #include <string>
 #include <memory>
 #include <vector>
-#include "scene/Scene.hpp"
 #include "scene/ManageFile.hpp"
+/*#include "scene/Scene.hpp"
 #include "scene/Camera.hpp"
 #include "rendering/Renderer.hpp"
 #include "platform/Window.hpp"
@@ -28,7 +28,7 @@
 #include "geometry/Plane.hpp"
 #include "lighting/PointLight.hpp"
 #include "lighting/AmbientLight.hpp"
-#include "gui/GuiManager.hpp"
+#include "gui/GuiManager.hpp"*/
 
 // Default constants
 constexpr int DEFAULT_WIDTH = 1280;
@@ -39,7 +39,7 @@ const std::string DEFAULT_SCENE_FILE = "scenes/default.rt";
  * @brief Create a default test scene
  * @return Populated Scene object
  */
-Scene createDefaultScene()
+/*Scene createDefaultScene()
 {
     Scene scene;
     scene.setName("Default Scene");
@@ -67,13 +67,13 @@ Scene createDefaultScene()
     scene.addLight(pl);
 
     return scene;
-}
+}*/
 
 /**
  * @brief Print usage information
  * @param programName Name of the executable
  */
-void printUsage(const std::string& programName)
+/*void printUsage(const std::string& programName)
 {
     std::cout << std::format("Usage: {} [scene_file] [width] [height]\n"
               "  scene_file: Path to .rt scene file (default: {})\n"
@@ -81,14 +81,14 @@ void printUsage(const std::string& programName)
               "  height:     Output height in pixels (default: {})\n"
               "\nExample: {} scenes/test.rt 1920 1080\n",
               programName, DEFAULT_SCENE_FILE, DEFAULT_WIDTH, DEFAULT_HEIGHT, programName);
-}
+}*/
 
 /**
  * @brief Main entry point
  */
 int main(int argc, char* argv[])
 {
-    std::filesystem::path sceneFile = DEFAULT_SCENE_FILE;
+    /*std::filesystem::path sceneFile = DEFAULT_SCENE_FILE;
     int width = DEFAULT_WIDTH;
     int height = DEFAULT_HEIGHT;
 
@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
         } else {
             positionalArgs.push_back(arg);
         }
-    }
+    }*/
 
     // manage error
     try
@@ -118,9 +118,10 @@ int main(int argc, char* argv[])
     {
         return (-1);
     }
-
+    std::cout << "----------------TEST PASS----------------" << std::endl;
+    exit(1);
     // Parse positional arguments
-    if (positionalArgs.size() >= 1) {
+    /*if (positionalArgs.size() >= 1) {
         sceneFile = positionalArgs[0];
     }
     if (positionalArgs.size() >= 2) {
@@ -292,6 +293,6 @@ int main(int argc, char* argv[])
     std::cout << "Shutting down...\n";
     guiManager.shutdown();
     window.close();
-    
+    */
     return 0;
 }
