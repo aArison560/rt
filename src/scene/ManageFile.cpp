@@ -1,5 +1,4 @@
-// #include "scene/ManageFile.hpp"
-#include "../../include/scene/ManageFile.hpp"
+#include "scene/ManageFile.hpp"
 
 ManageFile::ManageFile( int argc, char **argv )
 {
@@ -29,6 +28,17 @@ bool ManageFile::valueRbgIsRight(float r, float g, float b)
     return (br && bg && bb);
 }
 
+std::string ManageFile::strip(const std::string& str)
+{
+    const std::string whitespace = " \t\n\r\f\v";
+    
+    size_t start = str.find_first_not_of(whitespace);
+    if (start == std::string::npos) return "";
+
+    size_t end = str.find_last_not_of(whitespace);
+    return str.substr(start, end - start + 1);
+}
+
 bool ManageFile::valueIsShininess(float v)
 {
     return (v >= 0.0 && v <= 128.0);
@@ -45,15 +55,22 @@ bool ManageFile::rgbAllValueIsRight(std::string key, std::vector<float> vec)
         else if (vec.size() == 1 && !this->valueRbgIsRight(vec.at(0), 0.0f, 0.0f))
             return false;
     }
+    if (key == "C" && vec.size() == 10)
+    {
+        if (vec.at(6) != 0.0 && vec.at(7) != 1.0 && vec.at(8) != 0.0)
+            return false;
+    }
     if ((key == "L" || key == "directional") && (!this->valueRbgIsRight(vec.at(3), vec.at(4), vec.at(5)) \
         || !this->valueRbgIsRight(vec.at(6), 0.0, 0.0)))
         return false;
     if (key == "material")
     {
         if (!this->valueRbgIsRight(vec.at(0), vec.at(1), vec.at(2)) || !this->valueRbgIsRight(vec.at(3), 0.0f, 0.0f) \
-            || !this->valueRbgIsRight(vec.at(4), 0.0f, 0.0f) || !!this->valueRbgIsRight(vec.at(5), 0.0f, 0.0f) \
+            || !this->valueRbgIsRight(vec.at(4), 0.0f, 0.0f) || !this->valueRbgIsRight(vec.at(5), 0.0f, 0.0f) \
             || !this->valueIsShininess(vec.at(6)) || !this->valueRbgIsRight(vec.at(7), 0.0f, 0.0f))
-            return false;
+            {
+                return false;
+            }
     }
     return true;
 }
@@ -131,23 +148,48 @@ bool    ManageFile::verifyElem( std::vector<std::string> scene )
 void    ManageFile::checkErrorFile( void )
 {
     if (this->argc != 2)
-        throw std::invalid_argument("Arguments of file error, the number parm must be 1");
+    {
+        std::cerr << "Arguments of file error, the number parm must be 1" << std::endl;
+        throw std::invalid_argument("");
+    }
+    std::string argv = this->argv[1];
+    size_t pos = argv.rfind(".rt");
+    if (pos == std::string::npos)
+    {
+        std::cerr << "Extension file must be .rt" << std::endl;
+        throw std::invalid_argument("");
+    }
+    std::string ext = argv.substr(pos, argv.size());
+    if (ext != ".rt")
+    {
+        std::cerr << "Extension file must be .rt" << std::endl;
+        throw std::invalid_argument("");
+    }
     std::ifstream fd(this->argv[1]);
     std::string buff;
     std::vector<std::string> scene;
 
+    if (!fd.is_open())
+    {
+        std::cerr << "File not found or can't be opened" << std::endl;
+        throw std::invalid_argument("");
+    }
+
     while(std::getline(fd, buff))
     {
+        buff = this->strip(buff);
         if (!buff.empty() && buff.at(0) != '#')
             scene.push_back(buff);
         buff = "";
     }
+
     if (scene.size() == 0)
     {
         std::cerr << "Empty file..." << std::endl;
         throw std::logic_error("");
 
     }
+
     if (!this->verifyElem(scene))
         throw std::invalid_argument("");
 }

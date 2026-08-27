@@ -15,10 +15,11 @@ class ManageFile
         int argc;
         char **argv;
 
-    bool    verifyElem( std::vector<std::string> value );
-    bool    valueRbgIsRight(float r, float g, float b);
-    bool    rgbAllValueIsRight(std::string key, std::vector<float> vec);
-    bool    valueIsShininess(float v);
+    bool        verifyElem( std::vector<std::string> value );
+    bool        valueRbgIsRight(float r, float g, float b);
+    bool        rgbAllValueIsRight(std::string key, std::vector<float> vec);
+    bool        valueIsShininess(float v);
+    std::string strip(const std::string& str);
 
     public:
         void checkErrorFile( void );
