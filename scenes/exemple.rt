@@ -1,0 +1,20 @@
+# ============================================================
+# exemple.rt — scène minimale RTv1 (référence, zéro régression)
+# Usage : make run exemple.rt  |  ./bin/rtv1 scenes/exemple.rt
+# Sens : C = caméra (pos dir fov°) · L = lumière (pos intensité)
+#        sp = sphère (pos radius color) · pl = plan (pos normal color)
+# Couleurs r,g,b en 0-255. Positions x,y,z (Y-up).
+# Attendu : sphère rouge centrée + sol gris + ombre à gauche.
+# ============================================================
+
+# Caméra : pos 0,0,-5, regarde +Z (vers la sphère), fov 60°
+C 0,0,-5 0,0,1 60
+
+# Lumière ponctuelle à droite/haut, intensité 0.8 (diffuse + ombre dure)
+L 5,5,-5 0.8
+
+# Sphère rouge rayon 1 à l'origine
+sp 0,0,0 1 255,0,0
+
+# Sol gris : point y=-1, normale +Y (vers le haut)
+pl 0,-1,0 0,1,0 200,200,200

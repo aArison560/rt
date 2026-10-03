@@ -1,0 +1,22 @@
+# ============================================================
+# cyl.rt — test cylindres Phase 1 (latéral Quadric + 2 caps)
+# Usage : make run cyl.rt
+# Sens : cyl = cylindre (pos_base dir radius height color)
+#        base = pos, sommet = pos+dir*height, axe = dir normalisée
+# Attendu : 2 cylindres (rouge h=1, vert h=2) + sol, caps visibles d'en haut.
+# ============================================================
+
+# Caméra : pos 1.5,-1,-6 regarde +Z, fov 60°
+C 1.5,-1,-6 0,0,1 60
+
+# Lumière à droite/haut
+L 5,5,-5 0.8
+
+# Cylindre rouge : base 0,-0.8,0, axe +Y, R=1, h=1 (trapu)
+cyl 0,-0.8,0 0,1,0 1 1 255,0,0
+
+# Cylindre vert : base 3,-0.8,0, axe +Y, R=1, h=2 (élancé, test clip hMax)
+cyl 3,-0.8,0 0,1,0 1 2 0,255,0
+
+# Sol gris y=-1
+pl 0,-1,0 0,1,0 200,200,200

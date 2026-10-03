@@ -1,0 +1,27 @@
+# ============================================================
+# move_object.rt — test Phase 5.5 : translation objet façon Blender (G X/Y/Z)
+# Usage : make run move_object.rt
+# Sens : sp/cyl/parab pos = translation pure (objet + motif UV suivent),
+#        dir normalisée au parsing. Caméra 0,0,-5 forward +Z :
+#        pos.x++ => objet à DROITE de l'écran.
+# Attendu : sphère rouge à droite, cylindre vert à gauche, paraboloïde
+#           bleu au fond (teste la base cachée : aucun glissement UV).
+# ============================================================
+
+# Caméra standard
+C 0,0,-5 0,0,1 60
+
+# Lumière standard
+L 5,5,-5 0.8
+
+# Sphère translatée +X : attendue à DROITE de l'écran
+sp 1,0,0 1 255,0,0
+
+# Sol gris
+pl 0,-1,0 0,1,0 200,200,200
+
+# Cylindre vert translaté (-1,0,1) : base cachedU/cachedV suit sans rebuild
+cyl  -1,0,1 0,1,0 0.5 1 0,255,0
+
+# Paraboloïde bleu translaté (0,0,2) : a=b=0.6, h=1 (fond, plus petit)
+parab 0,0,2 0,1,0 0.6 0.6 1 0,0,255

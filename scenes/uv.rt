@@ -1,0 +1,33 @@
+# ============================================================
+# uv.rt — Phase 2 étape 1 : validation visuelle des UV par damier
+# Usage : make run uv.rt
+# Sens : mat checker scale color2 = damier (albedo/color + color2),
+#        appliqué au DERNIER objet défini (ligne mat APRÈS l'objet).
+#        scale = cases par unité UV. mat diffuse = retour uni.
+# Projections : sphère=sphérique (atan2/asin) · plan=planaire (fract)
+#        cylindre/cône=cylindrique (angle×hauteur) + caps planaires.
+# Attendu : sol carrelé gris · sphère rouge/noir (pincée aux pôles)
+#        cylindre vert/noir 6 cases/tour · cône bleu/blanc resserré apex.
+# ============================================================
+
+# Caméra : pos 0,1,-6 regarde +Z (cadre les 4 objets), fov 60°
+C 0,1,-6 0,0,1 60
+
+# Lumière standard
+L 5,5,-5 0.8
+
+# Sol : damier gris 4 cases/unité (carrelage planaire jusqu'à l'horizon)
+pl 0,-1,0 0,1,0 200,200,200
+mat checker 4 50,50,50
+
+# Sphère : damier rouge/noir 8 cases (16 cases à l'équateur, couture ±π)
+sp -2,0.5,0 1 255,0,0
+mat checker 8 0,0,0
+
+# Cylindre : damier vert/noir 6 cases/tour + caps en damier fin
+cyl 0,0,0 0,1,0 0.5 2 0,255,0
+mat checker 6 0,0,0
+
+# Cône : damier bleu/blanc 6 cases (resserrement vers l'apex, circonférence ∝ h−y)
+cone 2,0,0 0,1,0 0.6 1.8 0,0,255
+mat checker 6 255,255,255

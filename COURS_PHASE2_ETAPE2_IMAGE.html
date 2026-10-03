@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RTv1 — Phase 2 Étape 2 · Image collage (stb_image, sampler2D, repeat/clamp)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+:root{
+--primary:#0f172a; --accent:#0ea5e9; --accent2:#8b5cf6; --accent3:#06b6d4;
+--bg:#f8fafc; --bg2:#f1f5f9; --card:#ffffff; --card2:#fcfdff; --text:#0f172a; --muted:#475569; --border:#e2e8f0; --border2:#cbd5e1;
+--sidebarW:300px; --radius:18px; --shadow:0 10px 30px rgba(15,23,42,0.08), 0 1px 3px rgba(15,23,42,0.06); --shadow2:0 20px 60px rgba(15,23,42,0.12);
+--grad: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 50%, #06b6d4 100%);
+--gradSoft: linear-gradient(135deg, #e0f2fe 0%, #ede9fe 60%, #cffafe 100%);
+}
+@media(prefers-color-scheme:dark){
+:root:not([data-theme="light"]){--bg:#0b1220; --bg2:#111c34; --card:#12213e; --card2:#162a4d; --text:#e2e8f0; --muted:#94a3b8; --border:#1e3a5f; --border2:#234876; --primary:#f1f5f9}
+}
+html[data-theme="light"]{--bg:#f8fafc; --bg2:#eef2f7; --card:#ffffff; --card2:#fcfdff; --text:#0f172a; --muted:#475569; --border:#e2e8f0; --border2:#cbd5e1; --primary:#0f172a}
+html[data-theme="dark"]{--bg:#0b1220; --bg2:#111c34; --card:#12213e; --card2:#162a4d; --text:#e2e8f0; --muted:#a8bdd6; --border:#1e3a5f; --border2:#234876; --primary:#f1f5f9}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0; font-family:Inter, system-ui, -apple-system, sans-serif; background: radial-gradient(1200px 600px at 10% -10%, #e0f2fe 0%, transparent 60%), radial-gradient(1000px 500px at 90% 0%, #ede9fe 0%, transparent 55%), var(--bg); color:var(--text); line-height:1.7; -webkit-font-smoothing:antialiased}
+a{color:inherit}
+header{position:sticky; top:0; z-index:20; padding:22px 20px 18px; text-align:center; background: rgba(15,23,42,0.88); backdrop-filter: blur(16px) saturate(1.2); border-bottom:1px solid rgba(255,255,255,0.08); color:white; overflow:hidden}
+header::before{content:""; position:absolute; inset:0; background: radial-gradient(800px 400px at 20% 0%, rgba(14,165,233,0.25), transparent 60%), radial-gradient(600px 300px at 80% 0%, rgba(139,92,246,0.22), transparent 60%); pointer-events:none}
+header>*{position:relative}
+header h1{margin:0; font-size:2.15rem; font-weight:800; letter-spacing:-0.03em; line-height:1.1}
+header h1 span.grad{background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text}
+header p{opacity:0.82; max-width:900px; margin:8px auto 0; font-size:0.93rem}
+.header-actions{display:flex; gap:8px; justify-content:center; margin-top:14px; flex-wrap:wrap}
+.pill{font-size:0.78rem; padding:6px 12px; border-radius:999px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.14); color:white; backdrop-filter: blur(8px)}
+.pill b{color:white}
+.btn-ghost{appearance:none; cursor:pointer; font:600 0.82rem Inter; padding:8px 14px; border-radius:999px; background:white; color:#0f172a; border:none; box-shadow:0 4px 16px rgba(0,0,0,0.15); transition:transform .15s, box-shadow .15s}
+.btn-ghost:hover{transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,0,0,0.2)}
+.layout{display:flex; max-width:1440px; margin:0 auto; gap:0; min-height:calc(100vh - 120px)}
+aside.sidebar{width:var(--sidebarW); flex-shrink:0; background: linear-gradient(180deg, var(--card) 0%, var(--card2) 100%); border-right:1px solid var(--border); padding:18px 16px; position:sticky; top:92px; height:calc(100vh - 92px); overflow-y:auto; scrollbar-width:thin}
+aside.sidebar::-webkit-scrollbar{width:6px} aside.sidebar::-webkit-scrollbar-thumb{background:var(--border2); border-radius:999px}
+.sidebar-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+.progress-ring{position:relative; width:52px; height:52px; display:grid; place-items:center}
+.progress-ring svg{transform:rotate(-90deg)} .progress-ring span{position:absolute; font-size:0.78rem; font-weight:800; color:var(--accent)}
+.sidebar nav a{display:flex; gap:10px; align-items:center; padding:11px 12px; border-radius:14px; color:var(--text); text-decoration:none; font-size:0.9rem; font-weight:500; border:1px solid transparent; margin-bottom:7px; transition: all .18s; background: transparent}
+.sidebar nav a:hover{background:var(--bg2); border-color:var(--border); transform:translateX(2px)}
+.sidebar nav a.active{background: var(--gradSoft); border-color:#bae6fd; color:#0c4a6e; font-weight:700; box-shadow:0 4px 16px rgba(14,165,233,0.15)}
+.sidebar nav a.active .num{background:var(--accent); color:white; box-shadow:0 2px 8px rgba(14,165,233,0.4)}
+.sidebar .num{width:30px; height:30px; border-radius:999px; background:var(--bg2); display:flex; align-items:center; justify-content:center; font-size:0.82rem; font-weight:800; color:var(--muted); flex-shrink:0; border:1px solid var(--border); transition:all .18s}
+.sidebar .dot{width:9px; height:9px; border-radius:999px; margin-left:auto; flex-shrink:0; box-shadow:0 0 0 3px rgba(16,185,129,0.12)}
+.dot.fait{background:#10b981; box-shadow:0 0 0 4px rgba(16,185,129,0.15)} .dot.encours{background:#f59e0b; box-shadow:0 0 0 4px rgba(245,158,11,0.15)} .dot.todo{background:#cbd5e1}
+.hint{font-size:0.85rem; color:var(--text); background: var(--bg2); border:1px dashed var(--border2); border-radius:14px; padding:12px; margin-top:14px; line-height:1.6}
+.hint b{color:var(--text)}
+.btn-small{width:100%; margin-top:12px; padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:var(--card); cursor:pointer; font:600 0.85rem Inter; color:var(--text); transition: all .15s; display:flex; align-items:center; justify-content:center; gap:6px}
+.btn-small:hover{background:var(--bg2); border-color:var(--border2); transform:translateY(-1px)}
+.main{flex:1; padding:28px 24px 40px; max-width:calc(100% - var(--sidebarW));}
+@media(max-width:980px){
+.layout{flex-direction:column}
+aside.sidebar{width:100%; position:relative; top:0; height:auto; border-right:none; border-bottom:1px solid var(--border)}
+.main{max-width:100%; padding:18px 14px}
+header h1{font-size:1.7rem}
+}
+section.card{background: linear-gradient(180deg, var(--card) 0%, var(--card2) 100%); border:1px solid var(--border); border-radius:var(--radius); padding:30px; margin-bottom:22px; box-shadow:var(--shadow); position:relative; overflow:hidden; transition: box-shadow .2s, transform .2s, border-color .2s}
+section.card::before{content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--grad); opacity:0; transition:opacity .2s}
+section.card:hover{box-shadow:var(--shadow2); border-color:var(--border2); transform:translateY(-1px)}
+section.card:hover::before{opacity:1}
+section.card h2.sec{margin:0 0 8px; color:var(--primary); font-size:1.55rem; font-weight:800; letter-spacing:-0.02em; border-left:4px solid transparent; padding-left:14px; background: linear-gradient(90deg, var(--accent), transparent) left/4px 100% no-repeat}
+.subtitle{color:var(--text); font-size:0.9rem; margin-bottom:16px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; opacity:0.85}
+h3{color:var(--primary); margin-top:22px; font-weight:700; letter-spacing:-0.015em}
+.formula{background: var(--bg2); border:1px solid var(--border); border-radius:14px; padding:16px 18px; margin:14px 0; overflow-x:auto; font-size:0.96rem; position:relative; color:var(--text)}
+.formula::after{content:"fx"; position:absolute; top:10px; right:12px; font:700 0.65rem JetBrains Mono; letter-spacing:0.1em; color:var(--muted); background:var(--card); border:1px solid var(--border); padding:2px 6px; border-radius:999px}
+.figure{display:flex; flex-direction:column; align-items:center; gap:10px; margin:20px 0; padding:16px; background: #f8fafc; border:1px solid #e2e8f0; border-radius:16px; color:#0f172a}
+.figure figcaption{color:#475569 !important}
+.figure svg{max-width:100%; height:auto; filter: drop-shadow(0 4px 12px rgba(15,23,42,0.06))}
+.figure figcaption{font-size:0.84rem; color:var(--muted); text-align:center; max-width:700px; font-style:italic}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px} @media(max-width:800px){.grid2{grid-template-columns:1fr}}
+.tag{display:inline-flex; align-items:center; gap:6px; font-size:0.7rem; letter-spacing:0.08em; text-transform:uppercase; background:var(--gradSoft); color:#0c4a6e; padding:5px 10px; border-radius:999px; font-weight:700; border:1px solid #bae6fd}
+.kbd{font-family:JetBrains Mono, ui-monospace, monospace; background:#0f172a; color:#e2e8f0; padding:3px 7px; border-radius:8px; font-size:0.78em; border:1px solid #1e293b; box-shadow:0 2px 0 #020617}
+table{width:100%; border-collapse:separate; border-spacing:0; margin:12px 0; font-size:0.9rem; border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.04); background:var(--card)}
+th,td{padding:10px 12px; text-align:left; border-bottom:1px solid var(--border); color:var(--text)} th{background: var(--bg2); font-weight:700; color:var(--text); font-size:0.82rem; letter-spacing:0.04em; text-transform:uppercase} tr:last-child td{border-bottom:none} tr:hover td{background:var(--bg2)}
+.alert{border-left:4px solid #f59e0b; background: #fffbeb; padding:14px 16px; border-radius:12px; margin:14px 0; font-size:0.9rem; border:1px solid #fde68a; border-left-width:4px; color:#92400e}
+.alert b,.alert strong{color:#78350f}
+.success{border-left:4px solid #10b981; background: #ecfdf5; padding:14px 16px; border-radius:12px; margin:14px 0; border:1px solid #a7f3d0; border-left-width:4px; color:#065f46}
+.success b,.success strong{color:#064e3b}
+.badge{font-size:0.68rem; padding:4px 9px; border-radius:999px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; border:1px solid transparent}
+.badge.fait{background:#dcfce7; color:#166534; border-color:#86efac} .badge.encours{background:#fef3c7; color:#92400e; border-color:#fcd34d} .badge.todo{background:#e2e8f0; color:#334155; border-color:var(--border2)}
+.sec-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:2px}
+footer{text-align:center; color:var(--muted); padding:24px; font-size:0.85rem; border-top:1px solid var(--border); margin-top:10px; background:var(--card)}
+section.card.recall{background:linear-gradient(135deg,#f0f9ff,#e0f2fe); border-color:#bae6fd; color:#0f172a}
+section.card.recall h2{color:#0c4a6e; border:none; padding:0; background:none}
+section.card.recall p{color:#164e63}
+@keyframes fadeIn{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)}}
+section.card{animation: fadeIn .5s ease both} section.card:nth-child(1){animation-delay:.02s} section.card:nth-child(2){animation-delay:.06s} section.card:nth-child(3){animation-delay:.1s}
+code.inline{font-family:JetBrains Mono, monospace; background:var(--bg2); border:1px solid var(--border); padding:1px 6px; border-radius:6px; font-size:0.82em}
+pre.code{background:#0f172a; color:#e2e8f0; border-radius:14px; padding:16px 18px; overflow-x:auto; font-size:0.82rem; line-height:1.6; border:1px solid #1e293b}
+</style>
+</head>
+<body>
+<header>
+<h1>RTv1 — <span class="grad">Phase 2 · Étape 2</span></h1>
+<p>Image collage : stb_image → sampler2D(u,v) + repeat/clamp · PNG/JPG/PPM · 7 chapitres · Code réel du projet</p>
+<div class="header-actions">
+<span class="pill">🖼️ <b>stb_image</b> single-header</span>
+<span class="pill">🎯 <b>sampler2D</b> (u,v)→RGB</span>
+<span class="pill">🧱 <b>repeat / clamp</b></span>
+<button class="btn-ghost" id="themeBtn" onclick="cycleTheme()" title="Basculer clair / sombre / auto">◐ Thème : auto</button>
+<button class="btn-ghost" onclick="document.getElementById('c1').scrollIntoView({behavior:'smooth'})">Commencer →</button>
+</div>
+</header>
+
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-top">
+<h2 style="margin:0">Chapitres</h2>
+<div class="progress-ring" title="Progression">
+<svg width="52" height="52"><circle cx="26" cy="26" r="20" fill="none" stroke="#e2e8f0" stroke-width="5"/><circle id="progCircle" cx="26" cy="26" r="20" fill="none" stroke="url(#gradProg)" stroke-width="5" stroke-linecap="round" stroke-dasharray="125.6" stroke-dashoffset="0"/></svg>
+<span id="progress">7/7</span>
+<svg width="0" height="0"><defs><linearGradient id="gradProg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0ea5e9"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+</div>
+</div>
+<nav id="chapNav">
+<a href="#c1" data-id="c1"><span class="num">1</span> Pourquoi une image ? <span class="dot fait"></span></a>
+<a href="#c2" data-id="c2"><span class="num">2</span> stb_image <span class="dot fait"></span></a>
+<a href="#c3" data-id="c3"><span class="num">3</span> ImageTexture <span class="dot fait"></span></a>
+<a href="#c4" data-id="c4"><span class="num">4</span> Material + Renderer <span class="dot fait"></span></a>
+<a href="#c5" data-id="c5"><span class="num">5</span> PPM vs PNG/JPG <span class="dot fait"></span></a>
+<a href="#c6" data-id="c6"><span class="num">6</span> Parser + scène <span class="dot fait"></span></a>
+<a href="#c7" data-id="c7"><span class="num">7</span> Debug : le rendu gris <span class="dot fait"></span></a>
+</nav>
+<div class="hint"><b>Évaluation :</b> pars du damier (étape 1) → « les mêmes (u,v), mais <code class="inline">tex(u,v)</code> lit un pixel au lieu de calculer une parité ». Montre <code class="inline">sample()</code> puis <code class="inline">repeat/clamp</code>.</div>
+<button class="btn-small" onclick="document.querySelector('.main').scrollIntoView()">↑ Haut de page</button>
+</aside>
+<div class="main" id="main">
+
+<section class="card" id="c1">
+<div class="sec-head"><h2 class="sec">1. Pourquoi coller une image ?</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle">Après les UV (où) vient la <b>quoi</b> · <span class="kbd">Hit u/v</span> <span class="kbd">include/core/Object.hpp:5</span></div>
+<p>L'étape 1 a prouvé que chaque point 3D sait dire <b>(u, v) ∈ [0,1)²</b> (sphère = longitude×latitude, plan = projection, tube = angle×hauteur). Le damier calculait la couleur par une formule. L'image fait la même chose en <b>lisant un tableau de pixels</b> :</p>
+<div class="formula">
+\(\text{couleur}(P) = \text{tex}(\underbrace{u(P), v(P)}_{\text{étape 1}}, \underbrace{\text{pixels}[w \times h]}_{\text{étape 2}}).\)
+</div>
+<table>
+<tr><th>Étape 1 (checker)</th><th>Étape 2 (image)</th></tr>
+<tr><td><code class="inline">base = ((⌊u·s⌋+⌊v·s⌋) mod 2) ? albedo2 : albedo</code></td><td><code class="inline">base = map-&gt;sample(u, v)</code> (pixels 0–255)</td></tr>
+<tr><td>Preuve que les UV sont justes</td><td>Réutilise les <b>mêmes</b> UV — zéro changement géométrie</td></tr>
+<tr><td>2 couleurs</td><td>Millions de couleurs, mêmes équations d'éclairage</td></tr>
+</table>
+<div class="success"><b>Idée clé :</b> le <code class="inline">Renderer</code> ne change pas de maths d'éclairage — seule la ligne qui choisit <code class="inline">base</code> change. C'est pour ça que l'image suit automatiquement les objets en translation/rotation : les UV sont relatifs à l'objet, l'image ne fait que les habiller.</div>
+</section>
+
+<section class="card" id="c2">
+<div class="sec-head"><h2 class="sec">2. stb_image : le décodeur single-header</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle"><span class="kbd">include/stb/stb_image.h</span> (v2.30) · <span class="kbd">src/core/Texture.cpp:1</span></div>
+<h3>2.1. Principe</h3>
+<p><code class="inline">stb_image.h</code> (≈277 Ko) décode PNG, JPG, BMP, TGA, <b>PPM</b> en un appel. Règle d'or du single-header : le <code class="inline">.h</code> déclare partout, <b>un seul</b> <code class="inline">.cpp</code> définit l'implémentation :</p>
+<pre class="code">#define STB_IMAGE_IMPLEMENTATION  // 1 seule fois, ici :
+#include "stb/stb_image.h"        // src/core/Texture.cpp:4-5</pre>
+<p>Le mettre dans deux <code class="inline">.cpp</code> = symboles dupliqués au link. Le mettre nulle part = <code class="inline">undefined reference to stbi_load</code>.</p>
+<h3>2.2. Chargement forcé RGB</h3>
+<pre class="code">unsigned char* px = stbi_load(path.c_str(), &amp;w, &amp;h, &amp;n, 3); // 3 = force RGB
+if (!px || w &lt;= 0 || h &lt;= 0) return false;
+data.assign(px, px + (size_t)w * h * 3); // copie vers vector
+stbi_image_free(px);                     // libère le malloc interne</pre>
+<p>Forcer <code class="inline">3</code> canaux simplifie tout : pas de cas PNG gris (1 canal), RGB (3) ou RGBA (4) — le sampler lit toujours des triplets. Le <code class="inline">vector&lt;unsigned char&gt;</code> possède ensuite les pixels (RAII : <code class="inline">Scene::clear()</code> libère via <code class="inline">shared_ptr</code>, aucun <code class="inline">new</code> nu). Fichier absent ou corrompu → <code class="inline">load()</code> rend <code class="inline">false</code> → le parser refuse la scène avec <b>numéro de ligne</b> au lieu de rendre du magenta silencieux.</p>
+<div class="alert"><b>Coût :</b> une image 256×256 = 196 Ko RAM. Chargée <b>une fois</b> au parsing, partagée par tous les pixels via <code class="inline">shared_ptr</code> — le rendu multi-thread ne fait que lire, aucun verrou.</div>
+</section>
+
+<section class="card" id="c3">
+<div class="sec-head"><h2 class="sec">3. ImageTexture : sampler2D + repeat/clamp</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle"><span class="kbd">include/core/Texture.hpp:1</span> · <span class="kbd">src/core/Texture.cpp:38</span></div>
+<h3>3.1. Structure</h3>
+<pre class="code">enum class TexWrap { Repeat=0, Clamp=1 };
+class ImageTexture {
+  int w=0, h=0; TexWrap wrap = Repeat;
+  std::vector&lt;unsigned char&gt; data; // RGB, w*h*3
+  Vec3 sample(double u, double v) const; // 0-255
+};</pre>
+<h3>3.2. Wrap : que faire hors [0,1] ?</h3>
+<p>Les UV des caps et des surfaces infinies peuvent déborder (ex. <code class="inline">fract</code> plan, <code class="inline">v</code> hyperboloïde infini). Deux conventions Blender :</p>
+<div class="formula">
+\(\text{Repeat} : u \mapsto u - \lfloor u \rfloor\) (tuilage infini) — \(\text{Clamp} : u \mapsto \min(\max(u,0),1)\) (bords étirés).<br>
+Testé : <code class="inline">repeat(1.2) == repeat(0.2)</code> ✓, <code class="inline">clamp(1.5) == clamp(1.0)</code> ✓.
+</div>
+<h3>3.3. Échantillonnage + flip V</h3>
+<pre class="code">double uu = wrapCoord(u, wrap), vv = wrapCoord(v, wrap);
+vv = 1.0 - vv;                    // stb : ligne 0 en haut ; UV : origine en bas (Blender)
+int x = uu * w, y = vv * h;       // plus proche voisin (pas de filtrage bilinéaire)
+return Vec3(data[(y*w+x)*3], data[(y*w+x)*3+1], data[(y*w+x)*3+2]);</pre>
+<p>Sans le flip, l'image apparaît <b>à l'envers</b> (ciel en bas). Le plus proche voisin est volontaire : simple, rapide, et le moiré lointain reste un aliasing attendu — le filtrage bilinéaire sera une optimisation, pas un correctif.</p>
+<div class="figure">
+<svg width="700" height="170" viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,15)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Repeat : carrelage</text>
+<rect x="20" y="30" width="180" height="100" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="2" rx="6"/>
+<line x1="80" y1="30" x2="80" y2="130" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 3"/><line x1="140" y1="30" x2="140" y2="130" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 3"/>
+<text x="20" y="145" font-size="9" fill="#0c4a6e">u=1.2 → même pixel que u=0.2</text>
+</g>
+<g transform="translate(280,15)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Clamp : bords bloqués</text>
+<rect x="20" y="30" width="180" height="100" fill="#ede9fe" stroke="#8b5cf6" stroke-width="2" rx="6"/>
+<rect x="160" y="30" width="40" height="100" fill="#8b5cf6" opacity="0.25"/>
+<text x="20" y="145" font-size="9" fill="#5b21b6">u=1.5 → pixel du bord (x=w−1)</text>
+</g>
+<g transform="translate(510,15)">
+<text x="10" y="12" font-size="11" fill="#0f172a" font-weight="600">Texture manquante</text>
+<text x="10" y="40" font-size="28" font-weight="800" fill="#ff00ff">■</text><text x="40" y="45" font-size="9" fill="#0f172a">magenta (255,0,255)</text>
+<text x="10" y="70" font-size="9" fill="#64748b">jamais rendu en pratique :</text>
+<text x="10" y="85" font-size="9" fill="#64748b">le parser refuse avant</text>
+</g>
+</svg>
+<figcaption>Fig 3.1 — Repeat carrele (sol uvgrid), clamp étire le bord (cylindre), magenta = garde-fou jamais atteint grâce au parser strict.</figcaption>
+</div>
+</section>
+
+<section class="card" id="c4">
+<div class="sec-head"><h2 class="sec">4. Material + Renderer : priorité image</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle"><span class="kbd">include/core/Material.hpp:14</span> · <span class="kbd">src/core/Renderer.cpp:17</span></div>
+<h3>4.1. Extension du Material</h3>
+<pre class="code">struct Material {
+  // ... albedo, albedo2, useChecker, uvScale (étape 1, inchangés)
+  std::shared_ptr&lt;ImageTexture&gt; map = nullptr;
+  bool useImage = false; // prioritaire sur checker si actif
+};</pre>
+<p><code class="inline">shared_ptr</code> (pas <code class="inline">unique_ptr</code>) : la texture est créée au parsing puis <b>copiée avec</b> <code class="inline">Hit::material</code> à chaque intersection — le compteur partagé garde les pixels vivants tant qu'un objet ou un hit les référence. <code class="inline">class ImageTexture;</code> en forward-declaration dans le header évite d'inclure <code class="inline">stb</code> partout (temps de compile).</p>
+<h3>4.2. Ordre de résolution dans computeLight</h3>
+<pre class="code">Vec3 base = hit.color;
+if (m.useImage &amp;&amp; m.map &amp;&amp; !m.map-&gt;empty())
+    base = m.map-&gt;sample(hit.u, hit.v); // image d'abord
+else if (m.useChecker) { /* ... */ }      // sinon damier
+// puis éclairage Phase 1 inchangé :
+// col = base·(ambient + max(0,N·L)·I·0.9) + ombres dures</pre>
+<p>L'éclairage et les ombres sont <b>bit-identiques</b> à l'étape 1 quand <code class="inline">useImage=false</code> : aucune régression sur <code class="inline">uv.rt</code> / <code class="inline">exemple.rt</code>. L'image ne touche que <code class="inline">base</code>, donc une texture blanche rend exactement comme l'ancien uni blanc — bon test de non-régression.</p>
+<div class="grid2">
+<div class="formula"><b>Pourquoi image &gt; checker ?</b><br>Les deux utilisent les mêmes (u,v) : les cumuler (multiplier) assombrirait tout et compliquerait l'évaluation. Priorité simple = prédictible, et <code class="inline">tex off</code> / <code class="inline">mat diffuse</code> permettent de revenir en arrière.</div>
+<div class="formula"><b>Thread-safety :</b><br><code class="inline">sample()</code> est <code class="inline">const</code>, ne fait que lire <code class="inline">data</code>. N threads × M pixels lisent la même image sans verrou — comme les <code class="inline">Hit</code> locaux de la Phase 1.</div>
+</div>
+</section>
+
+<section class="card" id="c5">
+<div class="sec-head"><h2 class="sec">5. C'est quoi le .ppm ? (vs PNG/JPG)</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle"><span class="kbd">assets/checker.ppm</span> · <span class="kbd">assets/checker.png</span> · <span class="kbd">stbi_load</span> auto-détecte</div>
+<p><b>PPM</b> = Portable Pixmap (Netpbm) : le format image le plus simple qui existe. En-tête texte + pixels bruts :</p>
+<pre class="code">P6
+256 256
+255
+&lt;196608 octets RGB bruts&gt;</pre>
+<table>
+<tr><th></th><th>PPM binaire (P6)</th><th>PNG</th><th>JPG</th></tr>
+<tr><td>Contenu</td><td>RGB brut, sans compression</td><td>RVBA compressé sans perte</td><td>compressé avec pertes (photo)</td></tr>
+<tr><td>Taille 256×256</td><td><b>193 Ko</b> (toujours w×h×3)</td><td><b>869 o</b> (damier) — mesures réelles</td><td>variable, ~5–20 Ko</td></tr>
+<tr><td>Lisible à la main</td><td>oui (généré en 10 lignes Python)</td><td>non (zlib + filtres)</td><td>non (DCT)</td></tr>
+<tr><td>Pour RTv1</td><td>debug parfait (pixels exacts)</td><td>assets finaux (léger)</td><td>photos (jamais de damier !)</td></tr>
+</table>
+<p><code class="inline">AGENTS.md</code> ne parle que de <code class="inline">stb_image.h → sampler2D</code>, <b>sans imposer d'extension</b> : <code class="inline">stbi_load</code> détecte le format par la signature du fichier, pas par son nom. Notre <code class="inline">load()</code> accepte donc PNG/JPG/BMP/TGA/PPM de la même façon — vérifié : <code class="inline">checker.png 256×256</code> charge et rend <code class="inline">PASS</code>.</p>
+<div class="success"><b>Choix du projet :</b> générer en <code class="inline">.ppm</code> (scriptable sans dépendance, pixels contrôlés au bit près), livrer la scène en <code class="inline">.png</code> (<code class="inline">scenes/image.rt → assets/*.png</code>). Les <code class="inline">.ppm</code> restent en fallback. Ne jamais mettre de JPG pour un damier de test : la compression DCT bave les bords noir/blanc.</div>
+</section>
+
+<section class="card" id="c6">
+<div class="sec-head"><h2 class="sec">6. Parser tex + scène image.rt</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle"><span class="kbd">src/parser/SceneParser.cpp:226</span> · <span class="kbd">scenes/image.rt</span> · <span class="kbd">make run image.rt</span></div>
+<h3>6.1. Syntaxe (appliquée au dernier objet, comme mat)</h3>
+<pre class="code">sp -2,0.5,0 1 255,255,255
+tex image assets/checker.png repeat   # ou clamp, ou sans mode (= repeat)
+tex off                               # désactive l'image (retour checker/uni)
+cyl 0,0,0 0,1,0 0.5 2 255,255,255
+tex image assets/uvgrid.png clamp</pre>
+<p>Erreurs strictes avec numéro de ligne : <code class="inline">tex image</code> sans objet avant, wrap inconnu (<code class="inline">tile</code>), fichier introuvable (<code class="inline">tex image introuvable 'nofile.png'</code> → parsing refusé, pas de rendu partiel). C'est volontaire : une texture silencieusement absente donnerait un rendu « presque bon » impossible à noter.</p>
+<h3>6.2. Scène de test</h3>
+<table>
+<tr><th>Objet (image.rt)</th><th>Texture</th><th>Projection</th><th>Attendu</th></tr>
+<tr><td>Plan</td><td>uvgrid repeat</td><td>planaire</td><td>dégradé R=u G=v tuilé jusqu'à l'horizon</td></tr>
+<tr><td>Sphère</td><td>checker repeat</td><td>sphérique</td><td>cases rouge/noir, bordure verte = orientation</td></tr>
+<tr><td>Cylindre</td><td>uvgrid clamp</td><td>cylindrique</td><td>dégradé vertical bloqué, pas de tuilage</td></tr>
+<tr><td>Cône</td><td>checker repeat</td><td>cylindrique</td><td>cases resserrées vers l'apex (circonférence ∝ h−y)</td></tr>
+</table>
+<div class="success"><b>Validation exécutée :</b> 4/4 <code class="inline">useImage=1</code> ✓ · headless 320×180 = <b>1134 px rouges</b> (texture bien échantillonnée) ✓ · <code class="inline">repeat(1.2)==repeat(0.2)</code>, <code class="inline">clamp(1.5)==clamp(1.0)</code>, magenta si vide ✓ · ASan clean ✓ · pleine résa 1080×720 texturée ✓.</div>
+</section>
+
+<section class="card" id="c7">
+<div class="sec-head"><h2 class="sec">7. Debug réel : le rendu tout gris</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle"><span class="kbd">Makefile:58</span> · <span class="kbd">tmp/image.png</span> vs headless · à raconter en évaluation</div>
+<p>Symptôme observé : le headless (compilé frais en une ligne <code class="inline">g++</code>) affichait les textures, mais <code class="inline">./bin/rtv1 scenes/image.rt</code> rendait <b>tout gris</b> (<code class="inline">tmp/image.png</code>). Même scène, deux résultats → ce n'est pas la scène, c'est le <b>binaire</b>.</p>
+<div class="formula">
+Cause : <code class="inline">obj/%.o: src/%.cpp</code> — aucune dépendance headers.<br>
+Après l'édition de <code class="inline">Material.hpp</code> (+<code class="inline">map/useImage</code>), <code class="inline">SceneParser.o</code> (09:59) n'a <b>pas</b> été reconstruit : l'ancien parser ignorait silencieusement les lignes <code class="inline">tex</code> (directive inconnue = skip), objets restés blancs → gris sous lumière.
+</div>
+<pre class="code">HEADERS = $(shell find include -name '*.hpp' -o -name '*.h')
+obj/%.o: src/%.cpp $(HEADERS) | $(SDL_SO)   # Makefile:58 — tout header rebuild tout
+make clean && make && ./bin/rtv1 scenes/image.rt  # 1080x720 texturé ✓</pre>
+<div class="alert"><b>Leçon :</b> un rendu uni alors qu'on attend une texture = d'abord <code class="inline">ls -l obj/</code> vs <code class="inline">include/</code>, pas les maths d'UV. En évaluation, cite les 3 indices : (1) headless frais OK / binaire KO, (2) <code class="inline">SceneParser.o</code> plus vieux que <code class="inline">Material.hpp</code>, (3) ancien parser = lignes <code class="inline">tex</code> ignorées sans erreur.</div>
+<h3>7.1. Exercices (5 min)</h3>
+<p>1) Passe le cylindre de <code class="inline">clamp</code> à <code class="inline">repeat</code> : prédis la différence verticale avant de lancer. 2) Mets <code class="inline">tex off</code> après la sphère : que vaut <code class="inline">base</code> ? 3) Pourquoi le flip <code class="inline">vv = 1−vv</code> ? (indice : ligne 0 stb en haut, origine UV Blender en bas). 4) Prochaine étape : à quoi ressemblerait <code class="inline">tex wave sinus</code> avec ces mêmes <code class="inline">sample(u,v)</code> ?</p>
+<div style="margin-top:16px; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; font-size:0.82rem; line-height:1.5; color:var(--text)">
+<b>📚 Sources — Phase 2 étape 2</b><br>
+[1] <b>Catmull 1974 / Blinn &amp; Newell 1976</b> — mapping (u,v) (rappel étape 1)<br>
+[2] <b>stb_image v2.30 (Nothings)</b> — <span class="kbd">include/stb/stb_image.h</span>, <code class="inline">stbi_load / stbi_image_free</code><br>
+[3] <b>Netpbm PPM</b> — spec P6 (en-tête texte + RGB brut)<br>
+[4] Code : <span class="kbd">Texture.hpp:1</span> <span class="kbd">Texture.cpp:13/38</span> <span class="kbd">Material.hpp:14</span> <span class="kbd">Renderer.cpp:17</span> <span class="kbd">SceneParser.cpp:226</span> <span class="kbd">Makefile:58</span> <span class="kbd">scenes/image.rt</span> <span class="kbd">assets/checker.png uvgrid.png</span>
+</div>
+</section>
+
+<div class="card recall" style="text-align:center">
+<h2>À retenir 30s</h2>
+<p style="max-width:700px; margin:10px auto">Image = <code class="inline">tex(u,v)</code> sur les UV de l'étape 1 : <code class="inline">stbi_load(RGB)</code> une fois, <code class="inline">sample = wrap + flip V + plus proche voisin</code>, <code class="inline">Repeat=fract</code> / <code class="inline">Clamp=bords</code>, priorité <code class="inline">image &gt; checker &gt; uni</code>. PPM = brut exact pour tester, PNG = léger pour livrer. <code class="inline">tex image &lt;path&gt; [repeat|clamp]</code> après l'objet, <code class="inline">make clean &amp;&amp; make run image.rt</code>.</p>
+</div>
+
+</div>
+</div>
+
+<footer>RTv1_building — Phase 2 Étape 2 · Image collage · 7 chapitres · Recharge après <code>make run image.rt</code></footer>
+
+<script>
+const themeBtn=document.getElementById('themeBtn');
+function applyTheme(t){
+  const root=document.documentElement;
+  if(t==='auto'){ root.removeAttribute('data-theme'); }
+  else { root.setAttribute('data-theme', t); }
+  if(themeBtn) themeBtn.textContent='◐ Thème : '+t;
+  try{ localStorage.setItem('rtv1-theme', t); }catch(e){}
+}
+function cycleTheme(){
+  let cur='auto';
+  try{ cur=localStorage.getItem('rtv1-theme')||'auto'; }catch(e){}
+  applyTheme(cur==='auto' ? 'light' : cur==='light' ? 'dark' : 'auto');
+}
+(function(){ let t='auto'; try{ t=localStorage.getItem('rtv1-theme')||'auto'; }catch(e){} applyTheme(t); })();
+const links=[...document.querySelectorAll('#chapNav a')]
+const secs=[...document.querySelectorAll('section.card[id^="c"]')]
+function onScroll(){
+  let cur=""
+  secs.forEach(s=>{ if(window.scrollY + 160 >= s.offsetTop) cur=s.id })
+  links.forEach(a=> a.classList.toggle('active', a.dataset.id===cur))
+  const done=document.querySelectorAll('.badge.fait').length
+  document.getElementById('progress').textContent=done+"/7"
+  const pct=done/7
+  const circ=document.getElementById('progCircle')
+  if(circ){ const C=2*Math.PI*20; circ.style.strokeDashoffset = C*(1-pct) }
+}
+window.addEventListener('scroll', onScroll, {passive:true})
+onScroll()
+links.forEach(a=> a.addEventListener('click', ()=>{ links.forEach(x=>x.classList.remove('active')); a.classList.add('active') }))
+let lastY=0; window.addEventListener('scroll', ()=>{ const y=window.scrollY; if(Math.abs(y-lastY)>10){ document.querySelector('header').style.transform=`translateY(${Math.min(y*0.08, 6)}px)`; lastY=y } }, {passive:true})
+</script>
+</body>
+</html>

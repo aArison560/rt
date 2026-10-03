@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RTv1 — Phase 2 Étape 1 · Material & UV + Checker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+:root{
+--primary:#0f172a; --accent:#0ea5e9; --accent2:#8b5cf6; --accent3:#06b6d4;
+--bg:#f8fafc; --bg2:#f1f5f9; --card:#ffffff; --card2:#fcfdff; --text:#0f172a; --muted:#475569; --border:#e2e8f0; --border2:#cbd5e1;
+--sidebarW:300px; --radius:18px; --shadow:0 10px 30px rgba(15,23,42,0.08), 0 1px 3px rgba(15,23,42,0.06); --shadow2:0 20px 60px rgba(15,23,42,0.12);
+--grad: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 50%, #06b6d4 100%);
+--gradSoft: linear-gradient(135deg, #e0f2fe 0%, #ede9fe 60%, #cffafe 100%);
+}
+@media(prefers-color-scheme:dark){
+:root:not([data-theme="light"]){--bg:#0b1220; --bg2:#111c34; --card:#12213e; --card2:#162a4d; --text:#e2e8f0; --muted:#94a3b8; --border:#1e3a5f; --border2:#234876; --primary:#f1f5f9}
+}
+html[data-theme="light"]{--bg:#f8fafc; --bg2:#eef2f7; --card:#ffffff; --card2:#fcfdff; --text:#0f172a; --muted:#475569; --border:#e2e8f0; --border2:#cbd5e1; --primary:#0f172a}
+html[data-theme="dark"]{--bg:#0b1220; --bg2:#111c34; --card:#12213e; --card2:#162a4d; --text:#e2e8f0; --muted:#a8bdd6; --border:#1e3a5f; --border2:#234876; --primary:#f1f5f9}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0; font-family:Inter, system-ui, -apple-system, sans-serif; background: radial-gradient(1200px 600px at 10% -10%, #e0f2fe 0%, transparent 60%), radial-gradient(1000px 500px at 90% 0%, #ede9fe 0%, transparent 55%), var(--bg); color:var(--text); line-height:1.7; -webkit-font-smoothing:antialiased}
+a{color:inherit}
+header{position:sticky; top:0; z-index:20; padding:22px 20px 18px; text-align:center; background: rgba(15,23,42,0.88); backdrop-filter: blur(16px) saturate(1.2); border-bottom:1px solid rgba(255,255,255,0.08); color:white; overflow:hidden}
+header::before{content:""; position:absolute; inset:0; background: radial-gradient(800px 400px at 20% 0%, rgba(14,165,233,0.25), transparent 60%), radial-gradient(600px 300px at 80% 0%, rgba(139,92,246,0.22), transparent 60%); pointer-events:none}
+header>*{position:relative}
+header h1{margin:0; font-size:2.15rem; font-weight:800; letter-spacing:-0.03em; line-height:1.1}
+header h1 span.grad{background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text}
+header p{opacity:0.82; max-width:900px; margin:8px auto 0; font-size:0.93rem}
+.header-actions{display:flex; gap:8px; justify-content:center; margin-top:14px; flex-wrap:wrap}
+.pill{font-size:0.78rem; padding:6px 12px; border-radius:999px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.14); color:white; backdrop-filter: blur(8px)}
+.pill b{color:white}
+.btn-ghost{appearance:none; cursor:pointer; font:600 0.82rem Inter; padding:8px 14px; border-radius:999px; background:white; color:#0f172a; border:none; box-shadow:0 4px 16px rgba(0,0,0,0.15); transition:transform .15s, box-shadow .15s}
+.btn-ghost:hover{transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,0,0,0.2)}
+.layout{display:flex; max-width:1440px; margin:0 auto; gap:0; min-height:calc(100vh - 120px)}
+aside.sidebar{width:var(--sidebarW); flex-shrink:0; background: linear-gradient(180deg, var(--card) 0%, var(--card2) 100%); border-right:1px solid var(--border); padding:18px 16px; position:sticky; top:92px; height:calc(100vh - 92px); overflow-y:auto; scrollbar-width:thin}
+aside.sidebar::-webkit-scrollbar{width:6px} aside.sidebar::-webkit-scrollbar-thumb{background:var(--border2); border-radius:999px}
+.sidebar-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+.sidebar-title{font-size:0.8rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-weight:700}
+.progress-ring{position:relative; width:52px; height:52px; display:grid; place-items:center}
+.progress-ring svg{transform:rotate(-90deg)} .progress-ring span{position:absolute; font-size:0.78rem; font-weight:800; color:var(--accent)}
+.sidebar nav a{display:flex; gap:10px; align-items:center; padding:11px 12px; border-radius:14px; color:var(--text); text-decoration:none; font-size:0.9rem; font-weight:500; border:1px solid transparent; margin-bottom:7px; transition: all .18s; background: transparent}
+.sidebar nav a:hover{background:var(--bg2); border-color:var(--border); transform:translateX(2px)}
+.sidebar nav a.active{background: var(--gradSoft); border-color:#bae6fd; color:#0c4a6e; font-weight:700; box-shadow:0 4px 16px rgba(14,165,233,0.15)}
+.sidebar nav a.active .num{background:var(--accent); color:white; box-shadow:0 2px 8px rgba(14,165,233,0.4)}
+.sidebar .num{width:30px; height:30px; border-radius:999px; background:var(--bg2); display:flex; align-items:center; justify-content:center; font-size:0.82rem; font-weight:800; color:var(--muted); flex-shrink:0; border:1px solid var(--border); transition:all .18s}
+.sidebar .dot{width:9px; height:9px; border-radius:999px; margin-left:auto; flex-shrink:0; box-shadow:0 0 0 3px rgba(16,185,129,0.12)}
+.dot.fait{background:#10b981; box-shadow:0 0 0 4px rgba(16,185,129,0.15)} .dot.encours{background:#f59e0b; box-shadow:0 0 0 4px rgba(245,158,11,0.15)} .dot.todo{background:#cbd5e1}
+.hint{font-size:0.85rem; color:var(--text); background: var(--bg2); border:1px dashed var(--border2); border-radius:14px; padding:12px; margin-top:14px; line-height:1.6}
+.hint b{color:var(--text)}
+.btn-small{width:100%; margin-top:12px; padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:var(--card); cursor:pointer; font:600 0.85rem Inter; color:var(--text); transition: all .15s; display:flex; align-items:center; justify-content:center; gap:6px}
+.btn-small:hover{background:var(--bg2); border-color:var(--border2); transform:translateY(-1px)}
+.main{flex:1; padding:28px 24px 40px; max-width:calc(100% - var(--sidebarW));}
+@media(max-width:980px){
+.layout{flex-direction:column}
+aside.sidebar{width:100%; position:relative; top:0; height:auto; border-right:none; border-bottom:1px solid var(--border)}
+.main{max-width:100%; padding:18px 14px}
+header h1{font-size:1.7rem}
+}
+section.card{background: linear-gradient(180deg, var(--card) 0%, var(--card2) 100%); border:1px solid var(--border); border-radius:var(--radius); padding:30px; margin-bottom:22px; box-shadow:var(--shadow); position:relative; overflow:hidden; transition: box-shadow .2s, transform .2s, border-color .2s}
+section.card::before{content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--grad); opacity:0; transition:opacity .2s}
+section.card:hover{box-shadow:var(--shadow2); border-color:var(--border2); transform:translateY(-1px)}
+section.card:hover::before{opacity:1}
+section.card h2.sec{margin:0 0 8px; color:var(--primary); font-size:1.55rem; font-weight:800; letter-spacing:-0.02em; border-left:4px solid transparent; padding-left:14px; background: linear-gradient(90deg, var(--accent), transparent) left/4px 100% no-repeat}
+.subtitle{color:var(--text); font-size:0.9rem; margin-bottom:16px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; opacity:0.85}
+h3{color:var(--primary); margin-top:22px; font-weight:700; letter-spacing:-0.015em}
+.formula{background: var(--bg2); border:1px solid var(--border); border-radius:14px; padding:16px 18px; margin:14px 0; overflow-x:auto; font-size:0.96rem; position:relative; color:var(--text)}
+.formula::after{content:"fx"; position:absolute; top:10px; right:12px; font:700 0.65rem JetBrains Mono; letter-spacing:0.1em; color:var(--muted); background:var(--card); border:1px solid var(--border); padding:2px 6px; border-radius:999px}
+.figure{display:flex; flex-direction:column; align-items:center; gap:10px; margin:20px 0; padding:16px; background: #f8fafc; border:1px solid #e2e8f0; border-radius:16px; color:#0f172a}
+.figure figcaption{color:#475569 !important}
+.figure svg{max-width:100%; height:auto; filter: drop-shadow(0 4px 12px rgba(15,23,42,0.06))}
+.figure figcaption{font-size:0.84rem; color:var(--muted); text-align:center; max-width:700px; font-style:italic}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px} @media(max-width:800px){.grid2{grid-template-columns:1fr}}
+.tag{display:inline-flex; align-items:center; gap:6px; font-size:0.7rem; letter-spacing:0.08em; text-transform:uppercase; background:var(--gradSoft); color:#0c4a6e; padding:5px 10px; border-radius:999px; font-weight:700; border:1px solid #bae6fd}
+.kbd{font-family:JetBrains Mono, ui-monospace, monospace; background:#0f172a; color:#e2e8f0; padding:3px 7px; border-radius:8px; font-size:0.78em; border:1px solid #1e293b; box-shadow:0 2px 0 #020617}
+table{width:100%; border-collapse:separate; border-spacing:0; margin:12px 0; font-size:0.9rem; border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.04); background:var(--card)}
+th,td{padding:10px 12px; text-align:left; border-bottom:1px solid var(--border); color:var(--text)} th{background: var(--bg2); font-weight:700; color:var(--text); font-size:0.82rem; letter-spacing:0.04em; text-transform:uppercase} tr:last-child td{border-bottom:none} tr:hover td{background:var(--bg2)}
+.alert{border-left:4px solid #f59e0b; background: #fffbeb; padding:14px 16px; border-radius:12px; margin:14px 0; font-size:0.9rem; border:1px solid #fde68a; border-left-width:4px; color:#92400e}
+.alert b,.alert strong{color:#78350f}
+.success{border-left:4px solid #10b981; background: #ecfdf5; padding:14px 16px; border-radius:12px; margin:14px 0; border:1px solid #a7f3d0; border-left-width:4px; color:#065f46}
+.success b,.success strong{color:#064e3b}
+.badge{font-size:0.68rem; padding:4px 9px; border-radius:999px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; border:1px solid transparent}
+.badge.fait{background:#dcfce7; color:#166534; border-color:#86efac} .badge.encours{background:#fef3c7; color:#92400e; border-color:#fcd34d} .badge.todo{background:#e2e8f0; color:#334155; border-color:var(--border2)}
+.figure figcaption{color:#334155 !important}
+.sec-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:2px}
+footer{text-align:center; color:var(--muted); padding:24px; font-size:0.85rem; border-top:1px solid var(--border); margin-top:10px; background:var(--card)}
+/* Bandeau "À retenir" : couleurs explicites, indépendantes du thème */
+section.card.recall{background:linear-gradient(135deg,#f0f9ff,#e0f2fe); border-color:#bae6fd; color:#0f172a}
+section.card.recall h2{color:#0c4a6e; border:none; padding:0; background:none}
+section.card.recall p{color:#164e63}
+@keyframes fadeIn{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)}}
+section.card{animation: fadeIn .5s ease both} section.card:nth-child(1){animation-delay:.02s} section.card:nth-child(2){animation-delay:.06s} section.card:nth-child(3){animation-delay:.1s}
+code.inline{font-family:JetBrains Mono, monospace; background:var(--bg2); border:1px solid var(--border); padding:1px 6px; border-radius:6px; font-size:0.82em}
+pre.code{background:#0f172a; color:#e2e8f0; border-radius:14px; padding:16px 18px; overflow-x:auto; font-size:0.82rem; line-height:1.6; border:1px solid #1e293b}
+</style>
+</head>
+<body>
+<header>
+<h1>RTv1 — <span class="grad">Phase 2 · Étape 1</span></h1>
+<p>Material &amp; coordonnées UV + damier de validation · sphérique · planaire · cylindrique · 7 chapitres · Code réel du projet</p>
+<div class="header-actions">
+<span class="pill">🎨 <b>Material</b> albedo + type</span>
+<span class="pill">🗺️ <b>UV</b> 3 projections</span>
+<span class="pill">♟️ <b>Checker</b> preuve visuelle</span>
+<button class="btn-ghost" id="themeBtn" onclick="cycleTheme()" title="Basculer clair / sombre / auto">◐ Thème : auto</button>
+<button class="btn-ghost" onclick="document.getElementById('c1').scrollIntoView({behavior:'smooth'})">Commencer →</button>
+</div>
+</header>
+
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-top">
+<h2 style="margin:0">Chapitres</h2>
+<div class="progress-ring" title="Progression">
+<svg width="52" height="52"><circle cx="26" cy="26" r="20" fill="none" stroke="#e2e8f0" stroke-width="5"/><circle id="progCircle" cx="26" cy="26" r="20" fill="none" stroke="url(#gradProg)" stroke-width="5" stroke-linecap="round" stroke-dasharray="125.6" stroke-dashoffset="0"/></svg>
+<span id="progress">7/7</span>
+<svg width="0" height="0"><defs><linearGradient id="gradProg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0ea5e9"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+</div>
+</div>
+<nav id="chapNav">
+<a href="#c1" data-id="c1"><span class="num">1</span> Pourquoi les UV <span class="dot fait"></span></a>
+<a href="#c2" data-id="c2"><span class="num">2</span> Material <span class="dot fait"></span></a>
+<a href="#c3" data-id="c3"><span class="num">3</span> UV sphérique <span class="dot fait"></span></a>
+<a href="#c4" data-id="c4"><span class="num">4</span> UV planaire <span class="dot fait"></span></a>
+<a href="#c5" data-id="c5"><span class="num">5</span> UV cylindrique + caps <span class="dot fait"></span></a>
+<a href="#c6" data-id="c6"><span class="num">6</span> Checker &amp; éclairage <span class="dot fait"></span></a>
+<a href="#c7" data-id="c7"><span class="num">7</span> Parser, scène &amp; validation <span class="dot fait"></span></a>
+</nav>
+<div class="hint">
+<b>Comment lire ce cours</b><br>
+Chaque chapitre = maths → code → figure. Les refs <span class="kbd">fichier:ligne</span> pointent vers le vrai dépôt. Teste avec <span class="kbd">make run uv.rt</span>.
+</div>
+<button class="btn-small" onclick="toggleCompact()">⤢ Plein écran cours</button>
+<div style="margin-top:12px; font-size:0.78rem; color:var(--muted)">Refs : <span class="kbd">Material.hpp</span> <span class="kbd">Object.cpp</span> <span class="kbd">Quadric.cpp</span> <span class="kbd">Renderer.cpp</span></div>
+</aside>
+
+<div class="main" id="main">
+
+<!-- CHAPITRE 1 -->
+<section class="card" id="c1">
+<div class="sec-head"><h2 class="sec">1. Pourquoi des coordonnées UV ?</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle">Séparer <b>où</b> (géométrie 3D) de <b>quoi</b> (couleur 2D) · <span class="kbd">Hit</span> <span class="kbd">include/core/Object.hpp:5</span></div>
+<p>Un point d'impact vit en 3D : <b>hit.point = (x, y, z)</b>. Une texture (image, damier, bruit) vit en 2D : <b>(u, v) ∈ [0,1)²</b>. La fonction de <b>paramétrisation</b> fait le pont :</p>
+<div class="formula">
+\(\Phi : \text{surface 3D} \to [0,1)^2, \quad \Phi(P) = (u, v)\) — puis \(\text{couleur}(P) = \text{tex}(u,v)\).
+</div>
+<p>Concrètement dans RTv1, chaque <code class="inline">intersect</code> remplit désormais trois choses : le point, la normale <b>et</b> les UV. Le <code class="inline">Renderer</code> n'a plus besoin de savoir si l'objet est une sphère ou un plan : il lit juste <code class="inline">hit.u / hit.v</code> et <code class="inline">hit.material</code>.</p>
+<table>
+<tr><th>Avant (Phase 1)</th><th>Après (Phase 2 étape 1)</th></tr>
+<tr><td><code class="inline">Hit { t, point, normal, color }</code></td><td><code class="inline">Hit { t, point, normal, color, u, v, material }</code></td></tr>
+<tr><td>Couleur uniforme par objet</td><td>Couleur = fonction(u, v) → damier, puis image, puis bruit</td></tr>
+<tr><td>Rien à valider visuellement</td><td>Le damier <b>prouve</b> que les UV sont corrects (cases carrées, pas de couture béante)</td></tr>
+</table>
+<div class="success"><b>Idée clé :</b> le damier n'est pas un gadget — c'est l'instrument de mesure des UV. Des cases qui s'étirent = paramétrisation fautive. Des cases régulières = feu vert pour coller de vraies images à l'étape suivante.</div>
+</section>
+
+<!-- CHAPITRE 2 -->
+<section class="card" id="c2">
+<div class="sec-head"><h2 class="sec">2. Le Material : albedo, type, damier</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle"><span class="kbd">include/core/Material.hpp:1</span> · <span class="kbd">Object::material</span> <span class="kbd">include/core/Object.hpp:30</span></div>
+<h3>2.1. Structure</h3>
+<pre class="code">struct Material {
+    Vec3 albedo{255,255,255};  // couleur 1 (0-255, comme avant)
+    Vec3 albedo2{0,0,0};       // couleur 2 du damier
+    MaterialType type = Diffuse;
+    bool useChecker = false;   // false -&gt; rendu Phase 1 identique
+    double uvScale = 8.0;      // cases par unité UV
+};
+enum class MaterialType { Diffuse=0, Metal=1, Dielectric=2 };</pre>
+<p><b>albedo</b> = fraction de lumière réémise (ici en 0–255 par compatibilité avec <code class="inline">Object::color</code>). <b>type</b> ne sert pas encore : il prépare la Phase 3 (réflexion <code class="inline">Metal</code>, réfraction <code class="inline">Dielectric</code>) sans re-câbler les structures.</p>
+<h3>2.2. Où vit le matériau ?</h3>
+<div class="formula">
+<code class="inline">Object::material</code> (1 par objet, initialisé à <code class="inline">Material(color)</code>) → copié dans <code class="inline">Hit::material</code> à chaque intersection → lu par <code class="inline">Renderer::computeLight</code>.
+</div>
+<p>Copie volontaire (pas de pointeur) : le multi-thread lit des <code class="inline">Hit</code> locaux, aucun verrou, aucune durée de vie à gérer. Chaque constructeur (<code class="inline">Sphere</code>, <code class="inline">Plane</code>, <code class="inline">Cylinder/Cone/Paraboloid/Hyperboloid</code>) fait <code class="inline">material = Material(col)</code> — oublier cette ligne = damier noir/blanc par défaut sur cet objet.</p>
+<div class="alert"><b>Piège :</b> après toute modification d'un <code class="inline">.hpp</code>, lancer <code class="inline">make re</code> (pas juste <code class="inline">make</code>) : le Makefile ne suit pas les dépendances headers, les vieux <code class="inline">.o</code> mélangés au nouveau header produisent un warning ODR/LTO silencieux.</div>
+</section>
+
+<!-- CHAPITRE 3 -->
+<section class="card" id="c3">
+<div class="sec-head"><h2 class="sec">3. UV sphérique : longitude × latitude</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle"><span class="kbd">Sphere::getUV</span> <span class="kbd">src/core/Object.cpp:29</span> · appel <span class="kbd">Object.cpp:22</span></div>
+<h3>3.1. Dérivation</h3>
+<p>On normalise : \(\mathbf{l} = (P - C)/r\), donc \(\|\mathbf{l}\| = 1\). Longitude \(\theta = \mathrm{atan2}(l_z, l_x) \in [-\pi,\pi]\), latitude \(\phi = \arcsin(l_y) \in [-\pi/2, \pi/2]\). On ramène à \([0,1)\) :</p>
+<div class="formula">
+\(u = \mathrm{fract}\left(\frac{\theta}{2\pi} + 0.5\right), \qquad v = 0.5 - \frac{\phi}{\pi}.\)
+</div>
+<p>Pourquoi \(\mathrm{atan2}\) et pas \(\arctan(z/x)\) ? Parce qu'\(\mathrm{atan2}\) couvre les 4 quadrants (signe de x et z) — \(\arctan\) seul replierait la moitié arrière de la sphère sur l'avant. Le <code class="inline">clamp</code> de \(l_y\) à \([-1,1]\) protège \(\arcsin\) des erreurs d'arrondi (\(\|\mathbf{l}\| = 1.0000000002\) arrive vraiment).</p>
+<div class="figure">
+<svg width="700" height="180" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="60" y="12" font-size="11" fill="#0f172a" font-weight="600">Sphère → rectangle (équirectangulaire)</text>
+<circle cx="80" cy="80" r="45" fill="none" stroke="#0ea5e9" stroke-width="2.5"/>
+<ellipse cx="80" cy="80" rx="45" ry="15" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 3"/>
+<ellipse cx="80" cy="80" rx="22" ry="15" fill="none" stroke="#8b5cf6" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>
+<line x1="80" y1="35" x2="80" y2="125" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="86" y="60" font-size="9" fill="#0c4a6e">θ = atan2(z,x)</text>
+<text x="86" y="100" font-size="9" fill="#5b21b6">φ = asin(y)</text>
+</g>
+<g transform="translate(250,20)">
+<text x="70" y="12" font-size="11" fill="#0f172a" font-weight="600">Déroulé u×v</text>
+<rect x="30" y="30" width="180" height="100" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="2" rx="6"/>
+<line x1="30" y1="80" x2="210" y2="80" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 3"/>
+<line x1="120" y1="30" x2="120" y2="130" stroke="#0ea5e9" stroke-width="1.5" stroke-dasharray="4 3"/>
+<text x="36" y="48" font-size="9" fill="#0c4a6e">u : 0 → 1 (tour complet)</text>
+<text x="36" y="122" font-size="9" fill="#5b21b6">v : 0 (pôle N) → 1 (pôle S)</text>
+</g>
+<g transform="translate(490,20)">
+<text x="10" y="12" font-size="11" fill="#0f172a" font-weight="600">Couture &amp; pôles</text>
+<text x="10" y="35" font-size="9" fill="#92400e">⚠ couture u=0/1 : normale ✓, UV discontinu — normal pour un damier</text>
+<text x="10" y="55" font-size="9" fill="#92400e">⚠ pôles : triangles → pixels fins, le damier se pince — attendu</text>
+<text x="10" y="80" font-size="9" fill="#065f46">✓ test : scale=8 → 16 cases sur l'équateur, symétrie N/S</text>
+</g>
+</svg>
+<figcaption>Fig 3.1 — Projection équirectangulaire : comme peler une orange en un rectangle. Couture en θ=±π et pincement aux pôles sont inévitables — le damier les rend visibles au lieu de les cacher.</figcaption>
+</div>
+<pre class="code">void Sphere::getUV(const Vec3&amp; p, double&amp; u, double&amp; v) const {
+    Vec3 l = (p - center) / radius;
+    double theta = atan2(l.z, l.x);
+    double phi = asin(clamp(l.y, -1, 1));
+    u = fract(theta / (2*PI) + 0.5);
+    v = 0.5 - phi / PI;
+}</pre>
+</section>
+
+<!-- CHAPITRE 4 -->
+<section class="card" id="c4">
+<div class="sec-head"><h2 class="sec">4. UV planaire : projection sur la base du plan</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle"><span class="kbd">Plane::getUV</span> <span class="kbd">src/core/Object.cpp:52</span></div>
+<h3>4.1. Dérivation</h3>
+<p>Un plan infini n'a pas de « tour » à dérouler : on prend les coordonnées du point dans deux axes couchés sur le plan. On fabrique une base orthonormée \((\mathbf{a}_u, \mathbf{a}_v)\) à partir de la normale \(\mathbf{n}\) :</p>
+<div class="formula">
+\(\mathbf{a}_u = \mathrm{norm}(\mathbf{n} \times \mathbf{arb}), \quad \mathbf{a}_v = \mathrm{norm}(\mathbf{n} \times \mathbf{a}_u), \quad u = \mathrm{fract}((P-P_0)\cdot\mathbf{a}_u), \; v = \mathrm{fract}((P-P_0)\cdot\mathbf{a}_v),\)<br>
+avec \(\mathbf{arb} = (0,1,0)\) sauf si \(\mathbf{n} \parallel Y\) (alors \((0,0,1)\)).
+</div>
+<p>Le vecteur arbitraire évite le cas dégénéré \(\mathbf{n} \times \mathbf{n} = \mathbf{0}\). Le <code class="inline">fract</code> carrele le plan à l'infini avec des cases de 1 unité monde — <code class="inline">uvScale</code> multiplie ensuite la densité dans le checker.</p>
+<div class="figure">
+<svg width="700" height="170" viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,15)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">Plan + base (au, av)</text>
+<polygon points="20,130 180,130 230,60 70,60" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="2"/>
+<line x1="110" y1="110" x2="170" y2="110" stroke="#0ea5e9" stroke-width="2.5" marker-end="url(#aB)"/><text x="172" y="113" font-size="9" fill="#0ea5e9">au</text>
+<line x1="110" y1="110" x2="140" y2="75" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#aV)"/><text x="142" y="72" font-size="9" fill="#8b5cf6">av</text>
+<line x1="110" y1="110" x2="110" y2="55" stroke="#10b981" stroke-width="2" marker-end="url(#aG)"/><text x="100" y="50" font-size="9" fill="#10b981">n</text>
+<circle cx="150" cy="100" r="3" fill="#f59e0b"/><text x="155" y="103" font-size="9" fill="#92400e">P</text>
+</g>
+<g transform="translate(330,15)">
+<text x="60" y="12" font-size="11" fill="#0f172a" font-weight="600">Carrelage fract()</text>
+<rect x="20" y="30" width="220" height="110" fill="none" stroke="#cbd5e1" stroke-width="1"/>
+<rect x="20" y="30" width="55" height="55" fill="#0f172a"/><rect x="75" y="30" width="55" height="55" fill="#f8fafc" stroke="#cbd5e1"/><rect x="130" y="30" width="55" height="55" fill="#0f172a"/><rect x="185" y="30" width="55" height="55" fill="#f8fafc" stroke="#cbd5e1"/>
+<rect x="20" y="85" width="55" height="55" fill="#f8fafc" stroke="#cbd5e1"/><rect x="75" y="85" width="55" height="55" fill="#0f172a"/><rect x="130" y="85" width="55" height="55" fill="#f8fafc" stroke="#cbd5e1"/><rect x="185" y="85" width="55" height="55" fill="#0f172a"/>
+<text x="20" y="152" font-size="9" fill="#64748b">1 case = 1 unité monde / fract répète à l'infini</text>
+</g>
+<defs>
+<marker id="aB" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#0ea5e9"/></marker>
+<marker id="aV" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#8b5cf6"/></marker>
+<marker id="aG" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#10b981"/></marker>
+</defs>
+</svg>
+<figcaption>Fig 4.1 — Le plan est son propre papier millimétré : deux axes orthogonaux + fract = carrelage infini sans couture.</figcaption>
+</div>
+</section>
+
+<!-- CHAPITRE 5 -->
+<section class="card" id="c5">
+<div class="sec-head"><h2 class="sec">5. UV cylindrique + caps : le tube et ses couvercles</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle"><span class="kbd">Quadric::getUV</span> <span class="kbd">src/core/Quadric.cpp:53</span> · caps <span class="kbd">Quadric.cpp:100/160/200</span></div>
+<h3>5.1. Surface latérale : angle × hauteur</h3>
+<p>Dans la base locale \((U, dir, V)\) déjà cachée pour la Phase 1 (<code class="inline">cachedU/cachedV</code> — zéro coût supplémentaire), on récupère \((x_L, y_L, z_L)\) puis :</p>
+<div class="formula">
+\(u = \frac{\mathrm{atan2}(z_L, x_L)}{2\pi} + 0.5 \in [0,1), \qquad v = \begin{cases} \frac{y_L - h_{min}}{h_{max}-h_{min}} &amp; \text{tronqué (cylindre, cône, paraboloïde)} \\ \mathrm{fract}(y_L) &amp; \text{infini (hyperboloïde infini)} \end{cases}\)
+</div>
+<p>C'est le même \(u\) angulaire pour <b>toutes</b> les quadriques (cylindre, cône, paraboloïde, hyperboloïde) : seule la coordonnée \(v\) change selon la troncature. Dérouler un cône ou un cylindre donne le même rectangle — la différence géométrique reste dans l'intersection, pas dans les UV.</p>
+<h3>5.2. Caps : disques en UV planaire local</h3>
+<p>Un cap est un disque perpendiculaire à l'axe. On projette sur \((U, V)\) et on normalise par le diamètre :</p>
+<div class="formula">
+\(u = \mathrm{fract}\left(\frac{(P-C)\cdot U}{2R} + 0.5\right), \quad v = \mathrm{fract}\left(\frac{(P-C)\cdot V}{2R} + 0.5\right)\) — paraboloïde : \(R\) remplacé par \(a\sqrt{h}, b\sqrt{h}\) (rayon réel au bord).
+</div>
+<div class="figure">
+<svg width="700" height="180" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Tube → rectangle u×v</text>
+<ellipse cx="80" cy="40" rx="40" ry="12" fill="none" stroke="#0ea5e9" stroke-width="2"/>
+<line x1="40" y1="40" x2="40" y2="120" stroke="#0ea5e9" stroke-width="2"/><line x1="120" y1="40" x2="120" y2="120" stroke="#0ea5e9" stroke-width="2"/>
+<ellipse cx="80" cy="120" rx="40" ry="12" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="2"/>
+<line x1="80" y1="40" x2="80" y2="120" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 3"/>
+<text x="86" y="85" font-size="9" fill="#5b21b6">v = hauteur</text>
+<text x="20" y="140" font-size="9" fill="#0c4a6e">u = tour autour de l'axe</text>
+</g>
+<g transform="translate(280,20)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">Cap = disque → carré UV</text>
+<circle cx="90" cy="75" r="45" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="2"/>
+<line x1="45" y1="75" x2="135" y2="75" stroke="#0ea5e9" stroke-width="1.5"/><line x1="90" y1="30" x2="90" y2="120" stroke="#8b5cf6" stroke-width="1.5"/>
+<text x="95" y="70" font-size="9" fill="#0c4a6e">U/2R</text>
+<text x="60" y="40" font-size="9" fill="#5b21b6">V/2R</text>
+</g>
+<g transform="translate(480,20)">
+<text x="10" y="12" font-size="11" fill="#0f172a" font-weight="600">Raccord latéral/cap</text>
+<text x="10" y="35" font-size="9" fill="#92400e">⚠ couture u=0/1 verticale — attendue</text>
+<text x="10" y="55" font-size="9" fill="#92400e">⚠ anneau latéral/cap : UV différents — ligne visible, normale continue ✓</text>
+<text x="10" y="80" font-size="9" fill="#065f46">✓ test : cyl scale=6 → 6 cases sur le tour, caps en damier fin</text>
+</g>
+</svg>
+<figcaption>Fig 5.1 — Le tube se déroule comme une étiquette de bouteille ; chaque couvercle est projeté à plat. Le raccord latéral/cap reste visible en UV (c'est normal), il doit rester invisible en normales.</figcaption>
+</div>
+</section>
+
+<!-- CHAPITRE 6 -->
+<section class="card" id="c6">
+<div class="sec-head"><h2 class="sec">6. Checker + éclairage : la preuve par le damier</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle"><span class="kbd">Renderer::computeLight</span> <span class="kbd">src/core/Renderer.cpp:17</span></div>
+<h3>6.1. Formule</h3>
+<div class="formula">
+\(i = \lfloor u \cdot s \rfloor,\; j = \lfloor v \cdot s \rfloor, \quad \text{base} = \begin{cases} \text{albedo}_2 &amp; (i+j)\ \mathrm{impair} \\ \text{albedo} &amp; \text{sinon} \end{cases}\) — puis éclairage Phase 1 inchangé : \(\text{col} = \text{base}\cdot(\text{ambient} + \max(0, N\!\cdot\!L)\cdot I \cdot 0.9).\)
+</div>
+<p>Le bit de parité <code class="inline">(i+j)&amp;1</code> coûte ~1 ns : c'est un ET binaire, pas une division. Les ombres utilisent <code class="inline">base</code> aussi (sinon un damier à l'ombre « saignerait » sa couleur éclairée). Quand <code class="inline">useChecker=false</code>, <code class="inline">base = hit.color</code> : rendu <b>bit-identique</b> à la Phase 1 — c'est la compatibilité ascendante qui permet de merger sans régression.</p>
+<div class="grid2">
+<div class="formula"><b>Lecture du damier :</b><br>cases carrées → UV linéaires ✓<br>cases étirées en v → \(v\) non normalisée (oubli de \(h_{max}-h_{min}\))<br>moiré lointain → normal (aliasing, pas de bug)<br>couture verticale → \(u=0/1\), attendue</div>
+<div class="formula"><b>Coût :</b><br>\(+\!2\) doubles dans <code class="inline">Hit</code>, \(+\!1\) copie <code class="inline">Material</code> (~5 doubles) par intersection.<br>Négligeable devant le \(\sqrt{\Delta}\) et les 2 produits scalaires de la base locale.</div>
+</div>
+</section>
+
+<!-- CHAPITRE 7 -->
+<section class="card" id="c7">
+<div class="sec-head"><h2 class="sec">7. Parser, scène uv.rt &amp; validation</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle"><span class="kbd">SceneParser.cpp:198</span> · <span class="kbd">scenes/uv.rt</span> · <span class="kbd">make run uv.rt</span></div>
+<h3>7.1. Directive mat (s'applique au dernier objet)</h3>
+<pre class="code">pl 0,-1,0 0,1,0 200,200,200
+mat checker 4 50,50,50      # sol : 4 cases/unité, gris foncé
+sp -2,0.5,0 1 255,0,0
+mat checker 8 0,0,0         # sphère : 8 cases, rouge/noir
+mat diffuse                 # désactive le damier (retour uni)</pre>
+<p>Ordre imposé : la ligne <code class="inline">mat</code> <b>après</b> l'objet (erreur <i>« mat checker sans objet avant »</i> sinon). <code class="inline">scale &gt; 0</code> obligatoire. Cas inconnu (<code class="inline">mat marbre</code>) → erreur de parsing avec numéro de ligne, pas de valeur silencieuse.</p>
+<h3>7.2. Scène de test et résultats mesurés</h3>
+<table>
+<tr><th>Objet (uv.rt)</th><th>Projection</th><th>Attendu</th></tr>
+<tr><td>Plan scale=4</td><td>planaire</td><td>carrelage régulier jusqu'à l'horizon</td></tr>
+<tr><td>Sphère scale=8</td><td>sphérique</td><td>16 cases à l'équateur, pincement pôles</td></tr>
+<tr><td>Cylindre scale=6</td><td>cylindrique + caps</td><td>6 cases sur le tour, disques en damier</td></tr>
+<tr><td>Cône scale=6</td><td>cylindrique + base</td><td>même rythme, resserrement vers l'apex</td></tr>
+</table>
+<div class="success"><b>Validation exécutée :</b> parsing 4/4 objets checker ✓ · rendu headless 270×180 = <b>788 couleurs distinctes</b> (damier + dégradés, contre une poignée en uni) ✓ · <code class="inline">exemple.rt</code> sans <code class="inline">mat</code> → <code class="inline">useChecker=0</code> partout, zéro régression ✓ · <code class="inline">make re</code> sans warning ODR ✓.</div>
+<h3>7.3. UV et transformations : le motif suit l'objet</h3>
+<p>Toutes les formules utilisent le point <b>relatif</b> à l'objet (<code class="inline">point - center</code>, <code class="inline">point - pos</code>) et, pour les quadriques, la base locale <code class="inline">cachedU/cachedV</code>. Conséquence directe :</p>
+<div class="formula">
+<b>Translation</b> (<code class="inline">G</code>, <code class="inline">translate</code>) : le motif bouge <b>avec</b> l'objet — le damier ne glisse pas.<br>
+<b>Rotation</b> (<code class="inline">R</code>, <code class="inline">setDir</code>) : 1 seul rebuild de la base, le motif tourne <b>avec</b> l'objet.<br>
+C'est le comportement attendu façon Blender (UV attachés à la géométrie, pas au monde).
+</div>
+<table>
+<tr><th>Primitive</th><th>u</th><th>v</th><th>Cas particulier actuel</th></tr>
+<tr><td>Sphère</td><td><code class="inline">fract(θ/2π + 0.5)</code></td><td><code class="inline">0.5 − φ/π</code></td><td>pincement aux pôles, couture θ=±π</td></tr>
+<tr><td>Plan</td><td><code class="inline">fract(rel·au)</code></td><td><code class="inline">fract(rel·av)</code></td><td>carrelage infini, 1 case = 1 unité monde</td></tr>
+<tr><td>Cylindre / Cône (latéral)</td><td><code class="inline">atan2(zL,xL)/2π + 0.5</code></td><td><code class="inline">(yL−hMin)/(hMax−hMin)</code></td><td>cône : cases resserrées vers l'apex (circonférence ∝ h−y)</td></tr>
+<tr><td>Paraboloïde (latéral)</td><td>idem</td><td><code class="inline">yL/h</code></td><td>cap normalisé par \(a\sqrt{h}, b\sqrt{h}\)</td></tr>
+<tr><td>Hyperboloïde fini (−h..h)</td><td>idem</td><td><code class="inline">(yL+h)/2h</code></td><td>2 nappes : chaque lobe a ses propres UV</td></tr>
+<tr><td>Hyperboloïde infini</td><td>idem</td><td><code class="inline">fract(yL)</code></td><td>répétition verticale infinie</td></tr>
+<tr><td>Caps (cyl/cône/parab)</td><td><code class="inline">fract(rel·U/2R + 0.5)</code></td><td><code class="inline">fract(rel·V/2R + 0.5)</code></td><td>raccord latéral/cap visible en UV (normal)</td></tr>
+</table>
+<h3>7.4. Exercices (5 min)</h3>
+<p>1) Passe la sphère en <code class="inline">scale=4</code> : combien de cases sur l'équateur ? 2) Mets <code class="inline">mat diffuse</code> après le cylindre et prédis le rendu avant de lancer. 3) Pourquoi le cône resserre-t-il les cases vers l'apex alors que \(u\) est uniforme ? (indice : circonférence \(\propto (h-y)\)). 4) Prochaine étape : à quoi ressemblerait <code class="inline">tex image</code> avec ces mêmes \((u,v)\) ?</p>
+<div style="margin-top:16px; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; font-size:0.82rem; line-height:1.5; color:var(--text)">
+<b>📚 Sources — Phase 2 étape 1</b><br>
+[1] <b>Catmull 1974 — Texture mapping</b>, thèse Utah (paramétrisation \((u,v)\), subdivision) — base historique du chap. 1<br>
+[2] <b>Blinn &amp; Newell 1976 — Texture and reflection mapping</b> (mapping sphérique/environnement)<br>
+[3] <b>Porter &amp; Duff 1984 — Compositing digital images</b> (albedo comme fraction, prépare Phase 3 SSS)<br>
+[4] Code : <span class="kbd">Material.hpp:1</span> <span class="kbd">Object.hpp:5</span> <span class="kbd">Object.cpp:29/52</span> <span class="kbd">Quadric.cpp:53</span> <span class="kbd">Renderer.cpp:17</span> <span class="kbd">SceneParser.cpp:198</span> <span class="kbd">scenes/uv.rt</span>
+</div>
+</section>
+
+<div class="card recall" style="text-align:center">
+<h2>À retenir 30s</h2>
+<p style="max-width:700px; margin:10px auto">UV = \(\Phi(P) \to (u,v)\) : sphère \(\mathrm{atan2}/\arcsin\), plan \(P\cdot a_u / P\cdot a_v\), tube angle×hauteur + caps plats. Material porte albedo+checker. Damier \((⌊us⌋+⌊vs⌋)\,\mathrm{mod}\,2\) = preuve visuelle. <code class="inline">mat checker</code> après l'objet, <code class="inline">make run uv.rt</code>.</p>
+</div>
+
+</div><!-- main -->
+</div><!-- layout -->
+
+<footer>RTv1_building — Phase 2 Étape 1 · Material &amp; UV + Checker · 7 chapitres · Recharge après <code>make run uv.rt</code></footer>
+
+<script>
+// Thème clair / sombre / auto (mémorisé)
+const themeBtn=document.getElementById('themeBtn');
+function applyTheme(t){
+  const root=document.documentElement;
+  if(t==='auto'){ root.removeAttribute('data-theme'); }
+  else { root.setAttribute('data-theme', t); }
+  if(themeBtn) themeBtn.textContent='◐ Thème : '+t;
+  try{ localStorage.setItem('rtv1-theme', t); }catch(e){}
+}
+function cycleTheme(){
+  let cur='auto';
+  try{ cur=localStorage.getItem('rtv1-theme')||'auto'; }catch(e){}
+  applyTheme(cur==='auto' ? 'light' : cur==='light' ? 'dark' : 'auto');
+}
+(function(){ let t='auto'; try{ t=localStorage.getItem('rtv1-theme')||'auto'; }catch(e){} applyTheme(t); })();
+const links=[...document.querySelectorAll('#chapNav a')]
+const secs=[...document.querySelectorAll('section.card[id^="c"]')]
+function onScroll(){
+  let cur=""
+  secs.forEach(s=>{ if(window.scrollY + 160 >= s.offsetTop) cur=s.id })
+  links.forEach(a=> a.classList.toggle('active', a.dataset.id===cur))
+  const done=document.querySelectorAll('.badge.fait').length
+  document.getElementById('progress').textContent=done+"/7"
+  const pct=done/7
+  const circ=document.getElementById('progCircle')
+  if(circ){ const C=2*Math.PI*20; circ.style.strokeDashoffset = C*(1-pct) }
+}
+window.addEventListener('scroll', onScroll, {passive:true})
+onScroll()
+function toggleCompact(){
+  const sb=document.getElementById('sidebar')
+  const main=document.getElementById('main')
+  if(sb.style.display==='none'){ sb.style.display=''; main.style.maxWidth='calc(100% - var(--sidebarW))' }
+  else { sb.style.display='none'; main.style.maxWidth='100%' }
+}
+links.forEach(a=> a.addEventListener('click', ()=>{ links.forEach(x=>x.classList.remove('active')); a.classList.add('active') }))
+let lastY=0; window.addEventListener('scroll', ()=>{ const y=window.scrollY; if(Math.abs(y-lastY)>10){ document.querySelector('header').style.transform=`translateY(${Math.min(y*0.08, 6)}px)`; lastY=y } }, {passive:true})
+</script>
+</body>
+</html>

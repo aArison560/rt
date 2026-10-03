@@ -1,0 +1,35 @@
+# ============================================================
+# image.rt — Phase 2 étape 2 : collage d'images PNG (stb_image→sampler2D)
+# Usage : make clean && make && ./bin/rtv1 scenes/image.rt (10 s auto-quit)
+# Sens : tex image path [repeat|clamp] = colle l'image au DERNIER objet
+#        (ligne tex APRÈS l'objet, comme mat). repeat = tuilage (fract),
+#        clamp = bords bloqués. tex off = retire l'image.
+#        Couleur objet mise à blanc : seule la texture teinte (pas de mélange).
+# Assets : checker.png = damier rouge/noir + bordure verte d'orientation
+#        uvgrid.png = dégradé R=u G=v (lit les UV à l'œil : rouge→droite,
+#        vert→haut). Mêmes UV que uv.rt (sphère/plan/cylindre/cône).
+# Attendu : sol dégradé tuilé · sphère checker · cylindre dégradé bloqué
+#        (clamp) · cône checker resserré apex.
+# ============================================================
+
+# Caméra : pos 0,1,-6 regarde +Z (même cadre que uv.rt pour comparer)
+C 0,1,-6 0,0,1 60
+
+# Lumière standard
+L 5,5,-5 0.8
+
+# Sol : uvgrid en repeat (tuilage planaire, cases colorées jusqu'à l'horizon)
+pl 0,-1,0 0,1,0 200,200,200
+tex image assets/uvgrid.png repeat
+
+# Sphère : checker sphérique (couture ±π, pincement pôles, comme uv.rt)
+sp -2,0.5,0 1 255,255,255
+tex image assets/checker.png repeat
+
+# Cylindre : uvgrid en clamp (bords étirés, pas de répétition verticale)
+cyl 0,0,0 0,1,0 0.5 2 255,255,255
+tex image assets/uvgrid.png clamp
+
+# Cône : checker cylindrique (resserrement vers l'apex)
+cone 2,0,0 0,1,0 0.6 1.8 255,255,255
+tex image assets/checker.png repeat

@@ -1,0 +1,35 @@
+# ============================================================
+# quadriques.rt — Phase 1 complète (les 4 quadriques + sol)
+# Usage : make run quadriques.rt
+# Sens : parab = paraboloïde (pos dir a b height color), y = x²/a²+z²/b², 0..h
+#        hyp = hyperboloïde (pos dir a b c sheet height color)
+#        sheet=1 : 1 nappe (x²/a²+z²/b²-y²/c²=1, tour) · sheet=2 : 2 nappes (=-1, 2 lobes)
+#        avec height : tronqué -h..h · sans height : infini
+# Repère : Y-up RTv1 <-> Z-up Blender : (X,Y,Z) <-> (X,Z,-Y)
+# Attendu : de gauche à droite : cylindre, cône, paraboloïde bleu,
+#           hyper 1 nappe jaune (sablier), hyper 2 nappes magenta (2 lobes).
+# ============================================================
+
+# Caméra : pos 0,3,-10, regarde (0,-0.5,1) = plonge vers la rangée, fov 60°
+C 0,3,-10 0,-0.5,1 60
+
+# Lumière à droite/haut
+L 5,5,-5 0.8
+
+# Sol gris y=-1
+pl 0,-1,0 0,1,0 200,200,200
+
+# Cylindre rouge tronqué : base -3,0,0, axe +Y, R=0.5, h=2
+cyl -3,0,0 0,1,0 0.5 2 255,0,0
+
+# Cône vert : base -1,0,0, apex = base+Y*1.8, R=0.6 à la base
+cone -1,0,0 0,1,0 0.6 1.8 0,255,0
+
+# Paraboloïde bleu : sommet 1,0,0, a=b=0.7 (circulaire), h=1.5
+parab 1,0,0 0,1,0 0.7 0.7 1.5 0,0,255
+
+# Hyperboloïde jaune 1 nappe : a=b=c=0.5, h=1.2 (sablier continu)
+hyp 3,0,0 0,1,0 0.5 0.5 0.5 1 1.2 255,255,0
+
+# Hyperboloïde magenta 2 nappes : a=b=0.4 c=0.6, h=1.5 (2 lobes séparés)
+hyp 4.5,0,0 0,1,0 0.4 0.4 0.6 2 1.5 255,0,255

@@ -1,156 +1,110 @@
-# Ray Tracer (RT) - Makefile
-# C++23 project with SDL2, libpng, libjpeg + microui (C)
+# ============================================================
+# RTv1 - Makefile C++ POO (.hpp/.cpp) avec SDL local
+# ============================================================
 
-CXX := g++
-CC := gcc
-CXXFLAGS := -std=c++23 -Wall -Wextra -Werror -O2 -fPIC -march=native -pthread -g
-CFLAGS := -std=c11 -Wall -Wextra -Werror -O2 -fPIC -march=native -pthread -g
-CXXFLAGS_TEST := -std=c++23 -O2 -fPIC -pthread -g
-CFLAGS_TEST := -std=c11 -O2 -fPIC -pthread -g
+CXX = g++
+NAME = bin/rtv1
 
-# microui: pure C, no external deps
-CXXFLAGS += -I/usr/include/SDL2 -g
-CFLAGS += -I/usr/include/SDL2 -Iinclude -g
-CXXFLAGS_TEST += -I/usr/include/SDL2 -g
-CFLAGS_TEST += -I/usr/include/SDL2 -Iinclude -g
-LDFLAGS := -lSDL2 -lm -lpng -ljpeg -pthread -g
+SDL_VERSION = 2.30.8
+SDL_TAR = SDL2-$(SDL_VERSION).tar.gz
+SDL_URL = https://github.com/libsdl-org/SDL/releases/download/release-$(SDL_VERSION)/$(SDL_TAR)
+SDL_SRC = localSDL/src/SDL2-$(SDL_VERSION)
+SDL_ROOT = localSDL
+SDL_INC  = $(SDL_ROOT)/include
+SDL_LIB  = $(SDL_ROOT)/lib
+SDL_SO   = $(SDL_LIB)/libSDL2.so
 
-# Directories
-SRC_DIR := src
-INC_DIR := include
-OBJ_DIR := obj
-OBJ_DIR_TEST := obj_test
-BIN_DIR := .
+CXXFLAGS = -Wall -std=c++17 -pthread -Iinclude -I$(SDL_INC) -I$(SDL_INC)/SDL2 -D_REENTRANT -O3 -march=native -ffast-math -DNDEBUG
+LDFLAGS  = -L$(SDL_LIB) -lSDL2 -pthread -Wl,-rpath,'$$ORIGIN/../localSDL/lib' -Wl,-rpath,'$$ORIGIN/localSDL/lib' -Wl,-rpath,$(abspath $(SDL_LIB)) -O3 
 
-# Executable name
-TARGET := $(BIN_DIR)/rt
-TARGET_TEST := $(BIN_DIR)/rt_test
+# Sources POO
+SRC = src/math/Vec3.cpp src/math/Ray.cpp \
+      src/core/Object.cpp src/core/Quadric.cpp src/core/Scene.cpp src/core/Renderer.cpp src/core/Texture.cpp \
+      src/parser/SceneParser.cpp \
+      src/ui/sdl/sdl_init.cpp src/ui/sdl/sdl_draw.cpp src/ui/sdl/sdl_events.cpp \
+      src/main.cpp src/ui/qt_or_gtk/ui_window.cpp
 
-# C++ source files
-SOURCES := $(shell find $(SRC_DIR) -name '*.cpp' | sort)
-MAIN_SRC := src/app/main.cpp
-LIB_SRCS := $(filter-out $(MAIN_SRC), $(SOURCES))
-TEST_SRCS := $(sort $(LIB_SRCS) $(shell find tests -name '*.cpp'))
+OBJ = $(SRC:src/%.cpp=obj/%.o)
+TOTAL = $(words $(OBJ))
 
-# C source files (microui)
-C_SOURCES := $(shell find $(SRC_DIR) -name '*.c' | sort)
+GREEN  = \033[32m
+CYAN   = \033[36m
+YELLOW = \033[33m
+RESET  = \033[0m
 
-# Object files
-OBJECTS := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SOURCES)) \
-           $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(C_SOURCES))
+all: $(SDL_SO) $(NAME)
+	@printf "$(GREEN)[100%%]$(RESET) Built $(NAME) C++ POO (SDL $(SDL_VERSION))\n"
 
-OBJECTS_TEST := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR_TEST)/%.o, $(LIB_SRCS)) \
-                $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR_TEST)/%.o, $(C_SOURCES)) \
-                $(patsubst tests/%.cpp, $(OBJ_DIR_TEST)/%.o, $(filter tests/%.cpp, $(TEST_SRCS)))
+$(SDL_SO):
+	@mkdir -p localSDL/src
+	@if [ ! -f localSDL/src/$(SDL_TAR) ]; then \
+		printf "$(YELLOW)[ SDL ] Téléchargement SDL2 $(SDL_VERSION)...$(RESET)\n"; \
+		wget -q --show-progress -O localSDL/src/$(SDL_TAR) $(SDL_URL) || curl -L -o localSDL/src/$(SDL_TAR) $(SDL_URL); \
+	fi
+	@if [ ! -d $(SDL_SRC) ]; then \
+		printf "$(YELLOW)[ SDL ] Extraction...$(RESET)\n"; \
+		tar -xzf localSDL/src/$(SDL_TAR) -C localSDL/src; \
+	fi
+	@printf "$(YELLOW)[ SDL ] Build SDL local...$(RESET)\n"
+	@mkdir -p $(SDL_SRC)/build
+	@cd $(SDL_SRC)/build && ../configure --prefix=$(abspath $(SDL_ROOT)) --disable-dependency-tracking > /dev/null && $(MAKE) -j$$(nproc) > /dev/null && $(MAKE) install > /dev/null
+	@printf "$(GREEN)[ SDL ] SDL prête$(RESET)\n"
 
-# Progress tracking
-TOTAL_OBJS := $(words $(OBJECTS))
-TOTAL_TEST_OBJS := $(words $(OBJECTS_TEST))
-COUNTER_FILE := $(OBJ_DIR)/.counter
-COUNTER_FILE_TEST := $(OBJ_DIR_TEST)/.counter
-$(shell rm -f $(COUNTER_FILE) $(COUNTER_FILE_TEST))
-HEADERS := $(shell find $(INC_DIR) -name '*.hpp' -o -name '*.h' | sort)
-
-# Include path
-CXXFLAGS += -I$(INC_DIR)
-
-# Main targets
-.PHONY: all clean fclean re test retest
-
-all: $(TARGET)
-
-$(TARGET): $(OBJECTS)
-	@mkdir -p $(BIN_DIR)
-	@$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-	@printf "\nLinked: $@\n"
-
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
+$(NAME): $(OBJ) | $(SDL_SO)
 	@mkdir -p $(dir $@)
+	@printf "\n$(YELLOW)[100%%] Linking $(NAME)$(RESET)\n"
+	@$(CXX) $(OBJ) -o $@ $(LDFLAGS)
+
+HEADERS = $(shell find include -name '*.hpp' -o -name '*.h')
+obj/%.o: src/%.cpp $(HEADERS) | $(SDL_SO)
+	@mkdir -p $(dir $@)
+	@COUNT=$$(find obj -type f -name "*.o" 2>/dev/null | wc -l); \
+	NEXT=$$((COUNT+1)); PERCENT=$$((NEXT*100/$(TOTAL))); if [ $$PERCENT -gt 100 ]; then PERCENT=100; fi; \
+	FILLED=$$((PERCENT/5)); EMPTY=$$((20-FILLED)); \
+	BAR=$$(printf "%$${FILLED}s" | tr ' ' '#'); EMPTY_BAR=$$(printf "%$${EMPTY}s" | tr ' ' '-'); \
+	printf "\r\033[K$(CYAN)[%3d%%]$(RESET) [$(GREEN)%s$(RESET)%s] CXX %s" "$$PERCENT" "$$BAR" "$$EMPTY_BAR" "$<"
 	@$(CXX) $(CXXFLAGS) -c $< -o $@
-	@count=$$(cat $(COUNTER_FILE) 2>/dev/null || echo 0); \
-	count=$$((count + 1)); \
-	echo $$count > $(COUNTER_FILE); \
-	pct=$$((count * 100 / $(TOTAL_OBJS))); \
-	filled=$$((pct / 2)); \
-	bar=""; i=0; while [ $$i -lt $$filled ]; do bar="$$bar#"; i=$$((i + 1)); done; \
-	printf "\rCompilation [%-50s] %3d/%d (%3d%%)" "$$bar" $$count $(TOTAL_OBJS) $$pct
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
-	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -c $< -o $@
-	@count=$$(cat $(COUNTER_FILE) 2>/dev/null || echo 0); \
-	count=$$((count + 1)); \
-	echo $$count > $(COUNTER_FILE); \
-	pct=$$((count * 100 / $(TOTAL_OBJS))); \
-	filled=$$((pct / 2)); \
-	bar=""; i=0; while [ $$i -lt $$filled ]; do bar="$$bar#"; i=$$((i + 1)); done; \
-	printf "\rCompilation [%-50s] %3d/%d (%3d%%)" "$$bar" $$count $(TOTAL_OBJS) $$pct
+SCENE ?= scenes/cyl.rt
+# Permet `make run foo.rt` ou `make run scenes/foo.rt` : .rt extrait de MAKECMDGOALS
+RT_ARG := $(filter %.rt,$(MAKECMDGOALS))
+ifneq ($(RT_ARG),)
+ifeq ($(findstring /,$(RT_ARG)),)
+override SCENE := scenes/$(RT_ARG)
+else
+override SCENE := $(RT_ARG)
+endif
+endif
+# `SCENE=foo.rt` sans dossier -> résolu vers scenes/
+ifeq ($(findstring /,$(SCENE)),)
+override SCENE := scenes/$(SCENE)
+endif
+
+run: all
+	@./$(NAME) $(SCENE)
+
+# Cible factice pour `make run foo.rt` / `make run scenes/foo.rt` (évite "No rule to make target")
+%.rt:
+	@:
+
+leak_test: all
+	@valgrind --show-leak-kinds=all ./$(NAME) scenes/exemple.rt --once
+
+sdl_clean:
+	@rm -rf localSDL/src/SDL2-$(SDL_VERSION) localSDL/src/build
 
 clean:
-	@rm -rf $(OBJ_DIR) $(OBJ_DIR_TEST)
-	@echo "Cleaned object files"
+	@rm -rf obj
+	@printf "Clean done\n"
 
 fclean: clean
-	@rm -f $(TARGET) $(TARGET_TEST)
-	@echo "Cleaned all builds"
+	@rm -f $(NAME)
+	@printf "Fclean done\n"
+
+sdl_fclean: fclean sdl_clean
+	@rm -rf localSDL/lib/* localSDL/include/SDL2 localSDL/bin localSDL/share
+	@printf "SDL fclean done\n"
 
 re: fclean all
 
-retest: fclean test
-
-test: $(TARGET_TEST)
-
-$(TARGET_TEST): $(OBJECTS_TEST)
-	@mkdir -p $(BIN_DIR)
-	@$(CXX) $(CXXFLAGS_TEST) -o $@ $^ $(LDFLAGS)
-	@printf "\nLinked (test): $@\n"
-
-$(OBJ_DIR_TEST)/%.o: $(SRC_DIR)/%.cpp $(HEADERS)
-	@mkdir -p $(dir $@)
-	@$(CXX) $(CXXFLAGS_TEST) -I$(INC_DIR) -c $< -o $@
-	@count=$$(cat $(COUNTER_FILE_TEST) 2>/dev/null || echo 0); \
-	count=$$((count + 1)); \
-	echo $$count > $(COUNTER_FILE_TEST); \
-	pct=$$((count * 100 / $(TOTAL_TEST_OBJS))); \
-	filled=$$((pct / 2)); \
-	bar=""; i=0; while [ $$i -lt $$filled ]; do bar="$$bar#"; i=$$((i + 1)); done; \
-	printf "\rCompilation test [%-50s] %3d/%d (%3d%%)" "$$bar" $$count $(TOTAL_TEST_OBJS) $$pct
-
-$(OBJ_DIR_TEST)/%.o: $(SRC_DIR)/%.c $(HEADERS)
-	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS_TEST) -I$(INC_DIR) -c $< -o $@
-	@count=$$(cat $(COUNTER_FILE_TEST) 2>/dev/null || echo 0); \
-	count=$$((count + 1)); \
-	echo $$count > $(COUNTER_FILE_TEST); \
-	pct=$$((count * 100 / $(TOTAL_TEST_OBJS))); \
-	filled=$$((pct / 2)); \
-	bar=""; i=0; while [ $$i -lt $$filled ]; do bar="$$bar#"; i=$$((i + 1)); done; \
-	printf "\rCompilation test [%-50s] %3d/%d (%3d%%)" "$$bar" $$count $(TOTAL_TEST_OBJS) $$pct
-
-# Test sources from tests/ directory
-$(OBJ_DIR_TEST)/%.o: tests/%.cpp $(HEADERS)
-	@mkdir -p $(dir $@)
-	@$(CXX) $(CXXFLAGS_TEST) -I$(INC_DIR) -c $< -o $@
-	@count=$$(cat $(COUNTER_FILE_TEST) 2>/dev/null || echo 0); \
-	count=$$((count + 1)); \
-	echo $$count > $(COUNTER_FILE_TEST); \
-	pct=$$((count * 100 / $(TOTAL_TEST_OBJS))); \
-	filled=$$((pct / 2)); \
-	bar=""; i=0; while [ $$i -lt $$filled ]; do bar="$$bar#"; i=$$((i + 1)); done; \
-	printf "\rCompilation test [%-50s] %3d/%d (%3d%%)" "$$bar" $$count $(TOTAL_TEST_OBJS) $$pct
-
-# Help target
-.PHONY: help
-help:
-	@echo "Ray Tracer Build System"
-	@echo "======================"
-	@echo "Targets:"
-	@echo "  make all        - Build the ray tracer executable"
-	@echo "  make test       - Build without strict warning flags (-Wall -Wextra -Werror)"
-	@echo "  make retest     - Clean rebuild test executable"
-	@echo "  make clean      - Remove object files"
-	@echo "  make fclean     - Remove all build artifacts"
-	@echo "  make re         - Clean rebuild"
-	@echo "  make help       - Show this help message"
-	@echo ""
-	@echo "Usage: ./rt [scene_file] [width] [height]"
+.PHONY: all clean fclean sdl_clean sdl_fclean re run leak_test

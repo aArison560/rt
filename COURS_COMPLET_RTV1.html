@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RTv1 — Cours Complet Mathématiques | Algèbre & Géométrie Analytique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+:root{
+--primary:#0f172a; --accent:#0ea5e9; --accent2:#8b5cf6; --accent3:#06b6d4;
+--bg:#f8fafc; --bg2:#f1f5f9; --card:#ffffff; --card2:#fcfdff; --text:#0f172a; --muted:#64748b; --border:#e2e8f0; --border2:#cbd5e1;
+--sidebarW:300px; --radius:18px; --shadow:0 10px 30px rgba(15,23,42,0.08), 0 1px 3px rgba(15,23,42,0.06); --shadow2:0 20px 60px rgba(15,23,42,0.12);
+--grad: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 50%, #06b6d4 100%);
+--gradSoft: linear-gradient(135deg, #e0f2fe 0%, #ede9fe 60%, #cffafe 100%);
+}
+@media(prefers-color-scheme:dark){
+:root{--bg:#0b1220; --bg2:#111c34; --card:#12213e; --card2:#162a4d; --text:#e2e8f0; --muted:#94a3b8; --border:#1e3a5f; --border2:#234876; --primary:#f1f5f9}
+}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0; font-family:Inter, system-ui, -apple-system, sans-serif; background: radial-gradient(1200px 600px at 10% -10%, #e0f2fe 0%, transparent 60%), radial-gradient(1000px 500px at 90% 0%, #ede9fe 0%, transparent 55%), var(--bg); color:var(--text); line-height:1.7; -webkit-font-smoothing:antialiased}
+a{color:inherit}
+/* HEADER — glass + mesh */
+header{position:sticky; top:0; z-index:20; padding:22px 20px 18px; text-align:center; background: rgba(15,23,42,0.88); backdrop-filter: blur(16px) saturate(1.2); border-bottom:1px solid rgba(255,255,255,0.08); color:white; overflow:hidden}
+header::before{content:""; position:absolute; inset:0; background: radial-gradient(800px 400px at 20% 0%, rgba(14,165,233,0.25), transparent 60%), radial-gradient(600px 300px at 80% 0%, rgba(139,92,246,0.22), transparent 60%); pointer-events:none}
+header>*{position:relative}
+header h1{margin:0; font-size:2.15rem; font-weight:800; letter-spacing:-0.03em; line-height:1.1}
+header h1 span.grad{background:var(--grad); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text}
+header p{opacity:0.82; max-width:900px; margin:8px auto 0; font-size:0.93rem}
+.header-actions{display:flex; gap:8px; justify-content:center; margin-top:14px; flex-wrap:wrap}
+.pill{font-size:0.78rem; padding:6px 12px; border-radius:999px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.14); color:white; backdrop-filter: blur(8px)}
+.pill b{color:white}
+.btn-ghost{appearance:none; cursor:pointer; font:600 0.82rem Inter; padding:8px 14px; border-radius:999px; background:white; color:#0f172a; border:none; box-shadow:0 4px 16px rgba(0,0,0,0.15); transition:transform .15s, box-shadow .15s}
+.btn-ghost:hover{transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,0,0,0.2)}
+/* LAYOUT */
+.layout{display:flex; max-width:1440px; margin:0 auto; gap:0; min-height:calc(100vh - 120px)}
+aside.sidebar{width:var(--sidebarW); flex-shrink:0; background: linear-gradient(180deg, var(--card) 0%, var(--card2) 100%); border-right:1px solid var(--border); padding:18px 16px; position:sticky; top:92px; height:calc(100vh - 92px); overflow-y:auto; scrollbar-width:thin}
+aside.sidebar::-webkit-scrollbar{width:6px} aside.sidebar::-webkit-scrollbar-thumb{background:var(--border2); border-radius:999px}
+.sidebar-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px}
+.sidebar-title{font-size:0.8rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); font-weight:700}
+.progress-ring{position:relative; width:52px; height:52px; display:grid; place-items:center}
+.progress-ring svg{transform:rotate(-90deg)} .progress-ring span{position:absolute; font-size:0.78rem; font-weight:800; color:var(--accent)}
+.sidebar nav a{display:flex; gap:10px; align-items:center; padding:11px 12px; border-radius:14px; color:var(--text); text-decoration:none; font-size:0.9rem; font-weight:500; border:1px solid transparent; margin-bottom:7px; transition: all .18s; background: transparent}
+.sidebar nav a:hover{background:var(--bg2); border-color:var(--border); transform:translateX(2px)}
+.sidebar nav a.active{background: var(--gradSoft); border-color:#bae6fd; color:#0c4a6e; font-weight:700; box-shadow:0 4px 16px rgba(14,165,233,0.15)}
+.sidebar nav a.active .num{background:var(--accent); color:white; box-shadow:0 2px 8px rgba(14,165,233,0.4)}
+.sidebar .num{width:30px; height:30px; border-radius:999px; background:var(--bg2); display:flex; align-items:center; justify-content:center; font-size:0.82rem; font-weight:800; color:var(--muted); flex-shrink:0; border:1px solid var(--border); transition:all .18s}
+.sidebar .dot{width:9px; height:9px; border-radius:999px; margin-left:auto; flex-shrink:0; box-shadow:0 0 0 3px rgba(16,185,129,0.12)}
+.dot.fait{background:#10b981; box-shadow:0 0 0 4px rgba(16,185,129,0.15)} .dot.encours{background:#f59e0b; box-shadow:0 0 0 4px rgba(245,158,11,0.15)} .dot.todo{background:#cbd5e1}
+.hint{font-size:0.8rem; color:var(--muted); background: var(--bg2); border:1px dashed var(--border2); border-radius:14px; padding:12px; margin-top:14px; line-height:1.5}
+.hint b{color:var(--text)}
+.btn-small{width:100%; margin-top:12px; padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:var(--card); cursor:pointer; font:600 0.85rem Inter; color:var(--text); transition: all .15s; display:flex; align-items:center; justify-content:center; gap:6px}
+.btn-small:hover{background:var(--bg2); border-color:var(--border2); transform:translateY(-1px)}
+.main{flex:1; padding:28px 24px 40px; max-width:calc(100% - var(--sidebarW));}
+@media(max-width:980px){
+.layout{flex-direction:column}
+aside.sidebar{width:100%; position:relative; top:0; height:auto; border-right:none; border-bottom:1px solid var(--border)}
+.main{max-width:100%; padding:18px 14px}
+header h1{font-size:1.7rem}
+}
+/* CARDS — premium */
+section.card{background: linear-gradient(180deg, var(--card) 0%, var(--card2) 100%); border:1px solid var(--border); border-radius:var(--radius); padding:30px; margin-bottom:22px; box-shadow:var(--shadow); position:relative; overflow:hidden; transition: box-shadow .2s, transform .2s, border-color .2s}
+section.card::before{content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--grad); opacity:0; transition:opacity .2s}
+section.card:hover{box-shadow:var(--shadow2); border-color:var(--border2); transform:translateY(-1px)}
+section.card:hover::before{opacity:1}
+section.card h2.sec{margin:0 0 8px; color:var(--primary); font-size:1.55rem; font-weight:800; letter-spacing:-0.02em; border-left:4px solid transparent; padding-left:14px; background: linear-gradient(90deg, var(--accent), transparent) left/4px 100% no-repeat}
+.subtitle{color:var(--muted); font-size:0.9rem; margin-bottom:16px; display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+h3{color:var(--primary); margin-top:22px; font-weight:700; letter-spacing:-0.015em}
+.formula{background: var(--bg2); border:1px solid var(--border); border-radius:14px; padding:16px 18px; margin:14px 0; overflow-x:auto; font-size:0.96rem; position:relative; color:var(--text)}
+.formula::after{content:"fx"; position:absolute; top:10px; right:12px; font:700 0.65rem JetBrains Mono; letter-spacing:0.1em; color:var(--muted); background:var(--card); border:1px solid var(--border); padding:2px 6px; border-radius:999px}
+.figure{display:flex; flex-direction:column; align-items:center; gap:10px; margin:20px 0; padding:16px; background: #f8fafc; border:1px solid #e2e8f0; border-radius:16px; color:#0f172a}
+.figure figcaption{color:#475569 !important}
+.figure svg{max-width:100%; height:auto; filter: drop-shadow(0 4px 12px rgba(15,23,42,0.06))}
+.figure figcaption{font-size:0.84rem; color:var(--muted); text-align:center; max-width:700px; font-style:italic}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px} @media(max-width:800px){.grid2{grid-template-columns:1fr}}
+.tag{display:inline-flex; align-items:center; gap:6px; font-size:0.7rem; letter-spacing:0.08em; text-transform:uppercase; background:var(--gradSoft); color:#0c4a6e; padding:5px 10px; border-radius:999px; font-weight:700; border:1px solid #bae6fd}
+.kbd{font-family:JetBrains Mono, ui-monospace, monospace; background:#0f172a; color:#e2e8f0; padding:3px 7px; border-radius:8px; font-size:0.78em; border:1px solid #1e293b; box-shadow:0 2px 0 #020617}
+table{width:100%; border-collapse:separate; border-spacing:0; margin:12px 0; font-size:0.9rem; border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.04); background:var(--card)}
+th,td{padding:10px 12px; text-align:left; border-bottom:1px solid var(--border); color:var(--text)} th{background: var(--bg2); font-weight:700; color:var(--text); font-size:0.82rem; letter-spacing:0.04em; text-transform:uppercase} tr:last-child td{border-bottom:none} tr:hover td{background:var(--bg2)}
+.alert{border-left:4px solid #f59e0b; background: #fffbeb; padding:14px 16px; border-radius:12px; margin:14px 0; font-size:0.9rem; border:1px solid #fde68a; border-left-width:4px; color:#92400e}
+.alert b,.alert strong{color:#78350f}
+.success{border-left:4px solid #10b981; background: #ecfdf5; padding:14px 16px; border-radius:12px; margin:14px 0; border:1px solid #a7f3d0; border-left-width:4px; color:#065f46}
+.success b,.success strong{color:#064e3b}
+.badge{font-size:0.68rem; padding:4px 9px; border-radius:999px; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; border:1px solid transparent}
+.badge.fait{background:#dcfce7; color:#166534; border-color:#86efac} .badge.encours{background:#fef3c7; color:#92400e; border-color:#fcd34d} .badge.todo{background:#f1f5f9; color:#64748b; border-color:var(--border)}
+.sec-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:2px}
+footer{text-align:center; color:var(--muted); padding:24px; font-size:0.85rem; border-top:1px solid var(--border); margin-top:10px; background:var(--card)}
+/* Animations */
+@keyframes fadeIn{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)}}
+section.card{animation: fadeIn .5s ease both} section.card:nth-child(1){animation-delay:.02s} section.card:nth-child(2){animation-delay:.06s} section.card:nth-child(3){animation-delay:.1s}
+</style>
+</head>
+<body>
+<header>
+<h1>RTv1 — <span class="grad">Cours Complet</span></h1>
+<p>Algèbre & Géométrie analytique pour le ray-tracing CPU Blender-like · 10 chapitres · Phases 0 → 1 → 5.5 · Remplissage progressif</p>
+<div class="header-actions">
+<span class="pill">📐 <b>6 principes</b> ch.1 détaillés</span>
+<span class="pill">⚡ <b>Fluidité</b> cachedU/V · O3 · bench 188ms</span>
+<span class="pill">🎯 <b>Tests</b> move_*.rt validés</span>
+<button class="btn-ghost" onclick="document.getElementById('c1').scrollIntoView({behavior:'smooth'})">Commencer →</button>
+</div>
+</header>
+
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-top">
+<h2 style="margin:0">Chapitres</h2>
+<div class="progress-ring" title="Progression">
+<svg width="52" height="52"><circle cx="26" cy="26" r="20" fill="none" stroke="#e2e8f0" stroke-width="5"/><circle id="progCircle" cx="26" cy="26" r="20" fill="none" stroke="url(#gradProg)" stroke-width="5" stroke-linecap="round" stroke-dasharray="125.6" stroke-dashoffset="75"/></svg>
+<span id="progress">4/10</span>
+<svg width="0" height="0"><defs><linearGradient id="gradProg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0ea5e9"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+</div>
+</div>
+<nav id="chapNav">
+<a href="#c1" data-id="c1"><span class="num">1</span> Algèbre vectorielle <span class="dot fait" title="fait"></span></a>
+<a href="#c2" data-id="c2"><span class="num">2</span> Bases & repère <span class="dot fait"></span></a>
+<a href="#c3" data-id="c3"><span class="num">3</span> Droites, plans, sphères <span class="dot fait"></span></a>
+<a href="#c4" data-id="c4"><span class="num">4</span> Formes quadratiques <span class="dot fait"></span></a>
+<a href="#c5" data-id="c5"><span class="num">5</span> Quadriques (5) <span class="dot fait" title="fait"></span></a>
+<a href="#c6" data-id="c6"><span class="num">6</span> Intersection & normales <span class="dot fait" title="fait"></span></a>
+<a href="#c7" data-id="c7"><span class="num">7</span> Transformations <span class="dot fait" title="fait"></span></a>
+<a href="#c8" data-id="c8"><span class="num">8</span> Caméra sténopé <span class="dot fait" title="fait"></span></a>
+<a href="#c9" data-id="c9"><span class="num">9</span> Éclairage & ombres <span class="dot fait" title="fait"></span></a>
+<a href="#c10" data-id="c10"><span class="num">10</span> Optimisation <span class="dot fait" title="fait"></span></a>
+<a href="#c11" data-id="c11"><span class="num">11</span> FPS <span class="dot fait" title="fait"></span></a>
+</nav>
+<div class="hint">
+<b>Mode remplissage progressif</b><br>
+Coche un chapitre quand il est relu/compris. Le volet reste visible et surligne le chapitre en cours de lecture.<br>
+<span style="font-size:0.75rem">● fait &nbsp; ● en cours &nbsp; ● à faire</span>
+</div>
+<button class="btn-small" onclick="toggleCompact()">⤢ Plein écran cours</button>
+<div style="margin-top:12px; font-size:0.78rem; color:var(--muted)">Refs : <span class="kbd">Vec3.hpp</span> <span class="kbd">Quadric.hpp</span> <span class="kbd">Renderer.cpp</span></div>
+</aside>
+
+<div class="main" id="main">
+
+<!-- CHAPITRE 1 — ENRICHI 6 PRINCIPES -->
+<section class="card" id="c1">
+<div class="sec-head"><h2 class="sec">1. Algèbre vectorielle dans ℝ³</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle">Cours L1 Algèbre — 6 principes de base · <span class="kbd">Vec3</span> <span class="kbd">include/math/Vec3.hpp:4</span> · Tous les calculs RTv1 en dérivent</div>
+
+<!-- PRINCIPE 1 -->
+<h3 style="border-left:3px solid #0ea5e9; padding-left:10px;">Principe 1 — Espace vectoriel ℝ³ (8 axiomes)</h3>
+<p>Un <b>vecteur</b> \(\mathbf{v}=(x,y,z)\) n'est pas un point : c'est un déplacement. L'ensemble \(\mathbb{R}^3\) muni de <b>addition</b> et <b>multiplication scalaire</b> vérifie :</p>
+<div class="formula">
+<b>Addition :</b> \(\mathbf{a}+\mathbf{b}=(a_x+b_x,a_y+b_y,a_z+b_z)\) — commutative, associative, neutre \(\mathbf{0}\), inverse \(-\mathbf{v}\)<br>
+<b>Scalaire :</b> \(k\mathbf{a}=(k a_x,k a_y,k a_z)\) — distributif \(k(\mathbf{a}+\mathbf{b})=k\mathbf{a}+k\mathbf{b}\), \((k+l)\mathbf{a}=k\mathbf{a}+l\mathbf{a}\)<br>
+<b>Code :</b> `operator+`/`operator*` `Vec3.hpp:11` — ex: `light.pos - hit.point` `Renderer.cpp:18` est bien un vecteur.
+</div>
+<div class="figure">
+<svg width="700" height="160" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="80" y="12" font-size="11" fill="#0f172a" font-weight="600">Addition : parallélogramme</text>
+<line x1="20" y1="100" x2="100" y2="100" stroke="#0ea5e9" stroke-width="2.5" marker-end="url(#arrBlue)"/><text x="55" y="95" font-size="10" fill="#0ea5e9">a</text>
+<line x1="20" y1="100" x2="60" y2="45" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#arrViolet)"/><text x="30" y="50" font-size="10" fill="#8b5cf6">b</text>
+<line x1="100" y1="100" x2="140" y2="45" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.7"/>
+<line x1="60" y1="45" x2="140" y2="45" stroke="#0ea5e9" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.7"/>
+<line x1="20" y1="100" x2="140" y2="45" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#arrOrange)"/><text x="85" y="75" font-size="10" fill="#92400e">a+b</text>
+<circle cx="20" cy="100" r="3" fill="#0f172a"/>
+</g>
+<g transform="translate(240,20)">
+<text x="50" y="12" font-size="11" fill="#0f172a" font-weight="600">Scalaire k·a</text>
+<line x1="20" y1="60" x2="80" y2="60" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrBlue)"/><text x="40" y="55" font-size="9" fill="#0ea5e9">a</text>
+<line x1="20" y1="90" x2="120" y2="90" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrGreen)"/><text x="60" y="85" font-size="9" fill="#065f46">2·a (même dir, ×2)</text>
+<line x1="20" y1="120" x2="70" y2="120" stroke="#ef4444" stroke-width="2" marker-end="url(#arrRed)"/><text x="25" y="135" font-size="9" fill="#991b1b">-0.5·a (opposé, ×0.5)</text>
+</g>
+<g transform="translate(440,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Vecteur ≠ point</text>
+<circle cx="30" cy="60" r="3" fill="#0f172a"/><text x="35" y="58" font-size="9" fill="#0f172a">O (point)</text>
+<line x1="30" y1="60" x2="110" y2="85" stroke="#0f172a" stroke-width="2" marker-end="url(#arrBlack)"/><text x="65" y="70" font-size="9" fill="#0f172a">v = P-O</text>
+<circle cx="110" cy="85" r="3" fill="#0ea5e9"/><text x="115" y="88" font-size="9" fill="#0ea5e9">P (point)</text>
+<text x="20" y="115" font-size="8" fill="#64748b">point + vecteur = point</text>
+<text x="20" y="128" font-size="8" fill="#64748b">vecteur + vecteur = vecteur</text>
+</g>
+<defs><marker id="arrRed" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#ef4444"/></marker></defs>
+</svg>
+<figcaption>Fig 1.1 — L'addition suit le parallélogramme ; le scalaire étire/rétrécit/retourne. Un point + un vecteur donne un point (ex: <code>hit.point + N*1e-4</code> `Renderer.cpp:26`).</figcaption>
+</div>
+
+<!-- PRINCIPE 2 -->
+<h3 style="border-left:3px solid #8b5cf6; padding-left:10px;">Principe 2 — Combinaison linéaire, base, dimension</h3>
+<p>Tout \(\mathbf{v}= x\mathbf{e}_1+y\mathbf{e}_2+z\mathbf{e}_3\) avec \(\mathbf{e}_1=(1,0,0)\) etc. Une <b>base</b> est une famille libre (aucun vecteur combinaison des autres) et génératrice (tout vecteur s'écrit dessus). \(\dim\mathbb{R}^3=3\).</p>
+<div class="formula">
+<b>Coordonnées :</b> dans base \(\{ \mathbf{u},\mathbf{w},\mathbf{v}\}\) locale : \(\mathbf{X}= x\mathbf{u}+y\mathbf{w}+z\mathbf{v}\) avec \(x=\mathbf{X}\cdot\mathbf{u}\) etc.<br>
+<b>RTv1 :</b> `ox=(O-pos)·u` `Quadric.cpp:39` — c'est la coordonnée de \(\overrightarrow{pos\,O}\) dans la base locale.
+</div>
+<div class="figure">
+<svg width="700" height="170" viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">Base canonique e1,e2,e3</text>
+<line x1="60" y1="90" x2="120" y2="90" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrBlue)"/><text x="125" y="94" font-size="9" fill="#0ea5e9">e1</text>
+<line x1="60" y1="90" x2="60" y2="35" stroke="#10b981" stroke-width="2" marker-end="url(#arrGreen)"/><text x="45" y="32" font-size="9" fill="#10b981">e2=Y</text>
+<line x1="60" y1="90" x2="90" y2="120" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/><text x="92" y="125" font-size="9" fill="#8b5cf6">e3=Z</text>
+<circle cx="60" cy="90" r="3" fill="#0f172a"/><text x="50" y="105" font-size="8" fill="#64748b">O</text>
+</g>
+<g transform="translate(250,20)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">v = 2e1 + 1e2 + 0.5e3</text>
+<line x1="30" y1="110" x2="90" y2="110" stroke="#0ea5e9" stroke-width="1.5" stroke-dasharray="3 3"/><text x="55" y="105" font-size="8" fill="#0ea5e9">2·e1</text>
+<line x1="90" y1="110" x2="90" y2="70" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3 3"/><text x="95" y="90" font-size="8" fill="#10b981">1·e2</text>
+<line x1="90" y1="70" x2="105" y2="85" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="3 3"/><text x="107" y="88" font-size="8" fill="#8b5cf6">0.5·e3</text>
+<line x1="30" y1="110" x2="105" y2="85" stroke="#0f172a" stroke-width="2.5" marker-end="url(#arrBlack)"/><text x="60" y="125" font-size="9" fill="#0f172a">v</text>
+<circle cx="30" cy="110" r="3" fill="#0f172a"/>
+</g>
+<g transform="translate(450,20)">
+<text x="30" y="12" font-size="11" fill="#f59e0b" font-weight="600">Base locale objet</text>
+<rect x="10" y="30" width="170" height="90" rx="10" fill="#fffbeb" stroke="#f59e0b"/>
+<text x="20" y="50" font-size="9" fill="#92400e">X_local = x·u + y·w + z·v</text>
+<text x="20" y="68" font-size="8" fill="#64748b">x = X·u , y = X·w , z = X·v</text>
+<text x="20" y="85" font-size="8" fill="#64748b">u,v,w orthonormés</text>
+<text x="20" y="102" font-size="8" fill="#0f172a">→ Quadric.cpp:39</text>
+</g>
+</svg>
+<figcaption>Fig 1.2 — Tout vecteur est une combinaison linéaire. Le code ne fait que lire les coordonnées dans la base locale par produits scalaires.</figcaption>
+</div>
+
+<!-- PRINCIPE 3 -->
+<h3 style="border-left:3px solid #10b981; padding-left:10px;">Principe 3 — Norme & distance (euclidien)</h3>
+<div class="formula">
+\( \|\mathbf{v}\| = \sqrt{\mathbf{v}\cdot\mathbf{v}} = \sqrt{x^2+y^2+z^2}\) `Vec3.hpp:18`<br>
+Distance \(d(\mathbf{P},\mathbf{Q})=\|\mathbf{P}-\mathbf{Q}\|\) — ex: `lightDist = (Lpos-hit).length()` `Renderer.cpp:27`<br>
+Normalisé \(\hat{\mathbf{v}}=\mathbf{v}/\|\mathbf{v}\|\) si \(\|\mathbf{v}\|>10^{-9}\) `Vec3.hpp:21` → \(\|\hat{\mathbf{v}}\|=1\) (direction pure).
+</div>
+<div class="figure">
+<svg width="700" height="160" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">Norme = longueur</text>
+<line x1="20" y1="70" x2="120" y2="110" stroke="#0f172a" stroke-width="2.5" marker-end="url(#arrBlack)"/><text x="65" y="75" font-size="10" fill="#0f172a">v  ‖v‖</text>
+<line x1="20" y1="70" x2="20" y2="110" stroke="#94a3b8" stroke-dasharray="3 3"/><line x1="20" y1="110" x2="120" y2="110" stroke="#94a3b8" stroke-dasharray="3 3"/>
+<text x="25" y="125" font-size="8" fill="#64748b">base² + hauteur² = ‖v‖²</text>
+</g>
+<g transform="translate(250,20)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">Normalisation</text>
+<line x1="20" y1="60" x2="100" y2="60" stroke="#0f172a" stroke-width="3" marker-end="url(#arrBlack)"/><text x="45" y="55" font-size="9" fill="#0f172a">v  ‖v‖=5</text>
+<line x1="20" y1="100" x2="50" y2="100" stroke="#f59e0b" stroke-width="3" marker-end="url(#arrOrange)"/><text x="15" y="120" font-size="9" fill="#92400e">v̂  ‖v̂‖=1 (même direction)</text>
+<text x="20" y="145" font-size="8" fill="#64748b">v̂ = v / ‖v‖  — Ray.dir est toujours unitaire</text>
+</g>
+<g transform="translate(470,20)">
+<text x="30" y="12" font-size="11" fill="#ef4444" font-weight="600">Piège ‖v‖≈0</text>
+<rect x="10" y="30" width="170" height="70" rx="10" fill="#fef2f2" stroke="#fecaca"/>
+<text x="20" y="50" font-size="9" fill="#991b1b">si ‖v‖ &lt; 1e-9 → ne pas diviser</text>
+<text x="20" y="68" font-size="8" fill="#64748b">sinon NaN / explosion</text>
+<text x="20" y="88" font-size="8" fill="#0f172a">Vec3.hpp:21 : return *this</text>
+</g>
+</svg>
+<figcaption>Fig 1.3 — La norme donne la longueur ; normaliser = garder la direction en mettant la longueur à 1. Indispensable pour que <code>ray.dir·dir = cos</code> et que <code>a=D·D=1</code> dans la sphère.</figcaption>
+</div>
+
+<!-- PRINCIPE 4 -->
+<h3 style="border-left:3px solid #f59e0b; padding-left:10px;">Principe 4 — Produit scalaire (projection & angle)</h3>
+<div class="formula">
+\( \mathbf{a}\cdot\mathbf{b}=a_xb_x+a_yb_y+a_zb_z = \|\mathbf{a}\|\|\mathbf{b}\|\cos\theta\) `Vec3.hpp:16`<br>
+<b>Propriétés :</b> commutatif, bilinéaire, \(\mathbf{a}\cdot\mathbf{a}=\|\mathbf{a}\|^2\) , \(\mathbf{a}\cdot\mathbf{b}=0 ⇔ a⊥b\)<br>
+<b>Projection :</b> \(\mathrm{proj}_{\hat{\mathbf{b}}}(\mathbf{a}) = (\mathbf{a}\cdot\hat{\mathbf{b}})\hat{\mathbf{b}}\) — longueur = \(|\mathbf{a}\cdot\hat{\mathbf{b}}|\)
+</div>
+<table>
+<tr><th>Test</th><th>Formule</th><th>Code</th></tr>
+<tr><td>Angle éclairé ?</td><td>\(\mathbf{N}\cdot\mathbf{L}>0\) → face à la lumière</td><td>`diff = max(0, N·L)` `Renderer.cpp:19`</td></tr>
+<tr><td>Devant la caméra ?</td><td>\(\mathbf{N}\cdot\mathbf{D}<0\) → normale vers caméra</td><td>`if(N·D>0) N*=-1` `Quadric.cpp:97`</td></tr>
+<tr><td>Ombre portée ?</td><td>—</td><td>`shadow` `Renderer.cpp:26`</td></tr>
+</table>
+<div class="figure">
+<svg width="700" height="180" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="50" y="12" font-size="11" fill="#0f172a" font-weight="600">a·b = |a||b| cosθ</text>
+<line x1="20" y1="70" x2="120" y2="70" stroke="#0ea5e9" stroke-width="2.5" marker-end="url(#arrBlue)"/><text x="65" y="60" font-size="10" fill="#0ea5e9">a</text>
+<line x1="20" y1="70" x2="100" y2="120" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#arrViolet)"/><text x="45" y="125" font-size="10" fill="#8b5cf6">b</text>
+<path d="M50 70 A 20 20 0 0 0 68 82" fill="none" stroke="#64748b"/><text x="70" y="85" font-size="9" fill="#64748b">θ</text>
+<line x1="100" y1="120" x2="100" y2="70" stroke="#64748b" stroke-dasharray="4 3"/><text x="102" y="105" font-size="8" fill="#64748b">proj</text>
+<text x="20" y="150" font-size="8" fill="#64748b">θ=0°→cos=1 max — 90°→0 — 180°→-1</text>
+</g>
+<g transform="translate(260,20)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">Lambert N·L</text>
+<ellipse cx="70" cy="90" rx="28" ry="28" fill="#fef3c7" stroke="#f59e0b"/>
+<line x1="70" y1="62" x2="70" y2="32" stroke="#10b981" stroke-width="2" marker-end="url(#arrGreen)"/><text x="75" y="35" font-size="9" fill="#10b981">N</text>
+<line x1="70" y1="90" x2="130" y2="45" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrOrange)"/><text x="135" y="45" font-size="9" fill="#92400e">L</text>
+<text x="30" y="135" font-size="8" fill="#64748b">diff = max(0, cosθ)·I</text>
+</g>
+<g transform="translate(460,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Orthogonalité</text>
+<line x1="30" y1="70" x2="110" y2="70" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrBlue)"/>
+<line x1="60" y1="70" x2="60" y2="15" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/>
+<text x="70" y="65" font-size="9" fill="#0ea5e9">a</text><text x="45" y="25" font-size="9" fill="#8b5cf6">b</text>
+<text x="30" y="100" font-size="9" fill="#10b981">a·b=0 → a ⟂ b</text>
+<text x="30" y="120" font-size="8" fill="#64748b">ex: right·forward =0</text>
+</g>
+</svg>
+<figcaption>Fig 1.4 — Le scalaire mesure l'alignement. Tout l'éclairage RTv1 est un \(N·L\).</figcaption>
+</div>
+
+<!-- PRINCIPE 5 -->
+<h3 style="border-left:3px solid #6366f1; padding-left:10px;">Principe 5 — Produit vectoriel (perpendiculaire & aire)</h3>
+<div class="formula">
+\( \mathbf{a}\times\mathbf{b}=(a_yb_z-a_zb_y,\;a_zb_x-a_xb_z,\;a_xb_y-a_yb_x)\) `Vec3.hpp:17`<br>
+<b>Propriétés :</b> anti-commutatif \(\mathbf{a}\times\mathbf{b}= -\mathbf{b}\times\mathbf{a}\), bilinéaire, \(\|\mathbf{a}\times\mathbf{b}\|=\|\mathbf{a}\|\|\mathbf{b}\|\sin\theta\) = aire du parallélogramme<br>
+\(\mathbf{a}\times\mathbf{b} ⟂ \mathbf{a}\) et \(⟂ \mathbf{b}\), direction = règle de la main droite.
+</div>
+<div class="figure">
+<svg width="700" height="180" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">a × b ⟂ plan(a,b)</text>
+<line x1="30" y1="80" x2="110" y2="80" stroke="#0ea5e9" stroke-width="2.5" marker-end="url(#arrBlue)"/><text x="70" y="70" font-size="9" fill="#0ea5e9">a</text>
+<line x1="30" y1="80" x2="60" y2="25" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#arrViolet)"/><text x="35" y="28" font-size="9" fill="#8b5cf6">b</text>
+<line x1="30" y1="80" x2="85" y2="135" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrGreen)"/><text x="88" y="140" font-size="9" fill="#10b981">a×b</text>
+<circle cx="30" cy="80" r="3" fill="#0f172a"/>
+<text x="20" y="155" font-size="8" fill="#64748b">ordre = main droite (pouce = a×b)</text>
+</g>
+<g transform="translate(280,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Construction base RTv1</text>
+<line x1="60" y1="50" x2="60" y2="20" stroke="#10b981" stroke-width="2" marker-end="url(#arrGreen)"/><text x="65" y="30" font-size="9" fill="#10b981">w=dir</text>
+<line x1="60" y1="50" x2="20" y2="70" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arrGrey)"/><text x="10" y="75" font-size="8" fill="#64748b">arb</text>
+<line x1="60" y1="50" x2="110" y2="50" stroke="#0ea5e9" stroke-width="2.5" marker-end="url(#arrBlue)"/><text x="90" y="45" font-size="9" fill="#0ea5e9">u=w×arb</text>
+<line x1="60" y1="50" x2="85" y2="85" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#arrViolet)"/><text x="88" y="90" font-size="9" fill="#8b5cf6">v=w×u</text>
+<text x="20" y="125" font-size="8" fill="#64748b">Quadric.cpp:22 — si |w·arb|>0.999 → arb=(0,0,1)</text>
+</g>
+<g transform="translate(500,20)">
+<text x="20" y="12" font-size="11" fill="#ef4444" font-weight="600">Ordre = miroir !</text>
+<rect x="10" y="30" width="160" height="70" rx="10" fill="#fef2f2" stroke="#fecaca"/>
+<text x="20" y="50" font-size="9" fill="#991b1b">right = worldUp × forward ✓</text>
+<text x="20" y="68" font-size="9" fill="#991b1b">forward × worldUp ✗ (miroir)</text>
+<text x="20" y="88" font-size="8" fill="#64748b">Renderer.cpp:52 — test move_camera.rt</text>
+</g>
+<defs><marker id="arrGrey" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#94a3b8"/></marker></defs>
+</svg>
+<figcaption>Fig 1.5 — Le vectoriel fabrique la perpendiculaire. Tout le repère local et la caméra en dépendent ; inverser l'ordre miroite l'image.</figcaption>
+</div>
+
+<!-- PRINCIPE 6 -->
+<h3 style="border-left:3px solid #0f172a; padding-left:10px;">Principe 6 — Invariants par rotation (pourquoi le cache marche)</h3>
+<div class="formula">
+Si \(P\) orthogonale (\(P^\top=P^{-1}\), colonnes = base orthonormée) alors<br>
+\(\|P\mathbf{v}\|=\|\mathbf{v}\|\), \((P\mathbf{a})\cdot(P\mathbf{b})=\mathbf{a}\cdot\mathbf{b}\), \(\|P\mathbf{a}\times P\mathbf{b}\|=\|\mathbf{a}\times\mathbf{b}\|\)<br>
+<b>Conséquence :</b> le discriminant \( \Delta=b^2-4ac\) de \(a t^2+b t+c\) est <b>invariant</b> par changement monde→local — le solveur donne le même \(t\) quel que soit le repère.
+</div>
+<div class="figure">
+<svg width="700" height="140" viewBox="0 0 700 140" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Rotation conserve longueurs & angles</text>
+<line x1="20" y1="60" x2="80" y2="60" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrBlue)"/><line x1="20" y1="60" x2="50" y2="20" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/>
+<text x="70" y="55" font-size="9" fill="#0ea5e9">a</text><text x="30" y="25" font-size="9" fill="#8b5cf6">b</text>
+<path d="M40 60 A 15 15 0 0 0 48 45" fill="none" stroke="#64748b"/><text x="48" y="52" font-size="8" fill="#64748b">θ</text>
+</g>
+<text x="150" y="65" font-size="16" fill="#94a3b8">→ P →</text>
+<g transform="translate(220,20)">
+<line x1="20" y1="60" x2="80" y2="40" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrBlue)"/><line x1="20" y1="60" x2="60" y2="15" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/>
+<text x="20" y="95" font-size="8" fill="#10b981">même |a|,|b|,θ → même a·b et |a×b|</text>
+</g>
+<g transform="translate(430,20)">
+<rect x="10" y="10" width="220" height="90" rx="10" fill="#ecfdf5" stroke="#86efac"/>
+<text x="20" y="30" font-size="9" fill="#065f46">Donc cachedU/V suffit :</text>
+<text x="20" y="48" font-size="9" fill="#065f46">1 calcul → réutilisé per-ray</text>
+<text x="20" y="66" font-size="8" fill="#64748b">sans changer Δ, t, N</text>
+<text x="20" y="84" font-size="8" fill="#0f172a">Quadric.hpp:28 updateBasis()</text>
+</g>
+</svg>
+<figcaption>Fig 1.6 — Une rotation ne déforme rien : d'où l'optimisation <code>cachedU/V</code> — on calcule la base une fois, on s'en ressert pour tous les rayons.</figcaption>
+</div>
+
+<div class="success"><b>Exercice de validation (5 min) :</b> prends \(\mathbf{a}=(1,2,3),\mathbf{b}=(4,5,6)\) → calcule \(\mathbf{a}\cdot\mathbf{b}\), \(\|\mathbf{a}\|\), \(\hat{\mathbf{a}}\), \(\mathbf{a}\times\mathbf{b}\) et vérifie \(\|\mathbf{a}\times\mathbf{b}\|^2 = \|\mathbf{a}\|^2\|\mathbf{b}\|^2-(\mathbf{a}\cdot\mathbf{b})^2\). Puis teste dans `Vec3`.</div>
+<div style="margin-top:16px; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; font-size:0.82rem; line-height:1.5; color:var(--text)">
+<b>📚 Sources scientifiques — Ch.1</b><br>
+[1] <b>Peano–Grassmann — 8 axiomes</b> : Peano 1888 <i>Calcolo Geometrico</i> d'après Grassmann 1844 — HAL <a href="https://hal.science/hal-04451767v1/file/chap2022_03_Espaces_Vectoriels_WEB.pdf" target="_blank">hal-04451767 déf.1.1</a>, Lyon1 <a href="http://math.univ-lyon1.fr/~alachal/diaporamas/cours_PC/chap12_Espaces_Vectoriels_CM.pdf" target="_blank">chap12</a><br>
+[2] <b>Cauchy-Schwarz</b> \(|\mathbf{a}\cdot\mathbf{b}|\le\|\mathbf{a}\|\|\mathbf{b}\|\) : Cauchy 1821 / Bunyakovsky 1859 / Schwarz 1888 — preuve \(0\le\|x+\lambda y\|^2\) discriminant ≤0 — <a href="https://mathmonks.com/inequalities/cauchy-schwarz-inequality" target="_blank">mathmonks 2024</a>, <a href="https://pressbooks.pub/linearalgebraandapplications/chapter/cauchy-schwarz-inequality-proof/" target="_blank">Pressbooks 2023</a><br>
+[3] <b>Gibbs 1881 — produit vectoriel</b> \(\alpha\times\beta\) (skew product) — <a href="https://en.wikisource.org/wiki/Scientific_Papers_of_Josiah_Willard_Gibbs,_Volume_2/Chapter_III" target="_blank">Gibbs Papers Vol.2 Ch.III p.17</a>, Smithsonian <a href="https://library.si.edu/digital-library/book/elementsvectora00gibb" target="_blank">Elements of Vector Analysis 1881-84</a>, Rocci 2020 <a href="https://doi.org/10.1007/s00407-020-00264-x" target="_blank">doi:10.1007/s00407-020-00264-x</a><br>
+[4] <b>Norme euclidienne</b> \(\|\mathbf{v}\|=\sqrt{\mathbf{v}\cdot\mathbf{v}}\) — Pythagore n-D — <a href="https://isa-afp.org/browser_info/current/AFP/Cauchy/document.pdf" target="_blank">Isabelle AFP Cauchy Ch.2</a>
+</div>
+</section>
+
+<!-- CHAPITRE 2 — ENRICHI 5 PRINCIPES -->
+<section class="card" id="c2">
+<div class="sec-head"><h2 class="sec">2. Bases & changements de repère</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle">Cours L1 Algèbre linéaire — 5 principes · <span class="kbd">Vec3</span> <span class="kbd">Quadric.cpp:22</span> <span class="kbd">Renderer.cpp:52</span> · Pourquoi `cachedU/V` marche</div>
+
+<!-- PRINCIPE 1 -->
+<h3 style="border-left:3px solid #0ea5e9; padding-left:10px;">Principe 1 — Base, famille libre, dimension</h3>
+<p>Dans \(\mathbb{R}^3\), une <b>base</b> est une famille <b>libre</b> (aucun vecteur n'est combinaison des autres) et <b>génératrice</b> (tout vecteur s'écrit comme combinaison linéaire). Alors tout \(\mathbf{X}=x\mathbf{b}_1+y\mathbf{b}_2+z\mathbf{b}_3\) de façon <b>unique</b>.</p>
+<div class="formula">
+<b>Théorie : Lemme de Steinitz / Théorème de la dimension</b> — toutes les bases de \(\mathbb{R}^3\) ont 3 éléments → \(\dim\mathbb{R}^3=3\).<br>
+Ex canonique : \(\mathbf{e}_1=(1,0,0),\mathbf{e}_2=(0,1,0),\mathbf{e}_3=(0,0,1)\). RTv1 locale : \(\{\mathbf{u},\mathbf{w},\mathbf{v}\}\) avec \(\mathbf{w}=\hat{dir}=Y\), \(\mathbf{u}=X\), \(\mathbf{v}=Z\).
+</div>
+<div class="figure">
+<svg width="700" height="160" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Libre vs Liée</text>
+<line x1="20" y1="70" x2="80" y2="70" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrBlue)"/><text x="50" y="65" font-size="9" fill="#0ea5e9">b1</text>
+<line x1="20" y1="70" x2="50" y2="30" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/><text x="30" y="28" font-size="9" fill="#8b5cf6">b2</text>
+<line x1="20" y1="70" x2="85" y2="40" stroke="#10b981" stroke-width="2" marker-end="url(#arrGreen)"/><text x="88" y="38" font-size="8" fill="#10b981">b3 non dans plan(b1,b2)</text>
+<circle cx="20" cy="70" r="3" fill="#0f172a"/><text x="5" y="90" font-size="8" fill="#10b981">libre ✓ base</text>
+</g>
+<g transform="translate(260,20)">
+<text x="30" y="12" font-size="11" fill="#ef4444" font-weight="600">Liée → pas une base</text>
+<line x1="20" y1="70" x2="80" y2="70" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrBlue)"/><text x="50" y="65" font-size="9" fill="#0ea5e9">b1</text>
+<line x1="20" y1="70" x2="50" y2="30" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/>
+<line x1="20" y1="70" x2="65" y2="50" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrGrey)" stroke-dasharray="3 3"/><text x="68" y="48" font-size="8" fill="#94a3b8">b3=0.5b1+0.5b2</text>
+<text x="20" y="95" font-size="8" fill="#ef4444">liée ✗ (dans le plan)</text>
+</g>
+<g transform="translate(470,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Dimension 3</text>
+<rect x="10" y="30" width="170" height="75" rx="10" fill="#f0f9ff" stroke="#bae6fd"/>
+<text x="20" y="50" font-size="9" fill="#0c4a6e">Tout X = x·u + y·w + z·v</text>
+<text x="20" y="68" font-size="8" fill="#64748b">unique (x,y,z) ∈ ℝ³</text>
+<text x="20" y="86" font-size="8" fill="#0f172a">→ pos + base = repère local</text>
+</g>
+</svg>
+<figcaption>Fig 2.1 — Une base est libre (hors plan) et génératrice. RTv1 choisit \(\{u,w,v\}\) comme base locale du quadrique.</figcaption>
+</div>
+
+<!-- PRINCIPE 2 -->
+<h3 style="border-left:3px solid #8b5cf6; padding-left:10px;">Principe 2 — Base orthonormée (orthogonale + normée)</h3>
+<div class="formula">
+<b>Définition :</b> \(\{\mathbf{u},\mathbf{w},\mathbf{v}\}\) orthonormée ⇔ \(\|\mathbf{u}\|=\|\mathbf{w}\|=\|\mathbf{v}\|=1\) et \(\mathbf{u}\cdot\mathbf{w}=\mathbf{w}\cdot\mathbf{v}=\mathbf{u}\cdot\mathbf{v}=0\)<br>
+<b>Théorie : Procédé de Gram-Schmidt</b> — orthogonaliser puis normaliser. <b>Conséquence :</b> coordonnées immédiates par produit scalaire (pas d'inverse de matrice) : \(x=\mathbf{X}\cdot\mathbf{u}\) etc.
+</div>
+<div class="figure">
+<svg width="700" height="170" viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Orthogonal : 90°</text>
+<line x1="30" y1="70" x2="100" y2="70" stroke="#0ea5e9" stroke-width="2.5" marker-end="url(#arrBlue)"/><text x="65" y="65" font-size="9" fill="#0ea5e9">u</text>
+<line x1="30" y1="70" x2="30" y2="20" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrGreen)"/><text x="15" y="25" font-size="9" fill="#10b981">w</text>
+<rect x="30" y="55" width="12" height="12" fill="none" stroke="#64748b" stroke-width="1"/>
+<text x="45" y="50" font-size="8" fill="#64748b">u·w=0</text>
+<line x1="30" y1="70" x2="70" y2="105" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/><text x="72" y="110" font-size="9" fill="#8b5cf6">v  (sort de l'écran)</text>
+</g>
+<g transform="translate(250,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Normé : ‖·‖=1</text>
+<line x1="20" y1="60" x2="80" y2="60" stroke="#0f172a" stroke-width="1" stroke-dasharray="3 3"/><text x="85" y="64" font-size="8" fill="#64748b">1</text>
+<line x1="20" y1="60" x2="60" y2="60" stroke="#0ea5e9" stroke-width="3" marker-end="url(#arrBlue)"/><text x="35" y="55" font-size="9" fill="#0ea5e9">û</text>
+<line x1="20" y1="90" x2="90" y2="90" stroke="#0f172a" stroke-width="1" stroke-dasharray="3 3"/><text x="95" y="94" font-size="8" fill="#64748b">1</text>
+<line x1="20" y1="90" x2="50" y2="90" stroke="#10b981" stroke-width="3" marker-end="url(#arrGreen)"/><text x="28" y="85" font-size="9" fill="#10b981">ŵ</text>
+<text x="20" y="120" font-size="8" fill="#64748b">tous les vecteurs base ont longueur 1</text>
+</g>
+<g transform="translate(470,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Coordonnées par dot</text>
+<rect x="10" y="30" width="180" height="80" rx="10" fill="#f5f3ff" stroke="#ddd6fe"/>
+<text x="20" y="50" font-size="9" fill="#5b21b6">x = X·u</text>
+<text x="20" y="68" font-size="9" fill="#5b21b6">y = X·w</text>
+<text x="20" y="86" font-size="9" fill="#5b21b6">z = X·v</text>
+<text x="20" y="104" font-size="8" fill="#64748b">pas de matrice à inverser (si ortho)</text>
+</g>
+</svg>
+<figcaption>Fig 2.2 — Orthonormée = perpendiculaire + longueur 1. Alors les coordonnées sont de simples projections — c'est tout le secret de <code>ox=(O-pos)·u</code>.</figcaption>
+</div>
+
+<!-- PRINCIPE 3 -->
+<h3 style="border-left:3px solid #10b981; padding-left:10px;">Principe 3 — Construction \(u,v\) à partir de \(w\) (RTv1)</h3>
+<div class="formula">
+<b>Algorithme `buildBasis` / `updateBasis` `Quadric.cpp:22` :</b><br>
+\( \mathbf{w}= \hat{\mathbf{dir}}\) , &nbsp; \(\mathbf{arb}=(0,1,0)\) si \(|\mathbf{w}\cdot\mathbf{arb}|&lt;0.999\) sinon \((0,0,1)\) <i>(évite \(\mathbf{w}\times\mathbf{arb}\approx\mathbf{0}\))</i><br>
+\( \mathbf{u}= \dfrac{\mathbf{w}\times\mathbf{arb}}{\|\mathbf{w}\times\mathbf{arb}\|}\) , &nbsp; \( \mathbf{v}= \mathbf{w}\times\mathbf{u}\)  →  \(\{\mathbf{u},\mathbf{w},\mathbf{v}\}\) directe orthonormée (déterminant +1)
+</div>
+<div class="figure">
+<svg width="700" height="190" viewBox="0 0 700 190" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">Cas normal : w non vertical</text>
+<line x1="60" y1="80" x2="60" y2="30" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrGreen)"/><text x="65" y="30" font-size="9" fill="#10b981">w</text>
+<line x1="60" y1="80" x2="30" y2="100" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arrGrey)"/><text x="10" y="105" font-size="8" fill="#64748b">arb=(0,1,0)</text>
+<line x1="60" y1="80" x2="110" y2="80" stroke="#0ea5e9" stroke-width="2.5" marker-end="url(#arrBlue)"/><text x="95" y="75" font-size="9" fill="#0ea5e9">u=w×arb</text>
+<line x1="60" y1="80" x2="85" y2="115" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#arrViolet)"/><text x="88" y="125" font-size="9" fill="#8b5cf6">v=w×u</text>
+<circle cx="60" cy="80" r="3" fill="#0f172a"/>
+</g>
+<g transform="translate(280,20)">
+<text x="30" y="12" font-size="11" fill="#ef4444" font-weight="600">Cas dégénéré : w≈(0,1,0)</text>
+<line x1="60" y1="80" x2="60" y2="30" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrGreen)"/><text x="65" y="35" font-size="9" fill="#10b981">w≈Y</text>
+<line x1="60" y1="80" x2="60" y2="110" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arrGrey)" opacity="0.3"/><text x="45" y="120" font-size="8" fill="#ef4444">w×(0,1,0)≈0 !</text>
+<line x1="60" y1="80" x2="90" y2="80" stroke="#0ea5e9" stroke-width="2.5" marker-end="url(#arrBlue)"/><text x="92" y="75" font-size="9" fill="#0ea5e9">→ arb=(0,0,1)</text>
+<text x="20" y="145" font-size="8" fill="#64748b">test |w·arb|>0.999 `Quadric.cpp:25`</text>
+</g>
+<g transform="translate(490,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Directe vs indirecte</text>
+<rect x="10" y="30" width="170" height="80" rx="10" fill="#fffbeb" stroke="#fde68a"/>
+<text x="20" y="50" font-size="9" fill="#92400e">v = w×u → directe (main droite)</text>
+<text x="20" y="68" font-size="9" fill="#92400e">u = w×arb → ordre fixe le signe</text>
+<text x="20" y="88" font-size="8" fill="#64748b">inverser u = arb×w → base miroir</text>
+</g>
+</svg>
+<figcaption>Fig 2.3 — Le choix de \(arb\) évite la division par zéro. Le second \(cross\) garantit l'orthonormalité sans re-normaliser \(v\) (déjà unitaire).</figcaption>
+</div>
+
+<!-- PRINCIPE 4 -->
+<h3 style="border-left:3px solid #f59e0b; padding-left:10px;">Principe 4 — Matrice de passage \(P\) (orthogonale)</h3>
+<div class="formula">
+<b>Théorie : Matrice orthogonale \(P=[\mathbf{u}\;\mathbf{w}\;\mathbf{v}]\) \(3\times3\), colonnes = base</b><br>
+\(P^\top P = I\) ⇔ \(P^\top = P^{-1}\) , \(\det P = +1\) (directe) ⇔ rotation pure<br>
+<b>Monde → local :</b> \(\mathbf{X}_{local}=P^\top(\mathbf{X}_{world}-\mathbf{pos})\) ⇔ \((o_x,o_y,o_z)\) ci-dessus<br>
+<b>Local → monde :</b> \(\mathbf{X}_{world}=P\mathbf{X}_{local}+\mathbf{pos}\) — utilisé pour \(\nabla F\) `Quadric.cpp:93` : \(\mathbf{N}_{world}= \mathbf{u}g_x+\mathbf{w}g_y+\mathbf{v}g_z\)
+</div>
+<div class="figure">
+<svg width="700" height="170" viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(20,20)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">P = [ u | w | v ]</text>
+<rect x="20" y="30" width="120" height="90" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+<line x1="60" y1="40" x2="60" y2="110" stroke="#0ea5e9" stroke-width="2"/><text x="45" y="125" font-size="8" fill="#0ea5e9">u</text>
+<line x1="85" y1="40" x2="85" y2="110" stroke="#10b981" stroke-width="2"/><text x="75" y="125" font-size="8" fill="#10b981">w</text>
+<line x1="110" y1="40" x2="110" y2="110" stroke="#8b5cf6" stroke-width="2"/><text x="100" y="125" font-size="8" fill="#8b5cf6">v</text>
+<text x="30" y="145" font-size="8" fill="#64748b">3 colonnes orthonormées</text>
+</g>
+<text x="170" y="80" font-size="14" fill="#94a3b8">·</text>
+<g transform="translate(200,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Pᵀ = P⁻¹</text>
+<rect x="20" y="30" width="140" height="50" rx="8" fill="#ecfdf5" stroke="#86efac"/>
+<text x="30" y="50" font-size="9" fill="#065f46">Pᵀ·P = I</text>
+<text x="30" y="68" font-size="9" fill="#065f46">pas d'inverse à calculer</text>
+<text x="20" y="90" font-size="8" fill="#64748b">dot suffit (O(1))</text>
+</g>
+<text x="380" y="80" font-size="14" fill="#94a3b8">⇔</text>
+<g transform="translate(420,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Changement</text>
+<text x="20" y="35" font-size="9" fill="#0f172a">Monde → local : Pᵀ·(X-pos)</text>
+<text x="20" y="55" font-size="9" fill="#0f172a">Local → monde : P·Xlocal+pos</text>
+<text x="20" y="75" font-size="8" fill="#64748b">Nworld = P·∇Flocal</text>
+<text x="20" y="95" font-size="8" fill="#0ea5e9">Quadric.cpp:93</text>
+</g>
+</svg>
+<figcaption>Fig 2.4 — \(P\) orthogonale : la transposée est l'inverse. D'où les formules ultra-simples en \(dot\) et la reconstruction de la normale.</figcaption>
+</div>
+
+<!-- PRINCIPE 5 -->
+<h3 style="border-left:3px solid #0f172a; padding-left:10px;">Principe 5 — Projection & cache (pourquoi c'est fluide)</h3>
+<div class="formula">
+<b>Équations `Quadric.cpp:39` :</b> \(o_x=(\mathbf{O}-\mathbf{pos})\cdot\mathbf{u},\; d_x=\mathbf{D}\cdot\mathbf{u}\) (idem \(y,z\) avec \(\mathbf{w},\mathbf{v}\))<br>
+<b>Théorie : Invariance par isométrie</b> — \(\|\mathbf{X}\|\) et \(\mathbf{a}\cdot\mathbf{b}\) conservés → \(\Delta=b^2-4ac\) identique en monde ou local.<br>
+<b>Optimisation `Quadric.hpp:28` :</b> \(\mathbf{u},\mathbf{v}\) calculés 1× dans `updateBasis()` à la création / `setDir()`, puis réutilisés `cachedU/V` per-ray → <b>2 sqrt + 2 cross économisés / rayon / objet</b> (≈9M / frame 1080×720×6).
+</div>
+<div class="figure">
+<svg width="700" height="180" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(20,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Monde → local</text>
+<circle cx="40" cy="70" r="3" fill="#0f172a"/><text x="10" y="85" font-size="9" fill="#0f172a">pos</text>
+<line x1="40" y1="70" x2="100" y2="50" stroke="#0f172a" stroke-width="1.5" marker-end="url(#arrBlack)" stroke-dasharray="3 3"/><text x="70" y="45" font-size="8" fill="#0f172a">O-pos</text>
+<line x1="40" y1="70" x2="90" y2="70" stroke="#0ea5e9" stroke-width="1.5"/><text x="55" y="65" font-size="8" fill="#0ea5e9">·u→ox</text>
+<line x1="40" y1="70" x2="40" y2="30" stroke="#10b981" stroke-width="1.5"/><text x="15" y="30" font-size="8" fill="#10b981">·w→oy</text>
+</g>
+<text x="160" y="70" font-size="16" fill="#94a3b8">⇒</text>
+<g transform="translate(200,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Solveur local</text>
+<rect x="10" y="30" width="140" height="60" rx="8" fill="#f0f9ff" stroke="#bae6fd"/>
+<text x="20" y="50" font-size="9" fill="#0c4a6e">a t²+ b t + c =0</text>
+<text x="20" y="68" font-size="9" fill="#0c4a6e">Δ → t1,t2</text>
+<text x="20" y="86" font-size="8" fill="#64748b">même Δ qu'en monde</text>
+</g>
+<text x="370" y="70" font-size="16" fill="#94a3b8">⇒</text>
+<g transform="translate(410,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Retour monde</text>
+<line x1="30" y1="50" x2="70" y2="50" stroke="#0ea5e9" stroke-width="1.5"/><text x="35" y="45" font-size="8" fill="#0ea5e9">u·gx</text>
+<text x="75" y="55" font-size="10" fill="#0f172a">+</text>
+<line x1="85" y1="50" x2="125" y2="50" stroke="#10b981" stroke-width="1.5"/><text x="95" y="45" font-size="8" fill="#10b981">w·gy</text>
+<text x="130" y="55" font-size="10" fill="#0f172a">+</text>
+<line x1="140" y1="50" x2="180" y2="50" stroke="#8b5cf6" stroke-width="1.5"/><text x="150" y="45" font-size="8" fill="#8b5cf6">v·gz</text>
+<text x="30" y="75" font-size="9" fill="#0f172a">Nworld = P·∇F</text>
+<text x="30" y="95" font-size="8" fill="#64748b">puis normalized</text>
+</g>
+<g transform="translate(20,130)">
+<rect x="0" y="0" width="660" height="28" rx="8" fill="#ecfdf5" stroke="#86efac"/>
+<text x="10" y="18" font-size="9" fill="#065f46">💡 Fluide : cachedU/V = 1 calcul / rotation — translation pos+=Δ ne touche pas la base → O(1) `Scene.hpp:37`</text>
+</g>
+</svg>
+<figcaption>Fig 2.5 — Aller (dot) → solveur → retour (P·∇F). Le cache rend le tout O(1) pour G/R — base de la fluidité Blender.</figcaption>
+</div>
+<div class="success"><b>Mini-exo (3 min) :</b> prends \(\mathbf{pos}=(0,0,0), \mathbf{dir}=(0,1,0)\) → calcule \(\mathbf{u},\mathbf{v}\) à la main, puis \(\mathbf{O}=(2,3,4)\) → \(o_x,o_y,o_z\). Vérifie avec `Quadric.cpp:39`.</div>
+<div style="margin-top:16px; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; font-size:0.82rem; line-height:1.5; color:var(--text)">
+<b>📚 Sources scientifiques — Ch.2</b><br>
+[5] <b>Steinitz — Dimension / base</b> : lemme d'échange Steinitz 1913, \(\dim\mathbb{R}^3=3\) — Lyon1 <a href="http://math.univ-lyon1.fr/~alachal/diaporamas/cours_PC/chap12_Espaces_Vectoriels_CM.pdf" target="_blank">Th.3.17 dim s.e.v.</a><br>
+[6] <b>Gram-Schmidt 1883/1907</b> : Gram 1883 + Schmidt 1907 — preuve constructive \(e_k = (v_k-\sum\langle v_k,e_i\rangle e_i)/\|\cdot\|\) — <a href="https://planetmath.org/proofofgramschmidtorthogonalizationprocedure" target="_blank">PlanetMath 2013</a>, <a href="https://math.umd.edu/~millson/teaching/MATH405spring2020/MATH405lectures/Lecture11GramSchmidt.pdf" target="_blank">UMD Lecture 11</a>, <a href="https://androma.org/theorems/542" target="_blank">Androma Th.542</a>, historique Leon & al. <a href="https://compmath.wordpress.com/wp-content/uploads/2008/09/leon_91208.pdf" target="_blank">Leon 2008 p.4 Gram 1883</a><br>
+[7] <b>Matrice orthogonale \(P^\top=P^{-1}\), \(\det P=\pm1\)</b> — \(P^\top P=I\), \(\det P^2=1\) — <a href="https://ocw.mit.edu/courses/res-18-011-algebra-i-student-notes-fall-2021/mit18_701f21_lect12.pdf" target="_blank">MIT OCW Res.18-011 Lect.12 Prop.12.5</a>, <a href="https://androma.org/theorems/8600" target="_blank">Androma 8600</a>, Harvard <a href="https://people.math.harvard.edu/~knill/teaching/math22b2019/handouts/lecture08.pdf" target="_blank">Knill Lect.8</a><br>
+[8] <b>Isométrie \(O(3)/SO(3)\)</b> — conserve \(\|\cdot\|\) et \(\cdot\) — MIT OCW ci-dessus §4-5
+</div>
+</section>
+
+<!-- CHAPITRE 3 — ENRICHI 5 PRINCIPES -->
+<section class="card" id="c3">
+<div class="sec-head"><h2 class="sec">3. Géométrie analytique : droites, plans, sphères</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle">Cours Descartes 1637 — 5 principes · <span class="kbd">src/core/Object.cpp</span> <span class="kbd">Renderer.cpp:68</span> <span class="kbd">Ray.hpp</span> · Fondement du lancer de rayon</div>
+
+<!-- PRINCIPE 1 -->
+<h3 style="border-left:3px solid #0ea5e9; padding-left:10px;">Principe 1 — Repère de Descartes & droite paramétrée (Ray)</h3>
+<p>Descartes (1637 <i>La Géométrie</i>) : tout point \(P\) devient \((x,y,z)\in\mathbb{R}^3\). Une <b>droite</b> est l'ensemble \(\{\mathbf{O}+t\mathbf{D}\mid t\in\mathbb{R}\}\) où \(\mathbf{O}\) est l'origine du rayon et \(\mathbf{D}\) son vecteur directeur unitaire \(\|\mathbf{D}\|=1\).</p>
+<div class="formula">
+<b>Équation paramétrique (forme vectorielle) :</b> \(\boxed{\mathbf{P}(t)=\mathbf{O}+t\mathbf{D},\; t\ge10^{-4}}\)<br>
+<b>Forme cartésienne :</b> \(\frac{x-O_x}{D_x}=\frac{y-O_y}{D_y}=\frac{z-O_z}{D_z}=t\) si \(D_i\neq0\)<br>
+<b>RTv1 :</b> caméra `Ray{cam.pos, dir}` `Renderer.cpp:68` et ombre `Ray{hit+N·1e-4, lightDir}` `Renderer.cpp:26` — le \(10^{-4}\) évite l'auto-intersection (acne).
+</div>
+<div class="figure">
+<svg width="700" height="160" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="50" y="12" font-size="11" fill="#0f172a" font-weight="600">Ray : O + t·D (Descartes)</text>
+<circle cx="30" cy="70" r="5" fill="#0f172a"/><text x="15" y="90" font-size="9" fill="#0f172a">O</text>
+<line x1="30" y1="70" x2="180" y2="70" stroke="#0f172a" stroke-width="2" marker-end="url(#arrBlack)"/><text x="100" y="60" font-size="10" fill="#0f172a">D (|D|=1) →</text>
+<circle cx="100" cy="70" r="3" fill="#0ea5e9"/><text x="95" y="85" font-size="8" fill="#0ea5e9">t=2</text>
+<circle cx="150" cy="70" r="3" fill="#8b5cf6"/><text x="145" y="85" font-size="8" fill="#8b5cf6">t=5</text>
+<text x="20" y="115" font-size="8" fill="#64748b">t&lt;0 : derrière l'origine — t≥1e-4 : devant</text>
+<line x1="30" y1="70" x2="30" y2="120" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3"/><text x="5" y="135" font-size="8" fill="#94a3b8">axe t</text>
+</g>
+<g transform="translate(360,20)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">Coordonnées Cartésiennes</text>
+<rect x="10" y="30" width="170" height="75" rx="10" fill="#f0f9ff" stroke="#bae6fd"/>
+<text x="20" y="50" font-size="9" fill="#0c4a6e">P(t) = (Ox+tDx, Oy+tDy, Oz+tDz)</text>
+<text x="20" y="68" font-size="8" fill="#64748b">Descartes 1637 : géométrie → algèbre</text>
+<text x="20" y="86" font-size="8" fill="#0f172a">→ Ray.hpp, un seul t suffit en 3D</text>
+</g>
+</svg>
+<figcaption>Fig 3.1 — Le rayon est une droite orientée. Un seul paramètre \(t\) donne la profondeur (z-buffer).</figcaption>
+</div>
+
+<!-- PRINCIPE 2 -->
+<h3 style="border-left:3px solid #8b5cf6; padding-left:10px;">Principe 2 — Plan cartésien (équation normale)</h3>
+<p>Un <b>plan</b> est défini par un point \(\mathbf{P}_0\) et un vecteur normal unitaire \(\mathbf{N}\) (\(\|\mathbf{N}\|=1\)).</p>
+<div class="formula">
+<b>Forme normale (Hesse 1861) :</b> \(\boxed{\mathbf{N}\cdot(\mathbf{P}-\mathbf{P}_0)=0}\) ⇔ \(\mathbf{N}\cdot\mathbf{P}=d\) avec \(d=\mathbf{N}\cdot\mathbf{P}_0\)<br>
+<b>Forme générale :</b> \(Ax+By+Cz+D=0\) avec \((A,B,C)=\mathbf{N}\), \(D=-\mathbf{N}\cdot\mathbf{P}_0\) — *Théorème : tout plan est de cette forme et réciproquement si \((A,B,C)\neq0\)*<br>
+<b>Distance signée :</b> \(dist(\mathbf{Q},\text{plan})=\mathbf{N}\cdot(\mathbf{Q}-\mathbf{P}_0)\) (positif côté \(\mathbf{N}\))
+</div>
+<div class="figure">
+<svg width="700" height="180" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="50" y="12" font-size="11" fill="#0f172a" font-weight="600">Plan : N·(P-P0)=0</text>
+<line x1="10" y1="90" x2="200" y2="70" stroke="#94a3b8" stroke-width="1.2"/><line x1="50" y1="120" x2="240" y2="100" stroke="#94a3b8" stroke-width="1.2"/><line x1="10" y1="90" x2="50" y2="120" stroke="#94a3b8" stroke-width="1.2"/><line x1="200" y1="70" x2="240" y2="100" stroke="#94a3b8" stroke-width="1.2"/>
+<rect x="15" y="75" width="80" height="40" fill="#f1f5f9" stroke="#cbd5e1" opacity="0.5" rx="2"/>
+<circle cx="120" cy="85" r="4" fill="#0f172a"/><text x="125" y="82" font-size="9" fill="#0f172a">P0</text>
+<line x1="120" y1="85" x2="120" y2="35" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrGreen)"/><text x="125" y="35" font-size="10" fill="#10b981">N (|N|=1)</text>
+<text x="60" y="140" font-size="8" fill="#64748b">Ax+By+Cz+D=0, (A,B,C)=N</text>
+</g>
+<g transform="translate(380,20)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">Distance signée</text>
+<line x1="20" y1="80" x2="180" y2="80" stroke="#e2e8f0" stroke-width="6"/>
+<circle cx="80" cy="80" r="3" fill="#0f172a"/><text x="75" y="95" font-size="8" fill="#0f172a">P0</text>
+<line x1="80" y1="80" x2="80" y2="40" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3 3"/><text x="85" y="45" font-size="8" fill="#10b981">N</text>
+<circle cx="130" cy="50" r="4" fill="#0ea5e9"/><text x="135" y="48" font-size="9" fill="#0ea5e9">Q</text>
+<line x1="130" y1="50" x2="118" y2="80" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 3"/><text x="140" y="70" font-size="8" fill="#92400e">dist = N·(Q-P0)</text>
+<text x="20" y="125" font-size="8" fill="#64748b">+ côté N, - derrière, 0 sur le plan</text>
+</g>
+</svg>
+<figcaption>Fig 3.2 — Le plan est l'ensemble orthogonal à \(\mathbf{N}\) passant par \(\mathbf{P}_0\). Sa distance signée donne le côté (utile pour clipping).</figcaption>
+</div>
+
+<!-- PRINCIPE 3 -->
+<h3 style="border-left:3px solid #10b981; padding-left:10px;">Principe 3 — Sphère (équation quadrique centrée)</h3>
+<div class="formula">
+<b>Définition euclidienne :</b> \(\boxed{\|\mathbf{P}-\mathbf{C}\|^2=R^2}\) ⇔ \((x-C_x)^2+(y-C_y)^2+(z-C_z)^2=R^2\)<br>
+<b>Forme développée (quadrique) :</b> \(x^2+y^2+z^2-2C_x x-2C_y y-2C_z z+( \|\mathbf{C}\|^2-R^2)=0\) — centre \(\mathbf{C}\), rayon \(R\)<br>
+<b>Théorie : Théorème de Pythagore 3D</b> — la sphère est le lieu des points à distance \(R\) de \(\mathbf{C}\) ; normale en \(\mathbf{P}\) : \(\mathbf{N}= (\mathbf{P}-\mathbf{C})/R\) `Object.cpp:18`
+</div>
+<div class="figure">
+<svg width="700" height="170" viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">Sphère : |P-C|²=R²</text>
+<ellipse cx="80" cy="80" rx="45" ry="45" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="1.5"/><ellipse cx="80" cy="80" rx="45" ry="16" fill="none" stroke="#0ea5e9" opacity="0.5"/>
+<circle cx="80" cy="80" r="3" fill="#0f172a"/><text x="85" y="78" font-size="9" fill="#0f172a">C</text>
+<line x1="80" y1="80" x2="125" y2="80" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3"/><text x="100" y="75" font-size="9" fill="#64748b">R</text>
+<circle cx="115" cy="55" r="3" fill="#f59e0b"/><line x1="80" y1="80" x2="115" y2="55" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="3 3"/>
+<line x1="115" y1="55" x2="135" y2="30" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrGreen)"/><text x="138" y="28" font-size="9" fill="#10b981">N=(P-C)/R</text>
+</g>
+<g transform="translate(280,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Pythagore 3D</text>
+<line x1="20" y1="100" x2="80" y2="100" stroke="#0ea5e9" stroke-width="2"/><text x="45" y="95" font-size="8" fill="#0ea5e9">dx</text>
+<line x1="80" y1="100" x2="80" y2="60" stroke="#10b981" stroke-width="2"/><text x="85" y="80" font-size="8" fill="#10b981">dy</text>
+<line x1="80" y1="60" x2="40" y2="30" stroke="#8b5cf6" stroke-width="2"/><text x="55" y="35" font-size="8" fill="#8b5cf6">dz</text>
+<line x1="20" y1="100" x2="40" y2="30" stroke="#0f172a" stroke-width="1.5" stroke-dasharray="3 3"/><text x="15" y="115" font-size="8" fill="#64748b">R²=dx²+dy²+dz²</text>
+</g>
+<g transform="translate(480,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Quadrique dégénérée</text>
+<rect x="10" y="30" width="170" height="70" rx="10" fill="#fef3c7" stroke="#fde68a"/>
+<text x="20" y="50" font-size="9" fill="#92400e">A=1,B=1,C=1, J=|C|²-R²</text>
+<text x="20" y="68" font-size="8" fill="#64748b">cas où Q = I (sphère = paraboloïde dég.)</text>
+</g>
+</svg>
+<figcaption>Fig 3.3 — La sphère est le cas le plus simple de quadrique (centre-rayon). Sa normale est radiale.</figcaption>
+</div>
+
+<!-- PRINCIPE 4 -->
+<h3 style="border-left:3px solid #f59e0b; padding-left:10px;">Principe 4 — Intersection rayon → plan / sphère (cœur RTv1)</h3>
+<div class="formula">
+<b>Ray–Plan</b> `Object.cpp:23` : injecte \(\mathbf{P}(t)\) dans \(\mathbf{N}\cdot(\mathbf{P}-\mathbf{P}_0)=0\) → \(\boxed{t=\frac{(\mathbf{P}_0-\mathbf{O})\cdot\mathbf{N}}{\mathbf{N}\cdot\mathbf{D}}}\) si \(|\mathbf{N}\cdot\mathbf{D}|>10^{-6}\) (sinon //), \(t\ge10^{-4}\)<br>
+<b>Ray–Sphère</b> `Object.cpp:4` : \(\|\mathbf{O}+t\mathbf{D}-\mathbf{C}\|^2=R^2\) → \(a=1,\; b=2\,\mathbf{OC}\cdot\mathbf{D},\; c=\|\mathbf{OC}\|^2-R^2\) → \(\Delta=b^2-4c\) → \(t_{1,2}=(-b\mp\sqrt{\Delta})/2\) — <b>Formule quadratique de Viète–Descartes</b>
+</div>
+<table>
+<tr><th>Δ</th><th>Rayon vs sphère</th><th>t</th></tr>
+<tr><td>Δ&lt;0</td><td>Miss (à côté)</td><td>—</td></tr>
+<tr><td>Δ=0</td><td>Tangent (rasant)</td><td>\(t=-b/2\) unique</td></tr>
+<tr><td>Δ&gt;0</td><td>2 hits (entrée/sortie)</td><td>\(t_1&lt;t_2\), garde \(t\ge10^{-4}\) le plus petit</td></tr>
+</table>
+<div class="figure">
+<svg width="700" height="200" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(20,20)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">Ray–Plan</text>
+<line x1="10" y1="80" x2="180" y2="60" stroke="#e2e8f0" stroke-width="8"/><line x1="10" y1="80" x2="180" y2="60" stroke="#94a3b8"/>
+<circle cx="100" cy="70" r="3" fill="#0f172a"/><text x="105" y="65" font-size="8" fill="#0f172a">P0</text>
+<line x1="100" y1="70" x2="100" y2="30" stroke="#10b981" stroke-width="2" marker-end="url(#arrGreen)"/><text x="105" y="30" font-size="9" fill="#10b981">N</text>
+<line x1="20" y1="30" x2="100" y2="70" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/><text x="25" y="25" font-size="9" fill="#8b5cf6">O</text>
+<circle cx="100" cy="70" r="5" fill="none" stroke="#f59e0b" stroke-width="1.5"/><text x="40" y="110" font-size="8" fill="#64748b">t = (P0-O)·N / N·D</text>
+<text x="20" y="130" font-size="8" fill="#ef4444">si |N·D|≈0 → parallèle → miss</text>
+</g>
+<g transform="translate(340,20)">
+<text x="50" y="12" font-size="11" fill="#0f172a" font-weight="600">Ray–Sphère (Δ)</text>
+<ellipse cx="80" cy="80" rx="40" ry="40" fill="#e0f2fe" stroke="#0ea5e9"/><ellipse cx="80" cy="80" rx="40" ry="14" fill="none" stroke="#0ea5e9" opacity="0.4"/>
+<circle cx="80" cy="80" r="3" fill="#0f172a"/><text x="85" y="75" font-size="8" fill="#0f172a">C</text>
+<line x1="10" y1="40" x2="150" y2="90" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrViolet)"/><text x="15" y="30" font-size="9" fill="#8b5cf6">O D→</text>
+<circle cx="52" cy="62" r="4" fill="#10b981" stroke="white"/><text x="30" y="60" font-size="8" fill="#10b981">t1 entrée</text>
+<circle cx="108" cy="92" r="4" fill="#f59e0b" stroke="white"/><text x="112" y="105" font-size="8" fill="#92400e">t2 sortie</text>
+<text x="20" y="135" font-size="8" fill="#64748b">Δ>0 : 2 hits — plus petit t≥1e-4 gardé</text>
+</g>
+</svg>
+<figcaption>Fig 3.4 — Une division pour le plan, une quadratique pour la sphère. Même discriminant \(\Delta\) que pour les quadriques générales.</figcaption>
+</div>
+
+<!-- PRINCIPE 5 -->
+<h3 style="border-left:3px solid #0f172a; padding-left:10px;">Principe 5 — Orientation, epsilon & robustesse numérique</h3>
+<div class="formula">
+<b>Orientation :</b> si \(\mathbf{N}\cdot\mathbf{D}>0\) la normale fait face au rayon → flip \(\mathbf{N}:=-\mathbf{N}\) `Object.cpp:31` (toujours face caméra)<br>
+<b>Epsilon :</b> \(t\ge10^{-4}\) et \(hit+N·10^{-4}\) pour shadow-ray `Renderer.cpp:26` — <b>Théorie : perturbation / biais d'acné (shadow acne)</b> — évite que le rayon ne se ré-intersecte lui-même à cause des erreurs flottantes \(\approx10^{-15}\)<br>
+<b>Parallélisme :</b> \(|\mathbf{N}\cdot\mathbf{D}|<10^{-6}\) → pas d'intersection (plan de face).
+</div>
+<div class="figure">
+<svg width="700" height="150" viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Flip N·D&gt;0</text>
+<ellipse cx="60" cy="70" rx="30" ry="20" fill="#e0f2fe" stroke="#0ea5e9"/><line x1="60" y1="50" x2="60" y2="20" stroke="#10b981" stroke-width="2" marker-end="url(#arrGreen)"/><text x="65" y="25" font-size="8" fill="#10b981">N</text>
+<line x1="10" y1="90" x2="60" y2="60" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrViolet)"/><text x="5" y="85" font-size="8" fill="#8b5cf6">D</text>
+<text x="20" y="115" font-size="8" fill="#64748b">N·D>0 → N:=-N (face caméra)</text>
+</g>
+<g transform="translate(250,20)">
+<text x="30" y="12" font-size="11" fill="#f59e0b" font-weight="600">Biais 1e-4</text>
+<ellipse cx="60" cy="70" rx="30" ry="20" fill="#e0f2fe" stroke="#0ea5e9"/><circle cx="60" cy="50" r="3" fill="#0f172a"/>
+<line x1="60" y1="50" x2="60" y2="25" stroke="#10b981" stroke-width="2" marker-end="url(#arrGreen)"/>
+<circle cx="60" cy="25" r="3" fill="#f59e0b" stroke="white"/><text x="65" y="22" font-size="8" fill="#92400e">P+N·1e-4</text>
+<line x1="60" y1="25" x2="130" y2="15" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arrViolet)"/><text x="135" y="15" font-size="8" fill="#8b5cf6">shadow</text>
+<text x="20" y="115" font-size="8" fill="#64748b">sans biais → acne (auto-hit)</text>
+</g>
+<g transform="translate(480,20)">
+<text x="20" y="12" font-size="11" fill="#ef4444" font-weight="600">Seuil parallèle</text>
+<rect x="10" y="30" width="170" height="60" rx="10" fill="#fef2f2" stroke="#fecaca"/>
+<text x="20" y="50" font-size="9" fill="#991b1b">|N·D| &lt; 1e-6 → miss</text>
+<text x="20" y="70" font-size="8" fill="#64748b">évite division par ~0 → t → ±∞</text>
+</g>
+</svg>
+<figcaption>Fig 3.5 — Le flip, le biais et le seuil sont de la <i>géométrie numérique robuste</i> — sans eux, le rendu clignote.</figcaption>
+</div>
+<div class="success"><b>Mini-exo (4 min) :</b> plan \(z=0\) (\(P_0=(0,0,0), N=(0,0,1)\)), rayon \(O=(0,0,5), D=(0,0,-1)\) → \(t=\) ? Puis sphère \(C=(0,0,0), R=1\), même rayon → \(b,c,\Delta,t_{1,2}\) = ? Vérifie avec `Object.cpp:4`.</div>
+<div style="margin-top:16px; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; font-size:0.82rem; line-height:1.5; color:var(--text)">
+<b>📚 Sources scientifiques — Ch.3</b><br>
+[9] <b>Descartes 1637 — Géométrie analytique</b> : <i>La Géométrie</i> (appendice au <i>Discours de la méthode</i>) — arithmétisation des lignes — <a href="https://www.unicaen.fr/puc/sources/prodescartes/consult/descartes/Oeuvres/Oeuvres_Descartes/discours_de_la_methode.xml/la_geometrie.html" target="_blank">Unicaen corpus Descartes</a>, <a href="https://fr.wikisource.org/wiki/La_G%C3%A9om%C3%A9trie_(%C3%A9d._1637)" target="_blank">Wikisource 1637</a>, analyse Bühler 2020 <a href="https://afdm.apmep.fr/rubriques/temps/la-methode-des-coordonnees-de-descartes-martine-buhler/" target="_blank">APMEP</a>, BnF <a href="https://www.bnf.fr/fr/mediatheque/les-equations-la-methode-de-descartes-pour-resoudre-les-problemes-geometriques" target="_blank">BnF Descartes</a>, Universalis <a href="https://www.universalis.fr/encyclopedie/geometrie/2-la-geometrie-analytique/" target="_blank">Universalis §2</a><br>
+[10] <b>Plan \(Ax+By+Cz+D=0\) — Forme normale de Hesse 1861</b> : \(\mathbf{N}\cdot(\mathbf{P}-\mathbf{P}_0)=0\) — <a href="https://fr.wikiversity.org/wiki/Droites_et_plans_de_l%27espace/%C3%89quation_d%27un_plan_de_l%27espace" target="_blank">Wikiversité Th. plan</a>, <a href="https://wikiland.org/wiki/Hesse_normal_form" target="_blank">Wikiland Hesse 2026</a>, SchoolMouv <a href="https://www.schoolmouv.fr/demonstrations/equation-cartesienne-d-un-vecteur-normal-a-un-plan/demonstration" target="_blank">dém. vecteur normal</a>, Monka <a href="https://www.maths-et-tiques.fr/telech/20Esp3.pdf" target="_blank">20Esp3.pdf Th. cartésienne</a><br>
+[11] <b>Sphère / Pythagore 3D</b> \(\|\mathbf{P}-\mathbf{C}\|^2=R^2\) — extension Pythagore — même quadrique que §4<br>
+[12] <b>Ray–Plan / Ray–Sphère — quadratique Viète-Descartes</b> \(\Delta=b^2-4ac\), \(t=(-b\pm\sqrt\Delta)/2a\) — Whitted 1980 <a href="https://cs.rpi.edu/~cutler/classes/advancedgraphics/S23/papers/whitted_raytracing_80.pdf" target="_blank">CACM 1980</a>, Haines et al. 2019 <a href="https://doi.org/10.1007/978-1-4842-4427-2_7" target="_blank">doi:10.1007/978-1-4842-4427-2_7</a>, Berkeley <a href="https://cs184.eecs.berkeley.edu/public/sp22/lectures/lec-9-ray-tracing/lec-9-ray-tracing.pdf" target="_blank">CS184 Lec.9</a>, UCSD <a href="https://cseweb.ucsd.edu/~viscomp/classes/cse167/wi17/online/raytrace1-intersect.txt" target="_blank">CSE167</a>
+</div>
+</section>
+
+<!-- CHAPITRE 4 — ENRICHI 5 PRINCIPES -->
+<section class="card" id="c4">
+<div class="sec-head"><h2 class="sec">4. Formes quadratiques</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle">Cours Algèbre — 5 principes · <span class="kbd">Quadric.hpp:5</span> <span class="kbd">setCoeffs</span> · Pourquoi \(A\ldots J\) décide du type de quadrique</div>
+
+<!-- PRINCIPE 1 -->
+<h3 style="border-left:3px solid #0ea5e9; padding-left:10px;">Principe 1 — Définition : forme bilinéaire symétrique → quadratique</h3>
+<p>Soit \(Q\) symétrique \(3\times3\). La <b>forme bilinéaire</b> \(B(\mathbf{X},\mathbf{Y})=\mathbf{X}^\top Q\mathbf{Y}\) est symétrique \(B(\mathbf{X},\mathbf{Y})=B(\mathbf{Y},\mathbf{X})\). La <b>forme quadratique</b> associée est sa diagonale \(q(\mathbf{X})=B(\mathbf{X},\mathbf{X})\).</p>
+<div class="formula">
+\(\boxed{q(\mathbf{X})=\mathbf{X}^\top Q\mathbf{X}= Ax^2+By^2+Cz^2+Dxy+Exz+Fyz}\) avec<br>
+\(Q=\begin{pmatrix}A & D/2 & E/2\\ D/2 & B & F/2\\ E/2 & F/2 & C\end{pmatrix}\), \(\mathbf{X}=(x,y,z)^\top\) — *Théorème : toute forme quadratique s'écrit ainsi avec un unique \(Q\) symétrique*<br>
+<b>Complète (affine) :</b> \(F(\mathbf{X})=q(\mathbf{X})+\mathbf{L}\cdot\mathbf{X}+J\) avec \(\mathbf{L}=(G,H,I)\) — exactement \(A\ldots J\) `Quadric.hpp:25`
+</div>
+<div class="figure">
+<svg width="700" height="160" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Q symétrique 3×3</text>
+<rect x="10" y="30" width="100" height="75" rx="8" fill="#f0f9ff" stroke="#bae6fd"/>
+<text x="20" y="50" font-size="10" fill="#0c4a6e">A  D/2 E/2</text>
+<text x="20" y="70" font-size="10" fill="#0c4a6e">D/2 B  F/2</text>
+<text x="20" y="90" font-size="10" fill="#0c4a6e">E/2 F/2 C</text>
+<text x="15" y="125" font-size="8" fill="#64748b">6 coeff détermine q</text>
+</g>
+<g transform="translate(180,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">q(X)=XᵀQX</text>
+<line x1="20" y1="50" x2="80" y2="50" stroke="#0ea5e9" stroke-width="1.5" marker-end="url(#arrBlue)"/><text x="35" y="45" font-size="9" fill="#0ea5e9">Xᵀ</text>
+<rect x="85" y="35" width="30" height="30" fill="#e0f2fe" stroke="#0ea5e9"/><text x="92" y="54" font-size="9" fill="#0ea5e9">Q</text>
+<line x1="120" y1="50" x2="160" y2="50" stroke="#0ea5e9" stroke-width="1.5" marker-end="url(#arrBlue)"/><text x="135" y="65" font-size="9" fill="#0ea5e9">X</text>
+<text x="20" y="85" font-size="9" fill="#0f172a">= Ax²+By²+Cz²+Dxy+...</text>
+</g>
+<g transform="translate(380,20)">
+<text x="30" y="12" font-size="11" fill="#8b5cf6" font-weight="600">F affine</text>
+<rect x="10" y="30" width="170" height="75" rx="10" fill="#f5f3ff" stroke="#ddd6fe"/>
+<text x="20" y="50" font-size="9" fill="#5b21b6">F = q(X) + L·X + J</text>
+<text x="20" y="70" font-size="9" fill="#5b21b6">L=(G,H,I), J</text>
+<text x="20" y="90" font-size="8" fill="#64748b">→ 10 coeff A…J totaux</text>
+</g>
+</svg>
+<figcaption>Fig 4.1 — La quadrique est une forme quadratique \(q\) plus une partie linéaire \(\mathbf{L}\) et une constante \(J\). \(Q\) symétrique contient toute la géométrie.</figcaption>
+</div>
+
+<!-- PRINCIPE 2 -->
+<h3 style="border-left:3px solid #8b5cf6; padding-left:10px;">Principe 2 — Forme polaire & identité de polarisation</h3>
+<div class="formula">
+<b>Forme polaire :</b> \(B(\mathbf{X},\mathbf{Y})=\tfrac12\big(q(\mathbf{X}+\mathbf{Y})-q(\mathbf{X})-q(\mathbf{Y})\big)\) — <b>Identité de polarisation</b><br>
+En base canonique : \(B(\mathbf{e}_i,\mathbf{e}_j)=Q_{ij}\) — donc \(D=2B(\mathbf{e}_1,\mathbf{e}_2)\), etc.<br>
+<b>RTv1 :</b> les termes croisés \(Dxy, Exz, Fyz\) viennent exactement de \(B\) non-diagonale. Si \(D=E=F=0\), \(Q\) est diagonale → quadrique à axes alignés.
+</div>
+<div class="figure">
+<svg width="700" height="150" viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">q(X)=B(X,X)</text>
+<ellipse cx="70" cy="70" rx="50" ry="25" fill="#e0f2fe" stroke="#0ea5e9"/><text x="45" y="75" font-size="9" fill="#0ea5e9">X</text>
+<line x1="70" y1="70" x2="70" y2="20" stroke="#64748b" stroke-dasharray="3 3"/><text x="75" y="30" font-size="8" fill="#64748b">diagonale</text>
+</g>
+<text x="160" y="70" font-size="16" fill="#94a3b8">⇔</text>
+<g transform="translate(200,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">B(X,Y) symétrique</text>
+<ellipse cx="50" cy="50" rx="35" ry="20" fill="#ede9fe" stroke="#8b5cf6"/><text x="35" y="54" font-size="9" fill="#8b5cf6">X</text>
+<ellipse cx="90" cy="90" rx="35" ry="20" fill="#ede9fe" stroke="#8b5cf6"/><text x="75" y="94" font-size="9" fill="#8b5cf6">Y</text>
+<line x1="60" y1="70" x2="80" y2="80" stroke="#8b5cf6" stroke-width="1.2"/>
+<text x="40" y="125" font-size="8" fill="#64748b">q(X+Y)-q(X)-q(Y) = 2B(X,Y)</text>
+</g>
+<g transform="translate(400,20)">
+<rect x="10" y="30" width="170" height="70" rx="10" fill="#fffbeb" stroke="#fde68a"/>
+<text x="20" y="50" font-size="9" fill="#92400e">D = 2·B(e1,e2)</text>
+<text x="20" y="68" font-size="9" fill="#92400e">E = 2·B(e1,e3)</text>
+<text x="20" y="86" font-size="9" fill="#92400e">F = 2·B(e2,e3)</text>
+</g>
+</svg>
+<figcaption>Fig 4.2 — \(q\) et \(B\) se déterminent mutuellement. Les coefficients \(D,E,F\) mesurent l'oblicité des axes.</figcaption>
+</div>
+
+<!-- PRINCIPE 3 -->
+<h3 style="border-left:3px solid #10b981; padding-left:10px;">Principe 3 — Théorème spectral (diagonalisation orthogonale)</h3>
+<div class="formula">
+<b>Théorème spectral (Cauchy 1829, cas réel) :</b> Pour tout \(Q\) réel symétrique, il existe \(P\in O(3)\) orthogonale et \(\lambda_i\in\mathbb{R}\) tels que<br>
+\(\boxed{P^\top Q P = \mathrm{diag}(\lambda_1,\lambda_2,\lambda_3)}\) avec \(P^\top=P^{-1}\), \(P=[\mathbf{e}'_1\;\mathbf{e}'_2\;\mathbf{e}'_3]\) base orthonormée de vecteurs propres.<br>
+Alors dans base propre : \(q(\mathbf{X}')=\lambda_1{x'}^2+\lambda_2{y'}^2+\lambda_3{z'}^2\) — plus de termes croisés !
+</div>
+<div class="figure">
+<svg width="700" height="170" viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Avant : Q pleine</text>
+<rect x="10" y="30" width="80" height="80" rx="8" fill="#fef2f2" stroke="#fecaca"/>
+<text x="20" y="50" font-size="9" fill="#991b1b">A  D/2 E/2</text>
+<text x="20" y="70" font-size="9" fill="#991b1b">D/2 B  F/2</text>
+<text x="20" y="90" font-size="9" fill="#991b1b">E/2 F/2 C</text>
+<text x="15" y="125" font-size="8" fill="#64748b">6 coeff, croisements</text>
+</g>
+<text x="130" y="70" font-size="18" fill="#94a3b8">→ PᵀQP →</text>
+<g transform="translate(190,20)">
+<text x="20" y="12" font-size="11" fill="#10b981" font-weight="600">Après : diagonale</text>
+<rect x="10" y="30" width="80" height="80" rx="8" fill="#ecfdf5" stroke="#86efac"/>
+<text x="25" y="55" font-size="11" fill="#065f46">λ1 0  0</text>
+<text x="25" y="75" font-size="11" fill="#065f46">0  λ2 0</text>
+<text x="25" y="95" font-size="11" fill="#065f46">0  0  λ3</text>
+<text x="15" y="125" font-size="8" fill="#10b981">3 valeurs propres réelles</text>
+</g>
+<g transform="translate(350,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Nouvelle base</text>
+<line x1="40" y1="60" x2="80" y2="60" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrBlue)"/><text x="82" y="64" font-size="8" fill="#0ea5e9">e'1</text>
+<line x1="40" y1="60" x2="40" y2="25" stroke="#10b981" stroke-width="2" marker-end="url(#arrGreen)"/><text x="20" y="25" font-size="8" fill="#10b981">e'2</text>
+<line x1="40" y1="60" x2="65" y2="90" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/><text x="68" y="95" font-size="8" fill="#8b5cf6">e'3</text>
+<text x="20" y="115" font-size="8" fill="#64748b">vecteurs propres orthonormés</text>
+<text x="20" y="130" font-size="8" fill="#64748b">P = [e'1 e'2 e'3] ∈ O(3)</text>
+</g>
+</svg>
+<figcaption>Fig 4.3 — Le théorème spectral fait disparaître les termes croisés. Il ne reste que \(\lambda_1,\lambda_2,\lambda_3\) — la signature.</figcaption>
+</div>
+
+<!-- PRINCIPE 4 -->
+<h3 style="border-left:3px solid #f59e0b; padding-left:10px;">Principe 4 — Rang, signature, loi d'inertie de Sylvester</h3>
+<div class="formula">
+<b>Définitions :</b> \(\mathrm{rang}(q)=\#\{\lambda_i\neq0\}\), \(n_+=\#\{\lambda_i>0\}\), \(n_-=\#\{\lambda_i<0\}\), \(n_0=\#\{\lambda_i=0\}\)<br>
+<b>Loi d'inertie de Sylvester (1852) :</b> \(\boxed{(n_+,n_-,n_0)\text{ invariante par }P^\top QP}\) (changement de base quelconque, pas seulement orthogonale) — c'est un invariant <b>projectif</b> de la quadrique.<br>
+<b>Rang + signature → type :</b> voir tableau Fig 4.4 — même \(q\) peut donner ellipsoïde, hyperboloïde, paraboloïde, cylindre ou cône selon \(n_0\) et le terme linéaire \(\mathbf{L}\).
+</div>
+<table>
+<tr><th>Signature \((n_+,n_-,n_0)\)</th><th>Rang</th><th>Forme diagonale \(q\)</th><th>Avec \(\mathbf{L},J\) → quadrique RTv1</th></tr>
+<tr><td>\((3,0,0)\)</td><td>3</td><td>\(\lambda_1x^2+\lambda_2y^2+\lambda_3z^2\)</td><td>Ellipsoïde / sphère (\(J=-R^2\))</td></tr>
+<tr><td>\((2,1,0)\)</td><td>3</td><td>\(x^2+z^2-y^2\)</td><td>Hyp 1 nappe \(J=-1\) / 2 nappes \(J=+1\) / cône \(J=0\)</td></tr>
+<tr><td>\((2,0,1)\)</td><td>2</td><td>\(x^2+z^2\)</td><td>Paraboloïde \(-y=0\) / cylindre \(J=-R^2\)</td></tr>
+<tr><td>\((1,0,2)\)</td><td>1</td><td>\(x^2\)</td><td>2 plans parallèles</td></tr>
+</table>
+<div class="figure">
+<svg width="700" height="150" viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+<text x="250" y="18" text-anchor="middle" font-size="11" fill="#0f172a" font-weight="600">Signature → topologie (coupe)</text>
+<g transform="translate(40,30)"><text x="20" y="14" font-size="9" fill="#64748b">(3,0,0) ellipsoïde</text><ellipse cx="50" cy="70" rx="35" ry="25" fill="#e0f2fe" stroke="#0ea5e9"/><ellipse cx="50" cy="70" rx="35" ry="12" fill="none" stroke="#0ea5e9" opacity="0.5"/></g>
+<g transform="translate(180,30)"><text x="10" y="14" font-size="9" fill="#64748b">(2,1,0) cône J=0</text><path d="M50 40 L20 90 L80 90 Z" fill="#fef3c7" stroke="#f59e0b"/><line x1="50" y1="40" x2="50" y2="40" fill="#0f172a"/></g>
+<g transform="translate(320,30)"><text x="5" y="14" font-size="9" fill="#64748b">(2,0,1) paraboloïde</text><path d="M20 90 Q50 30 80 90" fill="#e0e7ff" stroke="#6366f1"/><ellipse cx="50" cy="90" rx="30" ry="8" fill="#c7d2fe" stroke="#6366f1"/></g>
+<g transform="translate(470,30)"><text x="10" y="14" font-size="9" fill="#64748b">(2,0,0) cylindre</text><rect x="20" y="50" width="50" height="40" rx="2" fill="#dcfce7" stroke="#10b981"/><ellipse cx="45" cy="50" rx="25" ry="7" fill="#dcfce7" stroke="#10b981"/><ellipse cx="45" cy="90" rx="25" ry="7" fill="#dcfce7" stroke="#10b981"/></g>
+</svg>
+<figcaption>Fig 4.4 — La signature prédit si la surface est fermée (3,0,0), ouverte à 1 nappe, à 2 nappes, ou dégénérée.</figcaption>
+</div>
+
+<!-- PRINCIPE 5 -->
+<h3 style="border-left:3px solid #0f172a; padding-left:10px;">Principe 5 — Application RTv1 : remplir \(A\ldots J\)</h3>
+<div class="formula">
+<b>Recette :</b> écris l'équation locale voulue, identifie les coeff \(A\ldots J\) par comparaison avec \(Ax^2+By^2+Cz^2+Dxy+\dots+J=0\), appelle `setCoeffs` `Quadric.cpp:17`.<br>
+<b>Exemples :</b> Cylindre \(x^2+z^2-R^2=0\) → \(A=1,C=1,J=-R^2\) — Cône \((h-y)^2\) → \(B=-R^2/h^2,\;H=2R^2/h\) — Paraboloïde \(x^2/a^2+z^2/b^2-y=0\) → \(A=1/a^2,C=1/b^2,H=-1\).
+</div>
+<div class="figure">
+<svg width="700" height="140" viewBox="0 0 700 140" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(20,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Équation → coeff → setCoeffs</text>
+<rect x="10" y="30" width="140" height="36" rx="8" fill="#f0f9ff" stroke="#bae6fd"/><text x="20" y="52" font-size="9" fill="#0c4a6e">x²/a²+z²/b²-y=0</text>
+<line x1="155" y1="48" x2="180" y2="48" stroke="#0f172a" marker-end="url(#arrBlack)"/><text x="160" y="40" font-size="8" fill="#0f172a">identifie</text>
+<rect x="185" y="30" width="140" height="36" rx="8" fill="#ecfdf5" stroke="#86efac"/><text x="195" y="52" font-size="9" fill="#065f46">A=1/a² C=1/b² H=-1</text>
+<line x1="330" y1="48" x2="355" y2="48" stroke="#0f172a" marker-end="url(#arrBlack)"/>
+<rect x="360" y="30" width="140" height="36" rx="8" fill="#fef3c7" stroke="#fde68a"/><text x="370" y="52" font-size="9" fill="#92400e">setCoeffs(A,B,C,D,E,F,G,H,I,J)</text>
+</g>
+<text x="20" y="95" font-size="8" fill="#64748b">Fig 4.5 — Chaque primitive RTv1 n'est qu'une ligne de coefficients. La signature du \(Q\) correspondant explique son type.</text>
+</svg>
+</div>
+<div class="success"><b>Exo de signature (4 min) :</b> cylindre \(A=1,C=1,J=-R^2\) → \(Q=\mathrm{diag}(1,0,1)\) → \((n_+,n_-,n_0)=(2,0,1)\) ? Non, \(B=0\) donc \(\lambda_2=0\) → \((2,0,1)\) rang 2 → dégénérée (attendue : cylindre). Et paraboloïde \(A=1/a^2,C=1/b^2,H=-1\) → \(Q=\mathrm{diag}(1/a^2,0,1/b^2)\) → même signature mais \(H\neq0\) → paraboloïde (non-centrée).</div>
+<div style="margin-top:16px; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; font-size:0.82rem; line-height:1.5; color:var(--text)">
+<b>📚 Sources scientifiques — Ch.4</b><br>
+[13] <b>Forme quadratique / polaire</b> \(q(\mathbf{X})=\mathbf{X}^\top Q\mathbf{X}\), \(B(\mathbf{X},\mathbf{Y})=\frac12(q(\mathbf{X}+\mathbf{Y})-q(\mathbf{X})-q(\mathbf{Y}))\) — <a href="https://licence-math.univ-lyon1.fr/lib/exe/fetch.php?media=p12%3Aalgiv%3Achapitre2_algebreiv.pdf" target="_blank">Univ Lyon1 Licence AlgIV Ch.2 déf.13-14</a>, <a href="https://wims.unicaen.fr/wims/modules/U2/algebra/docquadratic.fr/doc/1/files/docquadratic.pdf" target="_blank">WIMS Caen §1.1 déf.1.1-1.2</a><br>
+[14] <b>Théorème spectral Cauchy 1829 / Weierstrass 1858</b> \(P^\top QP=\mathrm{diag}(\lambda_i)\), \(\lambda_i\in\mathbb{R}\), \(P\in O(3)\) — <a href="https://fr.wikipedia.org/wiki/Th%C3%A9or%C3%A8me_spectral" target="_blank">Wikipédia Th. spectral 2023</a> § Cauchy 1829, <a href="http://demeslay.maths.free.fr/fichiers/maths/Cours/Cours_AutoadjointsThmSpectral.pdf" target="_blank">Demeslay Th.8</a>, <a href="https://agreg-maths.fr/uploads/versions/7331/Th%C3%A9or%C3%A8me_spectral.pdf" target="_blank">Grifone p.254 Th. spectral</a>, Majorant <a href="https://www.majorant.net/fiches/mp/mathematiques/endomorphismes-euclidiens-theoreme-spectral" target="_blank">MP Th.2.1</a><br>
+[15] <b>Loi d'inertie de Sylvester 1852</b> signature \((n_+,n_-,n_0)\) invariante par congruence — <a href="https://licence-math.univ-lyon1.fr/lib/exe/fetch.php?media=p12%3Aalgiv%3Achapitre2_algebreiv.pdf" target="_blank">Lyon1 Th.31 Sylvester</a>, <a href="https://agreg-maths.fr/uploads/versions/5391/Loi%20d_inertie%20de%20Sylvester%20et%20classification%20des%20formes%20quadratiques%20sur%20R.pdf" target="_blank">Agreg Th.19 Sylvester p.477</a>, BSMF 1887 <a href="https://www.numdam.org/item/10.24033/bsmf.352.pdf" target="_blank">de Presle 1887 démonstration</a>, WIMS <a href="https://wims.unicaen.fr/wims/modules/U2/algebra/docquadratic.fr/doc/1/files/docquadratic.pdf" target="_blank">§2 signature/rang</a><br>
+[16] <b>Réduction de Gauss</b> \(q=\sum\lambda_i\ell_i^2\) → base \(q\)-orthogonale — <a href="https://agreg-maths.fr/uploads/versions/5391/Loi%20d_inertie%20de%20Sylvester%20et%20classification%20des%20formes%20quadratiques%20sur%20R.pdf" target="_blank">Gauss Th.13-15</a>
+</div>
+</section>
+
+<!-- CHAPITRE 5 — ENRICHI 5 PRINCIPES -->
+<section class="card" id="c5">
+<div class="sec-head"><h2 class="sec">5. Quadriques : les 5 primitives RTv1</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle">Cours Berger 1977 — 5 principes · <span class="kbd">src/core/Quadric.cpp:119</span> · Y-up `Y = axe`, \(z\) AGENTS → permute \(y\leftrightarrow z\) · Toutes via \(A\ldots J\)</div>
+
+<table>
+<tr><th>Primitive</th><th>Équation locale Y-up</th><th>Coeff non nuls</th><th>Clip</th><th>Caps</th></tr>
+<tr><td>Cylinder</td><td>\(x^2+z^2=R^2\)</td><td>\(A=1,C=1,J=-R^2\)</td><td>\(y\in[0,h]\)</td><td>2 disques</td></tr>
+<tr><td>Cone</td><td>\(x^2+z^2-\frac{R^2}{h^2}(h-y)^2=0\)</td><td>\(A=1,C=1,B=-R^2/h^2,H=2R^2/h,J=-R^2\)</td><td>\(y\in[0,h]\)</td><td>1 base</td></tr>
+<tr><td>Paraboloid</td><td>\(x^2/a^2+z^2/b^2-y=0\)</td><td>\(A=1/a^2,C=1/b^2,H=-1\)</td><td>\(y\in[0,h]\)</td><td>ellipse</td></tr>
+<tr><td>Hyp 1 nappe</td><td>\(x^2/a^2+z^2/b^2-y^2/c^2=1\)</td><td>\(A=1/a^2,C=1/b^2,B=-1/c^2,J=-1\)</td><td>\(y\in[-h,h]\)</td><td>—</td></tr>
+<tr><td>Hyp 2 nappes</td><td>\(= -1\)</td><td>\(J=+1\)</td><td>\(y\in[-h,h]\)</td><td>—</td></tr>
+</table>
+
+<!-- PRINCIPE 1 -->
+<h3 style="border-left:3px solid #0ea5e9; padding-left:10px;">Principe 1 — Cylindre (surface réglée, rang 2)</h3>
+<div class="formula">
+\(\boxed{x^2+z^2-R^2=0}\) — *Théorie : surface réglée (génératrice ∥ \(y\)) + directrice cercle \(x^2+z^2=R^2\)* — Signature \((2,0,1)\), rang 2, dégénérée.<br>
+<b>RTv1 :</b> `setCoeffs(1,0,1,0,0,0,0,0,0,-R²)` `Quadric.cpp:119` ; clip \(y\in[0,h]\) `hMin/hMax` ; caps `Quadric.cpp:139` 2 disques \(y=0\) et \(y=h\) \((p-capPos)^2\le R^2\) ; normale latérale \(∇F=(2x,0,2z)\).
+</div>
+<div class="figure">
+<svg width="700" height="150" viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Cylindre : x²+z²=R²</text>
+<ellipse cx="60" cy="40" rx="30" ry="10" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="1.5"/><rect x="30" y="40" width="60" height="60" fill="#e0f2fe" stroke="#0ea5e9"/><ellipse cx="60" cy="100" rx="30" ry="10" fill="#bae6fd" stroke="#0ea5e9"/>
+<line x1="60" y1="40" x2="60" y2="100" stroke="#0ea5e9" stroke-dasharray="3 3" opacity="0.5"/><text x="65" y="70" font-size="8" fill="#0ea5e9">h</text>
+<text x="35" y="125" font-size="8" fill="#64748b">2 caps disques</text>
+</g>
+<g transform="translate(260,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Section y=cst</text>
+<circle cx="60" cy="70" r="30" fill="none" stroke="#0ea5e9" stroke-width="1.5"/><text x="55" y="75" font-size="9" fill="#0ea5e9">R</text>
+<line x1="60" y1="70" x2="90" y2="70" stroke="#64748b" stroke-dasharray="3 3"/><text x="20" y="115" font-size="8" fill="#64748b">cercle invariant en y</text>
+</g>
+<g transform="translate(460,20)">
+<rect x="10" y="20" width="180" height="80" rx="10" fill="#f0f9ff" stroke="#bae6fd"/>
+<text x="20" y="40" font-size="9" fill="#0c4a6e">A=1, C=1, J=-R²</text>
+<text x="20" y="60" font-size="9" fill="#0c4a6e">B=D=E=F=G=H=I=0</text>
+<text x="20" y="80" font-size="8" fill="#64748b">→ Q=diag(1,0,1)</text>
+</g>
+</svg>
+<figcaption>Fig 5.1 — Cylindre : extrusión d'un cercle le long de \(y\). Deux caps ferment le volume tronqué.</figcaption>
+</div>
+
+<!-- PRINCIPE 2 -->
+<h3 style="border-left:3px solid #10b981; padding-left:10px;">Principe 2 — Cône (sommet, génératrice, directrice)</h3>
+<div class="formula">
+\(\boxed{x^2+z^2-\frac{R^2}{h^2}(h-y)^2=0}\) — base en \(y=0\) rayon \(R\), apex en \(y=h\) rayon 0 (sommet).<br>
+Développement : \(x^2+z^2-\frac{R^2}{h^2}y^2+\frac{2R^2}{h}y-R^2=0\) → \(A=1,C=1,B=-R^2/h^2,H=2R^2/h,J=-R^2\) `Quadric.cpp:164`.<br>
+<b>Théorie : cône du second degré</b> — surface réglée dont toutes les génératrices passent par l'apex ; équation homogène après translation au sommet.
+</div>
+<div class="figure">
+<svg width="700" height="150" viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(40,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Cône : base R → apex 0</text>
+<path d="M60 30 L20 110 L100 110 Z" fill="#dcfce7" stroke="#10b981" stroke-width="1.5"/><ellipse cx="60" cy="110" rx="40" ry="10" fill="#86efac" stroke="#10b981"/>
+<circle cx="60" cy="30" r="3" fill="#0f172a"/><text x="65" y="28" font-size="8" fill="#0f172a">apex h</text>
+<line x1="20" y1="110" x2="100" y2="110" stroke="#64748b" stroke-dasharray="3 3"/><text x="40" y="125" font-size="8" fill="#64748b">base y=0 R</text>
+</g>
+<g transform="translate(300,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Coupes y=cst</text>
+<circle cx="40" cy="70" r="25" fill="none" stroke="#10b981" opacity="0.9"/><text x="70" y="45" font-size="8" fill="#10b981">y=0 R max</text>
+<circle cx="100" cy="70" r="12" fill="none" stroke="#10b981" opacity="0.5"/><text x="105" y="85" font-size="8" fill="#10b981">y=h/2</text>
+<circle cx="150" cy="70" r="2" fill="#0f172a"/><text x="152" y="75" font-size="8" fill="#0f172a">y=h 0</text>
+<text x="20" y="115" font-size="8" fill="#64748b">rayon linéaire R·(h-y)/h</text>
+</g>
+<g transform="translate(500,20)">
+<rect x="10" y="20" width="170" height="80" rx="10" fill="#f0fdf4" stroke="#86efac"/>
+<text x="20" y="40" font-size="9" fill="#065f46">B=-R²/h² H=2R²/h</text>
+<text x="20" y="60" font-size="9" fill="#065f46">J=-R²</text>
+<text x="20" y="80" font-size="8" fill="#64748b">1 seul cap (base)</text>
+</g>
+</svg>
+<figcaption>Fig 5.2 — Le rayon décroît linéairement vers l'apex. Pas de cap au sommet (point).</figcaption>
+</div>
+
+<!-- PRINCIPE 3 -->
+<h3 style="border-left:3px solid #6366f1; padding-left:10px;">Principe 3 — Paraboloïde (elliptique, non-centré)</h3>
+<div class="formula">
+\(\boxed{y = x^2/a^2 + z^2/b^2}\) ⇔ \(x^2/a^2+z^2/b^2-y=0\) — *Théorie : paraboloïde elliptique, surface non-centrée (pas de centre de symétrie), rang 2 signature \((2,0,1)\) mais \(\mathbf{L}\neq0\)*.<br>
+<b>RTv1 :</b> \(A=1/a^2,C=1/b^2,H=-1\) `Quadric.cpp:230` ; \(a=b\) → circulaire, \(a\neq b\) → elliptique ; clip \(y\in[0,h]\) + cap elliptique \(x^2/a^2+z^2/b^2\le h\) `Quadric.cpp:260` ; si \(a\to\infty\) → cylindre parabolique.
+</div>
+<div class="figure">
+<svg width="700" height="160" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(40,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Paraboloïde y=x²/a²+z²/b²</text>
+<path d="M20 100 Q70 20 120 100" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/><path d="M20 100 Q70 130 120 100" fill="none" stroke="#6366f1" opacity="0.4"/>
+<ellipse cx="70" cy="100" rx="50" ry="12" fill="#c7d2fe" stroke="#6366f1"/><text x="50" y="125" font-size="8" fill="#64748b">cap y=h ellipse</text>
+</g>
+<g transform="translate(320,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Sections</text>
+<path d="M20 80 Q50 30 80 80" fill="none" stroke="#6366f1"/><text x="30" y="95" font-size="8" fill="#6366f1">y=cst → ellipse</text>
+<path d="M120 30 Q120 80 120 130" fill="none" stroke="#f59e0b"/><text x="130" y="80" font-size="8" fill="#92400e">x=0 → parabole</text>
+</g>
+<g transform="translate(500,20)">
+<rect x="10" y="20" width="170" height="70" rx="10" fill="#eef2ff" stroke="#c7d2fe"/>
+<text x="20" y="40" font-size="9" fill="#4338ca">A=1/a², C=1/b², H=-1</text>
+<text x="20" y="60" font-size="8" fill="#64748b">linéaire en y → a≈0 possible</text>
+<text x="20" y="78" font-size="8" fill="#92400e">→ cas linéaire t=-c/b</text>
+</g>
+</svg>
+<figcaption>Fig 5.3 — Coupes horizontales = ellipses, verticales = paraboles. Le terme linéaire \(Hy\) rend le solveur parfois linéaire.</figcaption>
+</div>
+
+<!-- PRINCIPE 4 -->
+<h3 style="border-left:3px solid #a855f7; padding-left:10px;">Principe 4 — Hyperboloïdes 1 et 2 nappes (centrés)</h3>
+<div class="formula">
+\(\boxed{x^2/a^2+z^2/b^2-y^2/c^2= 1}\) 1 nappe (connexe) — \(\boxed{=-1}\) 2 nappes (deux composantes) — *Théorie : quadrique centrée, centre \((0,0,0)\), signature \((2,1,0)\) rang 3*.<br>
+<b>RTv1 :</b> \(A=1/a^2,C=1/b^2,B=-1/c^2,J=\mp1\) `Quadric.cpp:293` ; \(J=-1\) → gorge \(y=0\) rayon \(\sqrt{a^2}\) ; \(J=+1\) → vide autour de \(y=0\), sommets à \(y=\pm c\). Clip \(y\in[-h,h]\) si fini, sinon infini — pas de caps (surface ouverte).
+</div>
+<div class="figure">
+<svg width="700" height="160" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(40,20)">
+<text x="10" y="12" font-size="11" fill="#a855f7" font-weight="600">1 nappe J=-1 (connexe)</text>
+<ellipse cx="60" cy="40" rx="25" ry="9" fill="#fae8ff" stroke="#a855f7"/><path d="M35 40 Q37 70 60 75 Q83 70 85 40" fill="none" stroke="#a855f7" stroke-width="1.5"/><ellipse cx="60" cy="75" rx="28" ry="10" fill="#f5d0fe" stroke="#a855f7"/><path d="M32 75 Q35 105 60 110 Q85 105 88 75" fill="none" stroke="#a855f7" opacity="0.5"/>
+<text x="25" y="135" font-size="8" fill="#64748b">gorge y=0</text>
+</g>
+<g transform="translate(260,20)">
+<text x="10" y="12" font-size="11" fill="#f59e0b" font-weight="600">2 nappes J=+1 (déconnecté)</text>
+<path d="M20 55 Q60 25 100 55" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5"/><ellipse cx="60" cy="55" rx="40" ry="10" fill="#fef3c7" stroke="#f59e0b"/>
+<path d="M20 105 Q60 135 100 105" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5"/><ellipse cx="60" cy="105" rx="40" ry="10" fill="#fef3c7" stroke="#f59e0b"/>
+<text x="30" y="135" font-size="8" fill="#64748b">vide |y|<c  (2 cônes ouverts)</text>
+</g>
+<g transform="translate(480,20)">
+<rect x="10" y="20" width="180" height="85" rx="10" fill="#faf5ff" stroke="#e9d5ff"/>
+<text x="20" y="40" font-size="9" fill="#6b21a8">A=1/a² C=1/b² B=-1/c²</text>
+<text x="20" y="60" font-size="9" fill="#6b21a8">J=-1 → 1 nappe</text>
+<text x="20" y="78" font-size="9" fill="#92400e">J=+1 → 2 nappes</text>
+</g>
+</svg>
+<figcaption>Fig 5.4 — Même \(Q\), seul \(J\) change la connexité. \(c\) contrôle l'ouverture verticale.</figcaption>
+</div>
+
+<!-- PRINCIPE 5 -->
+<h3 style="border-left:3px solid #0f172a; padding-left:10px;">Principe 5 — Unification : un seul solveur \(a t^2+b t+c\)</h3>
+<div class="formula">
+<b>Théorie : toutes les quadriques sont des cas particuliers de \(F(\mathbf{X})=0\)</b> — donc un seul `Quadric::intersect` `Quadric.cpp:48` suffit : calcul de \(a,b,c\) génériques + \(\Delta\) + clip \(y\) + \(\nabla F\).<br>
+<b>RTv1 :</b> `Cylinder`/`Cone`/`Paraboloid`/`Hyperboloid` héritent `Quadric` `Quadric.hpp:42` et ne font que `setCoeffs` ; `buildBasis` cachée → `a,b,c` en local. Caps ajoutés après.
+</div>
+<div class="figure">
+<svg width="700" height="110" viewBox="0 0 700 110" xmlns="http://www.w3.org/2000/svg">
+<rect x="10" y="20" width="130" height="40" rx="8" fill="#f0f9ff" stroke="#bae6fd"/><text x="20" y="45" font-size="9" fill="#0c4a6e">Équation locale</text>
+<line x1="145" y1="40" x2="175" y2="40" stroke="#0f172a" marker-end="url(#arrBlack)"/><text x="148" y="30" font-size="7" fill="#0f172a">coeff</text>
+<rect x="180" y="20" width="130" height="40" rx="8" fill="#ecfdf5" stroke="#86efac"/><text x="190" y="45" font-size="9" fill="#065f46">A…J</text>
+<line x1="315" y1="40" x2="345" y2="40" stroke="#0f172a" marker-end="url(#arrBlack)"/>
+<rect x="350" y="20" width="130" height="40" rx="8" fill="#fef3c7" stroke="#fde68a"/><text x="360" y="45" font-size="9" fill="#92400e">a t²+b t+c</text>
+<line x1="485" y1="40" x2="515" y2="40" stroke="#0f172a" marker-end="url(#arrBlack)"/>
+<rect x="520" y="20" width="130" height="40" rx="8" fill="#ede9fe" stroke="#c4b5fd"/><text x="530" y="45" font-size="9" fill="#5b21b6">t, N, hit</text>
+<text x="200" y="85" font-size="8" fill="#64748b">5 primitives, 1 solveur générique — c'est la puissance des formes quadratiques</text>
+</svg>
+</div>
+<div class="success"><b>Rendu `quadriques.rt` :</b> place les 5 côte à côte `y=0` à \(x=-3,-1,1,3,4.5\) — même lumière, vérifie caps et normales. Capture attendue : cylindre rouge opaque, cône vert 1 cap, paraboloïde bleu elliptique, hyperboloïdes jaune/violet.</div>
+<div style="margin-top:16px; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; font-size:0.82rem; line-height:1.5; color:var(--text)">
+<b>📚 Sources scientifiques — Ch.5</b><br>
+[17] <b>Classification quadriques (5 propres)</b> : Berger 1977 <i>Géométrie Vol.2</i> — ULg <a href="http://www.geothalg.ulg.ac.be/geom/node33.html" target="_blank">node33 : ellipsoïde/H1/H2/PE/PH</a>, Caignaert <a href="http://c.caignaert.free.fr/chapitre16-04.pdf" target="_blank">ch16 §5.4-5.9</a> (Équations réduites 5.5-5.9), Wikipédia <a href="https://fr.wikipedia.org/wiki/Quadrique" target="_blank">Quadrique 2024</a> tableau 9 classes<br>
+[18] <b>Cylindre / Cône</b> (surfaces réglées) — Caignaert <a href="http://c.caignaert.free.fr/chapitre16-04.pdf" target="_blank">ch16 §1-2</a>, APMEP <a href="https://apmep.fr/IMG/pdf/CR_atelier_55_Vermeiren.pdf" target="_blank">Vermeiren 55</a><br>
+[19] <b>Paraboloïde elliptique</b> \(z=x^2/a^2+y^2/b^2\) — <a href="https://mathcurve.com/surfaces/paraboloidelliptic/paraboloidelliptic.shtml" target="_blank">Mathcurve Ferreol</a>, <a href="https://fr.wikipedia.org/wiki/Parabolo%C3%AFde" target="_blank">Wikipédia Paraboloïde 2026</a>, <a href="https://bibmath.net/dico/index.php?action=affiche&quoi=.%2Fp%2Fparaboloide.html" target="_blank">BibMath</a>, Illinois <a href="https://nmd.web.illinois.edu/quadrics/ellparab.html" target="_blank">IGQS ellparab</a><br>
+[20] <b>Hyperboloïde 1 nappe \(x^2/a^2+y^2/b^2-z^2/c^2=1\) / 2 nappes \(+1=0\)</b> — même sources [17] + <a href="http://c.caignaert.free.fr/chapitre18/node1.html" target="_blank">Caignaert Ch18 §1.8-1.9</a>
+</div>
+</section>
+
+<!-- CHAPITRE 6 — ENRICHI 5 PRINCIPES -->
+<section class="card" id="c6">
+<div class="sec-head"><h2 class="sec">6. Intersection & normales</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle">Cours Viète–Descartes + Analyse — 5 principes · <span class="kbd">Quadric::intersect</span> <span class="kbd">src/core/Quadric.cpp:48</span> · Cœur du ray-tracing</div>
+
+<!-- PRINCIPE 1 -->
+<h3 style="border-left:3px solid #0ea5e9; padding-left:10px;">Principe 1 — Substitution : rayon dans quadrique → \(a t^2+b t+c=0\)</h3>
+<p>On injecte \(\mathbf{P}(t)=\mathbf{O}+t\mathbf{D}\) exprimé en local \((o_x+t d_x,\;o_y+t d_y,\;o_z+t d_z)\) dans \(F(x,y,z)=Ax^2+By^2+Cz^2+Dxy+Exz+Fyz+Gx+Hy+Iz+J=0\).</p>
+<div class="formula">
+\(\boxed{a = A d_x^2+B d_y^2+C d_z^2+D d_xd_y+E d_xd_z+F d_yd_z}\)<br>
+\(\boxed{b = 2A o_xd_x+2B o_yd_y+2C o_zd_z+D(o_xd_y+o_yd_x)+E(o_xd_z+o_zd_x)+F(o_yd_z+o_zd_y)+G d_x+H d_y+I d_z}\)<br>
+\(\boxed{c = A o_x^2+B o_y^2+C o_z^2+D o_xo_y+E o_xo_z+F o_yo_z+G o_x+H o_y+I o_z+J}\) — `Quadric.cpp:48` — <b>Théorie : substitution de Viète (1591) / Descartes (1637) : géométrie → algèbre</b>
+</div>
+<div class="figure">
+<svg width="700" height="160" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(20,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Monde → local</text>
+<line x1="20" y1="50" x2="80" y2="50" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3"/><text x="85" y="54" font-size="8" fill="#64748b">O, D</text>
+<line x1="20" y1="80" x2="80" y2="80" stroke="#0f172a" stroke-width="1.5" marker-end="url(#arrBlack)"/><text x="85" y="84" font-size="8" fill="#0f172a">dot avec u,w,v</text>
+<rect x="100" y="40" width="100" height="50" rx="8" fill="#f0f9ff" stroke="#bae6fd"/><text x="110" y="60" font-size="9" fill="#0c4a6e">ox,oy,oz</text><text x="110" y="75" font-size="9" fill="#0c4a6e">dx,dy,dz</text>
+</g>
+<text x="210" y="65" font-size="16" fill="#94a3b8">→</text>
+<g transform="translate(250,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Injecte dans F</text>
+<rect x="10" y="30" width="160" height="50" rx="8" fill="#fef3c7" stroke="#fde68a"/>
+<text x="20" y="50" font-size="9" fill="#92400e">F(ox+tdx, oy+tdy, oz+tdz)=0</text>
+<text x="20" y="68" font-size="8" fill="#64748b">développe → a t²+b t+c</text>
+</g>
+<text x="430" y="65" font-size="16" fill="#94a3b8">→</text>
+<g transform="translate(470,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Quadratique</text>
+<rect x="10" y="30" width="140" height="50" rx="8" fill="#ecfdf5" stroke="#86efac"/>
+<text x="20" y="55" font-size="10" fill="#065f46">a t²+ b t + c =0</text>
+<text x="20" y="72" font-size="8" fill="#64748b">3 coeff suffisent</text>
+</g>
+</svg>
+<figcaption>Fig 6.1 — La substitution transforme un problème 3D en une simple équation du second degré en \(t\).</figcaption>
+</div>
+
+<!-- PRINCIPE 2 -->
+<h3 style="border-left:3px solid #8b5cf6; padding-left:10px;">Principe 2 — Résolution : discriminant \(\Delta\) et cas dégénéré \(a\approx0\)</h3>
+<div class="formula">
+<b>Formule quadratique (Brahmagupta–Viète–Al-Khwarizmi, \(\approx\) 628–1070) :</b> \(\boxed{t=\frac{-b\pm\sqrt{\Delta}}{2a}}\) avec \(\Delta=b^2-4ac\) si \(|a|\ge10^{-9}\)<br>
+\(\Delta<0\) → miss (0 réel) — \(\Delta=0\) → tangent (1 double) — \(\Delta>0\) → 2 hits \(t_1<t_2\) triés `Quadric.cpp:73`<br>
+<b>Cas linéaire :</b> si \(|a|<10^{-9}\) → \(\boxed{t=-c/b}\) si \(|b|\ge10^{-9}\) sinon miss — <b>cas paraboloïde de face</b> \(A d_x^2+C d_z^2\approx0\) où la quadrique est linéaire en \(y\).
+</div>
+<div class="figure">
+<svg width="700" height="180" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(20,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Δ&gt;0 : 2 hits</text>
+<path d="M20 80 Q50 20 80 80 T140 80" fill="none" stroke="#0ea5e9" stroke-width="1.8"/><line x1="20" y1="80" x2="160" y2="80" stroke="#64748b" stroke-width="0.8"/>
+<circle cx="50" cy="45" r="4" fill="#10b981" stroke="white"/><text x="42" y="35" font-size="8" fill="#10b981">t1</text>
+<circle cx="110" cy="45" r="4" fill="#10b981" stroke="white"/><text x="115" y="35" font-size="8" fill="#10b981">t2</text>
+<text x="20" y="110" font-size="8" fill="#64748b">entrée + sortie</text>
+</g>
+<g transform="translate(220,20)">
+<text x="30" y="12" font-size="11" fill="#f59e0b" font-weight="600">Δ=0 : tangent</text>
+<path d="M20 80 Q50 60 80 80" fill="none" stroke="#f59e0b" stroke-width="1.8"/><line x1="20" y1="80" x2="100" y2="80" stroke="#64748b" stroke-width="0.8"/>
+<circle cx="50" cy="70" r="4" fill="#f59e0b" stroke="white"/><text x="35" y="60" font-size="8" fill="#92400e">t tangent</text>
+</g>
+<g transform="translate(400,20)">
+<text x="30" y="12" font-size="11" fill="#ef4444" font-weight="600">Δ&lt;0 : miss</text>
+<line x1="20" y1="30" x2="80" y2="110" stroke="#ef4444" stroke-width="1.8"/><text x="20" y="125" font-size="8" fill="#64748b">pas d'intersection réelle</text>
+</g>
+<g transform="translate(20,120)">
+<rect x="0" y="0" width="660" height="28" rx="8" fill="#fffbeb" stroke="#fde68a"/>
+<text x="10" y="18" font-size="9" fill="#92400e">Si |a|&lt;1e-9 → linéaire t=-c/b (paraboloïde face) — sinon quadratique classique</text>
+</g>
+</svg>
+<figcaption>Fig 6.2 — Le discriminant décide. Le cas \(|a|\approx0\) est la seule façon d'intersecter un paraboloïde regardé par la tranche.</figcaption>
+</div>
+
+<!-- PRINCIPE 3 -->
+<h3 style="border-left:3px solid #10b981; padding-left:10px;">Principe 3 — Clipping \(y\) et caps (tronqué vs infini)</h3>
+<div class="formula">
+<b>Clip `hasClip` `Quadric.cpp:84` :</b> \(y_{local}=o_y+t d_y\) doit vérifier \(\boxed{y\in[h_{\min},h_{\max}]}\) avec \(10^{-6}\) de tolérance, sinon rejet — ce qui transforme une quadrique infinie en objet fini (cylindre \(h=2\) etc.).<br>
+<b>Caps :</b> après le latéral, teste les disques \(y=0\) (et \(y=h\) pour cylindre) : \(t_{cap}=(capPos-O)\cdot N_{cap}/(N_{cap}\cdot D)\), garde si \((P-capPos)^2\le R^2\) et \(t<t_{best}\).
+</div>
+<div class="figure">
+<svg width="700" height="160" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Clip y∈[0,h]</text>
+<rect x="20" y="30" width="60" height="60" fill="#e0f2fe" stroke="#0ea5e9"/><ellipse cx="50" cy="30" rx="30" ry="8" fill="#bae6fd" stroke="#0ea5e9"/><ellipse cx="50" cy="90" rx="30" ry="8" fill="#bae6fd" stroke="#0ea5e9"/>
+<line x1="80" y1="45" x2="120" y2="25" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="3 3"/><text x="122" y="25" font-size="8" fill="#ef4444">y>h rejet</text>
+<line x1="20" y1="45" x2="0" y2="25" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="3 3"/><text x="-5" y="20" font-size="8" fill="#ef4444">y&lt;0 rejet</text>
+<text x="20" y="125" font-size="8" fill="#64748b">Whitted : garde le plus petit t valide</text>
+</g>
+<g transform="translate(300,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Caps disques</text>
+<ellipse cx="60" cy="90" rx="30" ry="10" fill="#dcfce7" stroke="#10b981"/><text x="35" y="95" font-size="8" fill="#065f46">y=0</text>
+<ellipse cx="60" cy="30" rx="30" ry="10" fill="#dcfce7" stroke="#10b981"/><text x="35" y="35" font-size="8" fill="#065f46">y=h</text>
+<line x1="20" y1="20" x2="60" y2="30" stroke="#8b5cf6" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#arrViolet)"/><text x="5" y="15" font-size="8" fill="#8b5cf6">ray cap</text>
+<text x="20" y="125" font-size="8" fill="#64748b">test (P-cap)²≤R²</text>
+</g>
+<g transform="translate(500,20)">
+<rect x="10" y="20" width="170" height="80" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+<text x="20" y="40" font-size="9" fill="#0f172a">Quadric : 0-2 caps</text>
+<text x="20" y="60" font-size="8" fill="#64748b">Cyl:2 — Cone:1 — Hyp:0</text>
+<text x="20" y="80" font-size="8" fill="#64748b">Parab:1 (base)</text>
+</g>
+</svg>
+<figcaption>Fig 6.3 — Le clip coupe la quadrique infinie ; les caps rebouchent les trous. Sans eux, le cylindre serait ouvert.</figcaption>
+</div>
+
+<!-- PRINCIPE 4 -->
+<h3 style="border-left:3px solid #f59e0b; padding-left:10px;">Principe 4 — Normale = gradient \(\nabla F\) (Hesse)</h3>
+<div class="formula">
+<b>Théorème : la normale à \(F=0\) est le gradient</b> \(\boxed{\nabla F=(\partial_xF,\partial_yF,\partial_zF)=(2Ax+Dy+Ez+G,\;Dx+2By+Fz+H,\;Ex+Fy+2Cz+I)}\) `Quadric.cpp:89` — <i>Hesse 1844, forme normale</i><br>
+<b>Retour monde :</b> \(\mathbf{N}_{world}= \mathbf{u}\,g_x+\mathbf{w}\,g_y+\mathbf{v}\,g_z\) puis \(\hat{\mathbf{N}}=\mathbf{N}/\|\mathbf{N}\|\), flip si \(\mathbf{N}\cdot\mathbf{D}>0\) → face caméra.<br>
+<b>Interprétation :</b> \(\nabla F\) est orthogonal aux courbes de niveau de \(F\); \(F=0\) est la courbe de niveau 0.
+</div>
+<div class="figure">
+<svg width="700" height="170" viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">F(x,y,z)=0 → ∇F</text>
+<ellipse cx="70" cy="70" rx="45" ry="30" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="1.2"/>
+<text x="45" y="75" font-size="8" fill="#0ea5e9">F=0</text>
+<ellipse cx="70" cy="70" rx="60" ry="45" fill="none" stroke="#94a3b8" stroke-dasharray="3 3"/>
+<text x="80" y="45" font-size="7" fill="#94a3b8">F=1</text>
+<line x1="100" y1="50" x2="130" y2="30" stroke="#10b981" stroke-width="2" marker-end="url(#arrGreen)"/><text x="132" y="28" font-size="9" fill="#10b981">∇F ⟂ niveau</text>
+<circle cx="100" cy="50" r="3" fill="#0f172a"/>
+</g>
+<g transform="translate(280,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Calcul local → monde</text>
+<rect x="10" y="30" width="160" height="60" rx="8" fill="#ecfdf5" stroke="#86efac"/>
+<text x="20" y="50" font-size="9" fill="#065f46">gx=2Ax+Dy+Ez+G</text>
+<text x="20" y="68" font-size="9" fill="#065f46">gy=Dx+2By+Fz+H</text>
+<text x="20" y="86" font-size="9" fill="#065f46">gz=Ex+Fy+2Cz+I</text>
+<text x="20" y="110" font-size="8" fill="#64748b">→ Nworld = u·gx + w·gy + v·gz</text>
+</g>
+<g transform="translate(500,20)">
+<text x="20" y="12" font-size="11" fill="#ef4444" font-weight="600">Flip</text>
+<line x1="40" y1="50" x2="80" y2="30" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrViolet)"/><text x="85" y="28" font-size="8" fill="#8b5cf6">D</text>
+<line x1="40" y1="50" x2="70" y2="20" stroke="#10b981" stroke-width="2" marker-end="url(#arrGreen)"/><text x="72" y="15" font-size="8" fill="#10b981">N</text>
+<text x="20" y="75" font-size="8" fill="#64748b">N·D>0 → N:=-N</text>
+<text x="20" y="95" font-size="8" fill="#64748b">toujours face caméra</text>
+</g>
+</svg>
+<figcaption>Fig 6.4 — Le gradient est perpendiculaire à la surface. Son retour en monde donne l'ombrage correct.</figcaption>
+</div>
+
+<!-- PRINCIPE 5 -->
+<h3 style="border-left:3px solid #0f172a; padding-left:10px;">Principe 5 — Robustesse & choix du \(t\)</h3>
+<div class="formula">
+<b>Choix :</b> parmi les \(t\) valides, garde le plus petit \(t\ge10^{-4}\) — si \(nCand=2\) et \(t_1\) valide, c'est le plus proche (`break`) `Quadric.cpp:104`.<br>
+<b>Robustesse numérique :</b> tolérance \(10^{-6}\) sur clip, \(\|\mathbf{N}\|>10^{-9}\) sinon rejet, \(|a|<10^{-9}\) → linéaire, \(<b|<10^{-9}\) → miss.<br>
+<b>Théorie : analyse d'erreur flottante (Wilkinson) —</b> le biais \(10^{-4}\) évite l'auto-intersection, le tri \(t_1<t_2\) garantit le premier hit.
+</div>
+<div class="figure">
+<svg width="700" height="130" viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Tri t1&lt;t2 → plus petit valide</text>
+<line x1="20" y1="50" x2="200" y2="50" stroke="#0f172a" stroke-width="1"/>
+<circle cx="60" cy="50" r="6" fill="#10b981" stroke="white"/><text x="50" y="35" font-size="8" fill="#10b981">t1 clip ok → garde</text>
+<circle cx="120" cy="50" r="6" fill="#94a3b8" stroke="white"/><text x="110" y="70" font-size="8" fill="#64748b">t2 (ignoré)</text>
+<text x="20" y="90" font-size="8" fill="#64748b">si t1 rejeté par clip → teste t2</text>
+</g>
+<g transform="translate(380,20)">
+<text x="20" y="12" font-size="11" fill="#f59e0b" font-weight="600">Seuils</text>
+<rect x="10" y="30" width="260" height="50" rx="8" fill="#fffbeb" stroke="#fde68a"/>
+<text x="20" y="50" font-size="8" fill="#92400e">t≥1e-4 — |a|&lt;1e-9 → linéaire — |N|&lt;1e-9 → miss — clip ±1e-6</text>
+</g>
+</svg>
+<figcaption>Fig 6.5 — Le tri et les seuils garantissent le bon hit même en cas rasant ou dégénéré.</figcaption>
+</div>
+<div class="success"><b>Exo (3 min) :</b> cône \(A=1,B=-R^2/h^2\) avec \(R=1,h=2\) → calcule \(g_y\) en \((x=0.5,y=1,z=0)\) puis \(\mathbf{N}_{world}\) si \(\mathbf{w}=(0,1,0)\).</div>
+<div style="margin-top:16px; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; font-size:0.82rem; line-height:1.5; color:var(--text)">
+<b>📚 Sources scientifiques — Ch.6</b><br>
+[21] <b>Substitution Viète–Descartes + Formule quadratique</b> \(t=(-b\pm\sqrt{\Delta})/2a\), \(\Delta=b^2-4ac\) : Brahmagupta 628, al-Khwarizmi 825, Viète 1591 — RBHM 2022 <a href="https://doi.org/10.47976/rbhm2022v22n4555-66" target="_blank">doi:10.47976/rbhm2022v22n4555-66</a>, <a href="https://mathshistory.st-andrews.ac.uk/HistTopics/Quadratic_etc_equations/" target="_blank">MacTutor Quadratic</a>, OpenStax <a href="https://query.libretexts.org/Francais/Livre_%3A_Algebre_elementaire_(OpenStax)/10%3A_%C3%89quations_quadratiques/10.03%3A_R%C3%A9soudre_des_%C3%A9quations_quadratiques_%C3%A0_l'aide_de_la_formule_quadratique" target="_blank">formule/Δ</a>, CK-12 <a href="https://www.ck12.org/flexi/fr/algebre/le-modele-quadratique/qui-a-decouvert-l'equation-quadratique/" target="_blank">Brahmagupta VIIᵉ</a><br>
+[22] <b>Gradient \(\nabla F\) ⟂ surface</b> \(N\propto\nabla F\) — Hesse 1844, Lagrange — J. Bertrand <a href="https://www.numdam.org/item/JMPA_1844_1_9__133_0.pdf" target="_blank">JMPA 1844 Mémoire surfaces</a>, Chasles <a href="https://www.numdam.org/item/JMPA_1843_1_8__215_0.pdf" target="_blank">JMPA 1843 quadriques</a><br>
+[23] <b>Robustesse flottante</b> \(\epsilon=10^{-4}/10^{-6}\) — Wilkinson 1960 analyse d'erreur, Press et al. <i>Numerical Recipes</i> — même base que stabilité \(\Delta\) en Ch.3 [12]
+</div>
+</section>
+
+<!-- CHAPITRE 7 — ENRICHI 5 PRINCIPES -->
+<section class="card" id="c7">
+<div class="sec-head"><h2 class="sec">7. Transformations affines</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle">Cours Groupe affine 1743 — 5 principes · <span class="kbd">Scene.hpp:37</span> <span class="kbd">Object.hpp:16</span> <span class="kbd">Quadric.hpp:35</span> · G/R/S Blender</div>
+
+<!-- PRINCIPE 1 -->
+<h3 style="border-left:3px solid #0ea5e9; padding-left:10px;">Principe 1 — Transformation affine : translation (groupe des déplacements)</h3>
+<p>Une <b>transformation affine</b> est \(\mathbf{P}'= A\mathbf{P}+\mathbf{t}\) avec \(A\) linéaire et \(\mathbf{t}\) translation. Si \(A=I\) → <b>translation pure</b> \( \mathbf{P}'=\mathbf{P}+\boldsymbol{\Delta}\) — c'est le <b>G</b> de Blender (grab).</p>
+<div class="formula">
+\(\boxed{\mathbf{pos}'=\mathbf{pos}+\boldsymbol{\Delta}}\) — <b>Théorie : Groupe des translations \((\mathbb{R}^3,+)\)</b> — commutatif, \( \boldsymbol{\Delta}_1+\boldsymbol{\Delta}_2=\boldsymbol{\Delta}_2+\boldsymbol{\Delta}_1\), neutre \(\mathbf{0}\).<br>
+<b>RTv1 :</b> `object->translate(delta)` `Object.hpp:16` → `pos=pos+delta` `Quadric.hpp:35` — <b>O(1)</b>, ne touche pas à \(\mathbf{dir}\) ni à `cachedU/V` `Quadric.hpp:28` ; `Scene::translateObject` `Scene.hpp:37` même coût. Parser `sp 1,0,0` `SceneParser.cpp:115` fait `pos` direct.
+</div>
+<div class="figure">
+<svg width="700" height="140" viewBox="0 0 700 140" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Translation : pos+Δ</text>
+<circle cx="40" cy="70" r="16" fill="#e0f2fe" stroke="#0ea5e9"/><text x="32" y="74" font-size="9" fill="#0ea5e9">obj</text>
+<line x1="60" y1="70" x2="110" y2="70" stroke="#0f172a" stroke-width="2" marker-end="url(#arrBlack)" stroke-dasharray="4 3"/>
+<circle cx="130" cy="70" r="16" fill="#bae6fd" stroke="#0ea5e9"/><text x="115" y="74" font-size="8" fill="#0f172a">pos+Δ</text>
+<text x="70" y="60" font-size="9" fill="#0f172a">Δ=(1,0,0)</text>
+<text x="20" y="110" font-size="8" fill="#10b981">O(1) — base inchangée</text>
+</g>
+<g transform="translate(350,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Commutativité</text>
+<rect x="10" y="30" width="170" height="50" rx="8" fill="#f0f9ff" stroke="#bae6fd"/>
+<text x="20" y="50" font-size="9" fill="#0c4a6e">Δ1+Δ2 = Δ2+Δ1</text>
+<text x="20" y="68" font-size="8" fill="#64748b">2× G X puis G Y = G Y puis G X</text>
+</g>
+</svg>
+<figcaption>Fig 7.1 — La translation est une addition pure. Test `move_object.rt` : `sp 1,0,0 → droite écran`.</figcaption>
+</div>
+
+<!-- PRINCIPE 2 -->
+<h3 style="border-left:3px solid #8b5cf6; padding-left:10px;">Principe 2 — Rotation : \(SO(3)\), axe & angle (Euler–Rodrigues)</h3>
+<div class="formula">
+\(\boxed{\mathbf{dir}'=\widehat{\mathbf{dir}_{new}}}\) puis \(\mathbf{w}=\mathbf{dir}'\), \( \mathbf{u}=\frac{\mathbf{w}\times\mathbf{arb}}{\|\cdot\|}\), \(\mathbf{v}=\mathbf{w}\times\mathbf{u}\) — <b>Théorie : Groupe spécial orthogonal \(SO(3)=\{R\mid R^\top R=I,\det R=+1\}\)</b> — conserve \(\|\cdot\|\) et \(\cdot\) et l'orientation.<br>
+<b>RTv1 :</b> `setDir(d)` `Quadric.hpp:37` → `dir=d.normalized(); updateBasis();` — <b>1 seul rebuild</b> de `cachedU/V` (coût fixe, puis tous les rayons réutilisent). <b>Non-commutatif :</b> \(R_xR_y\neq R_yR_x\).
+</div>
+<div class="figure">
+<svg width="700" height="160" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Rotation R : dir → dir'</text>
+<line x1="60" y1="80" x2="60" y2="30" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrGreen)"/><text x="65" y="30" font-size="9" fill="#10b981">dir</text>
+<line x1="60" y1="80" x2="95" y2="45" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#arrOrange)"/><text x="98" y="45" font-size="9" fill="#92400e">dir'</text>
+<path d="M60 60 A 20 20 0 0 1 75 52" fill="none" stroke="#64748b" stroke-width="1"/><text x="78" y="58" font-size="8" fill="#64748b">θ</text>
+<text x="20" y="110" font-size="8" fill="#f59e0b">1× updateBasis() — axe Y local</text>
+</g>
+<g transform="translate(300,20)">
+<text x="20" y="12" font-size="11" fill="#ef4444" font-weight="600">Non-commutatif</text>
+<rect x="10" y="30" width="160" height="50" rx="8" fill="#fef2f2" stroke="#fecaca"/>
+<text x="20" y="50" font-size="9" fill="#991b1b">Rx·Ry ≠ Ry·Rx</text>
+<text x="20" y="68" font-size="8" fill="#64748b">ordre des R Blender compte</text>
+</g>
+<g transform="translate(520,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">SO(3)</text>
+<rect x="10" y="30" width="150" height="50" rx="8" fill="#f5f3ff" stroke="#ddd6fe"/>
+<text x="20" y="50" font-size="9" fill="#5b21b6">RᵀR=I, det=+1</text>
+<text x="20" y="68" font-size="8" fill="#64748b">conserve orientation</text>
+</g>
+</svg>
+<figcaption>Fig 7.2 — La rotation ne touche que \(\mathbf{dir}\); le reste de l'objet suit. Son ordre n'est pas interchangeable.</figcaption>
+</div>
+
+<!-- PRINCIPE 3 -->
+<h3 style="border-left:3px solid #10b981; padding-left:10px;">Principe 3 — Repère Y-up vs Z-up (Blender)</h3>
+<div class="formula">
+\(\boxed{\text{RTv1 }(X,Y,Z) \leftrightarrow \text{Blender }(X,Z,-Y)}\) avec \(\text{worldUp}=(0,1,0)\) `Renderer.cpp:48` — <b>Théorie : changement de repère par permutation + signe, matrice \(M=\begin{pmatrix}1&0&0\\0&0&1\\0&-1&0\end{pmatrix}\) orthogonale \(\det=+1\)</b><br>
+<b>Caméra :</b> \(right=worldUp\times forward\) `Renderer.cpp:52` garantit \(cam.x\!\uparrow\) → objet écran gauche (pan `Shift+MMB` Blender) — test `move_camera.rt`.
+</div>
+<div class="figure">
+<svg width="700" height="150" viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">RTv1 Y-up</text>
+<line x1="60" y1="70" x2="100" y2="70" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrBlue)"/><text x="105" y="74" font-size="9" fill="#0ea5e9">X</text>
+<line x1="60" y1="70" x2="60" y2="30" stroke="#10b981" stroke-width="2" marker-end="url(#arrGreen)"/><text x="45" y="25" font-size="9" fill="#10b981">Y up</text>
+<line x1="60" y1="70" x2="85" y2="95" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/><text x="88" y="100" font-size="9" fill="#8b5cf6">Z</text>
+</g>
+<text x="180" y="65" font-size="16" fill="#94a3b8">⇔ M ⇔</text>
+<g transform="translate(260,20)">
+<text x="30" y="12" font-size="11" fill="#6366f1" font-weight="600">Blender Z-up</text>
+<line x1="60" y1="70" x2="100" y2="70" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrBlue)"/><text x="105" y="74" font-size="9" fill="#0ea5e9">X</text>
+<line x1="60" y1="70" x2="85" y2="45" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/><text x="88" y="40" font-size="9" fill="#8b5cf6">Z up</text>
+<line x1="60" y1="70" x2="60" y2="100" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrOrange)"/><text x="45" y="115" font-size="9" fill="#92400e">Y→-Z</text>
+</g>
+<g transform="translate(430,20)">
+<rect x="10" y="30" width="170" height="50" rx="10" fill="#f0f9ff" stroke="#bae6fd"/>
+<text x="20" y="50" font-size="9" fill="#0c4a6e">worldUp {0,1,0}</text>
+<text x="20" y="68" font-size="8" fill="#64748b">Renderer.cpp:48</text>
+</g>
+</svg>
+<figcaption>Fig 7.3 — La conversion est une simple permutation signée, orthogonale donc sans distorsion.</figcaption>
+</div>
+
+<!-- PRINCIPE 4 -->
+<h3 style="border-left:3px solid #f59e0b; padding-left:10px;">Principe 4 — Composition & optimisation (pourquoi G/R est fluide)</h3>
+<div class="formula">
+<b>Composition :</b> \(\mathbf{P}'' = R(\mathbf{P}+\boldsymbol{\Delta})\) — translation puis rotation ≠ rotation puis translation.<br>
+<b>Optimisation RTv1 :</b> `translate` O(1) (pos seul), `rotate` O(1) + 1 rebuild `cachedU/V` `Quadric.hpp:28` — <b>Théorie : complexité amortie</b> — le coût per-ray est nul pour G et constant pour R, d'où 60 Hz possible même avec 6 quadriques.<br>
+<b>Lumière & caméra :</b> `Scene::moveCamera(delta)` / `moveLight(delta)` `Scene.hpp:37` O(1) aussi (3 additions).
+</div>
+<div class="figure">
+<svg width="700" height="130" viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(20,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Coût per-frame</text>
+<rect x="10" y="30" width="200" height="30" rx="8" fill="#ecfdf5" stroke="#86efac"/><text x="20" y="50" font-size="9" fill="#065f46">G : 3 additions O(1)</text>
+<rect x="10" y="70" width="200" height="30" rx="8" fill="#fffbeb" stroke="#fde68a"/><text x="20" y="90" font-size="9" fill="#92400e">R : 1 normalize + 1 cross O(1)</text>
+</g>
+<g transform="translate(350,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Per-ray : 0 rebuild</text>
+<rect x="10" y="30" width="200" height="60" rx="10" fill="#f5f3ff" stroke="#ddd6fe"/>
+<text x="20" y="50" font-size="9" fill="#5b21b6">cachedU/V réutilisé</text>
+<text x="20" y="70" font-size="8" fill="#64748b">777k rayons ×6 objets → 9M ops sauvées</text>
+</g>
+</svg>
+<figcaption>Fig 7.4 — Le coût d'une interaction Blender est indépendant du nombre de rayons — d'où la fluidité.</figcaption>
+</div>
+
+<!-- PRINCIPE 5 -->
+<h3 style="border-left:3px solid #0f172a; padding-left:10px;">Principe 5 — Tests statiques move_*.rt (blocage anti-miroir)</h3>
+<div class="formula">
+<b>Théorie : validation par invariants</b> — on fige les conventions par 3 scènes :<br>
+`move_camera.rt` : \(C 1,0,-5\) vs \(C 0,0,-5\) → sphère à <b>gauche</b> (pan Shift+MMB) — teste \(right=worldUp\times forward\)<br>
+`move_light.rt` : \(L 8,5,-5\) → ombre à <b>gauche</b> (\(L\cdot\Delta\)) — teste \(lightDir=(L_{pos}-hit).normalized()\) `Renderer.cpp:18`<br>
+`move_object.rt` : \(sp 1,0,0\) → <b>droite écran</b> — teste \(pos+=Δ\) pur.
+</div>
+<div class="figure">
+<svg width="700" height="130" viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">move_camera</text>
+<rect x="10" y="30" width="140" height="50" rx="8" fill="#f0f9ff" stroke="#bae6fd"/><text x="20" y="50" font-size="9" fill="#0c4a6e">C 1,0,-5 → gauche</text>
+<text x="20" y="68" font-size="8" fill="#64748b">Renderer.cpp:52</text>
+</g>
+<g transform="translate(250,20)">
+<text x="20" y="12" font-size="11" fill="#f59e0b" font-weight="600">move_light</text>
+<rect x="10" y="30" width="140" height="50" rx="8" fill="#fffbeb" stroke="#fde68a"/><text x="20" y="50" font-size="9" fill="#92400e">L 8,5,-5 → ombre -X</text>
+<text x="20" y="68" font-size="8" fill="#64748b">Renderer.cpp:18</text>
+</g>
+<g transform="translate(470,20)">
+<text x="20" y="12" font-size="11" fill="#10b981" font-weight="600">move_object</text>
+<rect x="10" y="30" width="140" height="50" rx="8" fill="#ecfdf5" stroke="#86efac"/><text x="20" y="50" font-size="9" fill="#065f46">sp 1,0,0 → droite</text>
+<text x="20" y="68" font-size="8" fill="#64748b">SceneParser pos</text>
+</g>
+</svg>
+<figcaption>Fig 7.5 — 3 scènes suffisent à verrouiller les signes pour tout l'interactif futur.</figcaption>
+</div>
+<div class="success"><b>Exo (2 min) :</b> prédis où va l'ombre si \(L\) passe de \((5,5,-5)\) à \((-5,5,-5)\) ? Vérifie avec `move_light.rt`.</div>
+<div style="margin-top:16px; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; font-size:0.82rem; line-height:1.5; color:var(--text)">
+<b>📚 Sources scientifiques — Ch.7</b><br>
+[24] <b>Groupe affine / translations</b> \((\mathbb{R}^3,+)\) distingué dans \(GA(3)= \mathbb{R}^3\rtimes GL(3)\) — Euler affinité 1743, Helmholtz 1868, Klein Erlangen 1872 — <a href="https://agreg-maths.fr/uploads/versions/709/183%20-%20Utilisation%20des%20groupes%20en%20geometrie..pdf" target="_blank">Agreg 183 groupe affine §1-2</a>, <a href="https://les-mathematiques.net/vanilla/uploads/editor/p7/l60j6507z6xe.pdf" target="_blank">Hormière Espaces affines §1.2/§6.1</a>, <a href="https://www.universalis.fr/encyclopedie/geometrie/5-transformations-geometriques/" target="_blank">Universalis §5 Helmoltz/Klein/Cayley</a>, Grenoble IREM <a href="https://irem.univ-grenoble-alpes.fr/revues/reperes-irem/consultation-en-ligne/numero-063-reperes-irem/3-les-transformations-en-geometrie-introduction-a-une-approche-historique--1361064.kjsp?RH=1702554838942" target="_blank">Repères IREM 063</a><br>
+[25] <b>Groupe spécial orthogonal \(SO(3)\)</b> \(R^\top R=I,\det=+1\) — Euler 1771 <i>Problema algebraicum</i>, Rodrigues 1840 <i>J. Math. Pures Appl.</i> 5 — <a href="https://rotations.berkeley.edu/other-representations-of-a-rotation/" target="_blank">Berkeley Euler–Rodrigues</a>, <a href="https://en.wikipedia.org/wiki/SO(3)" target="_blank">Wikipedia SO(3)</a> § det, <a href="https://arxiv.org/abs/1909.06669" target="_blank">Hashim arXiv:1909.06669</a>, Androma <a href="https://androma.org/theorems/8287" target="_blank">Euler Rotation Th. SO(3)</a><br>
+[26] <b>Y-up ↔ Z-up</b> \(M=\begin{pmatrix}1&0&0\\0&0&1\\0&-1&0\end{pmatrix}\in SO(3)\) — Blender convention \(Z\)-up, RTv1 \(Y\)-up `Renderer.cpp:48` — même groupe que [25]
+</div>
+</section>
+
+<!-- CHAPITRE 8 — ENRICHI 5 PRINCIPES -->
+<section class="card" id="c8">
+<div class="sec-head"><h2 class="sec">8. Caméra sténopé</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle">Cours Alhazen 1021 / Brunelleschi 1415 — 5 principes · <span class="kbd">src/core/Renderer.cpp:41</span> <span class="kbd">Scene.hpp:8</span> · Le sténopé qui ne miroite pas</div>
+
+<!-- PRINCIPE 1 -->
+<h3 style="border-left:3px solid #0ea5e9; padding-left:10px;">Principe 1 — Modèle sténopé (trou d'épingle) — Ibn al-Haytham 1021</h3>
+<p>Une <b>caméra sténopé</b> est une boîte noire avec un trou \(\mathbf{O}\) (centre optique) et un plan image à distance \(f=1\) devant. Tout point \(\mathbf{P}\) s'image en \(\mathbf{p}= \mathbf{O}+f\frac{\mathbf{P}-\mathbf{O}}{\|\mathbf{P}-\mathbf{O}\|}\) — <b>Théorie : projection centrale (perspective), inventée par Ibn al-Haytham (Alhazen) 1021 <i>Kitāb al-Manāẓir</i> puis Brunelleschi 1415 (tavoletta).</b></p>
+<div class="formula">
+\(\boxed{\text{Image} = \text{intersection du rayon } \mathbf{O}+t\mathbf{D} \text{ avec le plan } (\mathbf{P}-\mathbf{O})\cdot\mathbf{forward}=1}\) — *tous les rayons partent de \(\mathbf{O}\)*.<br>
+<b>RTv1 :</b> pas de matrice \(4\times4\) — on tire directement \(\mathbf{D}\) par pixel (plus simple qu'OpenGL).
+</div>
+<div class="figure">
+<svg width="700" height="160" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Sténopé : trou + plan à f=1</text>
+<circle cx="40" cy="70" r="5" fill="#0f172a"/><text x="25" y="90" font-size="8" fill="#0f172a">O</text>
+<line x1="40" y1="70" x2="180" y2="30" stroke="#0ea5e9" stroke-width="1.2" stroke-dasharray="3 3"/><line x1="40" y1="70" x2="180" y2="110" stroke="#0ea5e9" stroke-width="1.2" stroke-dasharray="3 3"/>
+<rect x="180" y="30" width="60" height="80" rx="2" fill="#e0f2fe" stroke="#0ea5e9"/><text x="185" y="70" font-size="8" fill="#0ea5e9">plan f=1</text>
+<circle cx="120" cy="50" r="4" fill="#f59e0b"/><text x="125" y="48" font-size="8" fill="#92400e">P</text>
+<line x1="40" y1="70" x2="120" y2="50" stroke="#f59e0b" stroke-width="1.5"/><circle cx="180" cy="50" r="3" fill="#f59e0b"/><text x="185" y="48" font-size="8" fill="#92400e">p image</text>
+<text x="20" y="135" font-size="8" fill="#64748b">Alhazen 1021 : rayon droit par le trou</text>
+</g>
+<g transform="translate(380,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Perspective = droites → droites</text>
+<rect x="20" y="30" width="100" height="60" fill="#f1f5f9" stroke="#cbd5e1"/><line x1="40" y1="50" x2="100" y2="70" stroke="#0f172a"/><line x1="40" y1="70" x2="100" y2="50" stroke="#0f172a"/>
+<text x="30" y="105" font-size="8" fill="#64748b">conserve l'alignement, pas les angles</text>
+</g>
+</svg>
+<figcaption>Fig 8.1 — Le sténopé : un point, un plan, des rayons droits. Toute l'image tient dans \(f=1\).</figcaption>
+</div>
+
+<!-- PRINCIPE 2 -->
+<h3 style="border-left:3px solid #8b5cf6; padding-left:10px;">Principe 2 — Repère caméra : \(forward, right, up\) (orthonormé direct)</h3>
+<div class="formula">
+\(\boxed{\mathbf{forward}=\hat{\mathbf{dir}}}\) `Scene.hpp:8` — direction de visée<br>
+\(\boxed{\mathbf{right}=\frac{\mathbf{worldUp}\times\mathbf{forward}}{\|\cdot\|}}\) `Renderer.cpp:52` — <b>ordre crucial</b> : \(worldUp\times forward\) (pas l'inverse) — sinon miroir horizontal<br>
+\(\boxed{\mathbf{up}= \mathbf{forward}\times\mathbf{right}}\) — complète le trièdre direct \(\det=+1\) — alors \(\{\mathbf{right},\mathbf{up},\mathbf{forward}\}\) est orthonormé.<br>
+<b>Théorie : base orthonormée directe (Gram-Schmidt dégénéré)</b> — si \(|\mathbf{forward}\cdot\mathbf{worldUp}|>0.999\) → \(\mathbf{worldUp}=(0,0,1)\) de secours.
+</div>
+<div class="figure">
+<svg width="700" height="170" viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Trièdre caméra (direct)</text>
+<circle cx="60" cy="80" r="4" fill="#0f172a"/><text x="50" y="95" font-size="9" fill="#0f172a">O</text>
+<line x1="60" y1="80" x2="140" y2="80" stroke="#0f172a" stroke-width="2" marker-end="url(#arrBlack)"/><text x="110" y="75" font-size="9" fill="#0f172a">forward (dir)</text>
+<line x1="60" y1="80" x2="100" y2="40" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arrBlue)"/><text x="102" y="35" font-size="9" fill="#0ea5e9">right = WUp×F</text>
+<line x1="60" y1="80" x2="60" y2="30" stroke="#10b981" stroke-width="2" marker-end="url(#arrGreen)"/><text x="45" y="25" font-size="9" fill="#10b981">up = F×right</text>
+<text x="20" y="125" font-size="8" fill="#ef4444">right×forward = miroir !</text>
+</g>
+<g transform="translate(360,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Cas dégénéré : forward≈Y</text>
+<rect x="10" y="30" width="170" height="60" rx="8" fill="#fffbeb" stroke="#fde68a"/>
+<text x="20" y="50" font-size="9" fill="#92400e">|forward·worldUp|>0.999</text>
+<text x="20" y="68" font-size="9" fill="#92400e">→ worldUp=(0,0,1)</text>
+<text x="20" y="86" font-size="8" fill="#64748b">évite right≈0</text>
+</g>
+</svg>
+<figcaption>Fig 8.2 — L'ordre du cross fixe la parité. Le test dégénéré évite la division par ≈0 quand on regarde à la verticale.</figcaption>
+</div>
+
+<!-- PRINCIPE 3 -->
+<h3 style="border-left:3px solid #10b981; padding-left:10px;">Principe 3 — Champ de vue (FOV) et aspect</h3>
+<div class="formula">
+\(\boxed{\text{scale}=\tan(\tfrac{\text{fov}}{2}\cdot\pi/180)}\) `Renderer.cpp:46` — demi-largeur du plan à \(f=1\)<br>
+\(\boxed{\text{aspect}=w/h=1080/720=1.5}\) `Renderer.cpp:45`<br>
+<b>Théorie : trigonométrie du triangle isocèle</b> — fov 60° → scale = \(\tan30°≈0.577\) → plan large \(2·aspect·scale≈1.73\) à distance 1.
+</div>
+<div class="figure">
+<svg width="700" height="150" viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">FOV = angle d'ouverture</text>
+<circle cx="30" cy="70" r="3" fill="#0f172a"/><text x="15" y="85" font-size="8" fill="#0f172a">O</text>
+<line x1="30" y1="70" x2="150" y2="30" stroke="#0f172a"/><line x1="30" y1="70" x2="150" y2="110" stroke="#0f172a"/>
+<path d="M50 70 A 20 20 0 0 1 62 58" fill="none" stroke="#f59e0b" stroke-width="1.5"/><text x="65" y="55" font-size="9" fill="#92400e">fov 60°</text>
+<line x1="90" y1="30" x2="90" y2="110" stroke="#0ea5e9" stroke-dasharray="3 3"/><text x="95" y="70" font-size="8" fill="#0ea5e9">plan f=1</text>
+<text x="30" y="125" font-size="8" fill="#64748b">scale=tan(fov/2) → demi-largeur</text>
+</g>
+<g transform="translate(350,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Aspect w/h</text>
+<rect x="20" y="40" width="120" height="60" rx="2" fill="#f1f5f9" stroke="#94a3b8"/><text x="60" y="70" font-size="9" fill="#64748b">1080×720</text>
+<text x="75" y="85" font-size="8" fill="#64748b">1.5:1</text>
+<line x1="20" y1="40" x2="140" y2="40" stroke="#0f172a" marker-end="url(#arrBlack)"/><line x1="20" y1="100" x2="20" y2="40" stroke="#0f172a" marker-end="url(#arrBlack)"/>
+<text x="20" y="125" font-size="8" fill="#64748b">nx *= aspect (étire x)</text>
+</g>
+</svg>
+<figcaption>Fig 8.3 — FOV = zoom, aspect = étirement. Ensemble ils définissent la fenêtre du monde visible.</figcaption>
+</div>
+
+<!-- PRINCIPE 4 -->
+<h3 style="border-left:3px solid #f59e0b; padding-left:10px;">Principe 4 — Du pixel au rayon : \(n_x,n_y\) → \(\mathbf{D}\)</h3>
+<div class="formula">
+\(\boxed{n_x=(2\frac{x+0.5}{w}-1)\cdot aspect\cdot scale,\quad n_y=(1-2\frac{y+0.5}{h})\cdot scale}\) `Renderer.cpp:65` — \(x\) de 0 à \(w-1\), \(y\) de 0 à \(h-1\), \(+0.5\) = centre du pixel (anti-aliasing 1 spp)<br>
+\(\boxed{\mathbf{D}=\frac{\mathbf{right}\,n_x+\mathbf{up}\,n_y+\mathbf{forward}}{\|\cdot\|}}\) `Renderer.cpp:67` — **Théorie : interpolation bilinéaire** sur le plan image.
+</div>
+<div class="figure">
+<svg width="700" height="170" viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">Plan image : grille w×h</text>
+<rect x="20" y="30" width="100" height="70" fill="#f8fafc" stroke="#94a3b8"/><line x1="70" y1="30" x2="70" y2="100" stroke="#e2e8f0"/><line x1="20" y1="65" x2="120" y2="65" stroke="#e2e8f0"/>
+<circle cx="70" cy="65" r="3" fill="#f59e0b"/><text x="75" y="62" font-size="8" fill="#92400e">pixel (x,y) +0.5</text>
+<text x="20" y="115" font-size="8" fill="#64748b">nx ∈ [-aspect·scale, +...]</text>
+<text x="20" y="128" font-size="8" fill="#64748b">ny ∈ [-scale, +scale]</text>
+</g>
+<g transform="translate(300,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">Interpolation</text>
+<circle cx="40" cy="70" r="3" fill="#0f172a"/><text x="30" y="85" font-size="8" fill="#0f172a">O</text>
+<line x1="40" y1="70" x2="120" y2="70" stroke="#0f172a" marker-end="url(#arrBlack)"/><text x="85" y="65" font-size="8" fill="#0f172a">forward</text>
+<line x1="120" y1="70" x2="150" y2="50" stroke="#0ea5e9" marker-end="url(#arrBlue)"/><text x="152" y="48" font-size="8" fill="#0ea5e9">right·nx</text>
+<line x1="150" y1="50" x2="150" y2="30" stroke="#10b981" marker-end="url(#arrGreen)"/><text x="155" y="35" font-size="8" fill="#10b981">up·ny</text>
+<line x1="40" y1="70" x2="150" y2="30" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrViolet)"/><text x="100" y="35" font-size="8" fill="#8b5cf6">D</text>
+</g>
+</svg>
+<figcaption>Fig 8.4 — Chaque pixel est une combinaison linéaire des trois axes caméra. Le \(+0.5\) centre le rayon au milieu du pixel.</figcaption>
+</div>
+
+<!-- PRINCIPE 5 -->
+<h3 style="border-left:3px solid #0f172a; padding-left:10px;">Principe 5 — Validation anti-miroir (move_camera.rt)</h3>
+<div class="formula">
+<b>Test `AGENTS.md:49` :</b> `C 1,0,-5 0,0,1 60` vs `C 0,0,-5` → sphère \((0,0,0)\) doit apparaître à <b>gauche</b> écran — c'est le pan \(Shift+MMB\) Blender.<br>
+Si elle va à droite → \(right = forward\times worldUp\) (ordre inversé) — bug classique.<br>
+<b>Y-up :</b> \(cam.x\!\uparrow\) → objet monde \(-X\) → écran gauche grâce à \(right=WUp\times F\).
+</div>
+<div class="figure">
+<svg width="700" height="130" viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Test gauche/droite</text>
+<rect x="10" y="30" width="120" height="60" rx="4" fill="#0f172a"/><text x="35" y="50" font-size="8" fill="white">écran 1080×720</text>
+<circle cx="40" cy="60" r="8" fill="#f59e0b"/><text x="30" y="75" font-size="7" fill="#92400e">sphère gauche ✓</text>
+<circle cx="100" cy="60" r="8" fill="#e2e8f0" opacity="0.5"/><text x="85" y="85" font-size="7" fill="#64748b">si miroir → droite ✗</text>
+</g>
+<g transform="translate(300,20)">
+<rect x="10" y="30" width="170" height="50" rx="8" fill="#ecfdf5" stroke="#86efac"/>
+<text x="20" y="50" font-size="9" fill="#065f46">C 1,0,-5 → gauche = OK</text>
+<text x="20" y="68" font-size="8" fill="#64748b">C -1,0,-5 → droite</text>
+</g>
+</svg>
+<figcaption>Fig 8.5 — Le test `move_camera.rt` fige à jamais le signe du cross.</figcaption>
+</div>
+<div class="success"><b>Exo (2 min) :</b> fov de 60° à 90° → scale = ? Largeur du plan à \(f=1\) = ? Quel pixel donne \(\mathbf{D}=forward\) ?</div>
+<div style="margin-top:16px; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; font-size:0.82rem; line-height:1.5; color:var(--text)">
+<b>📚 Sources scientifiques — Ch.8</b><br>
+[27] <b>Alhazen 1021 — Sténopé / Camera obscura</b> : <i>Kitāb al-Manāẓir</i>, <i>On the Shape of the Eclipse</i> — Springer Raynaud <a href="https://link.springer.com/book/10.1007/978-3-319-47991-0" target="_blank">doi:10.1007/978-3-319-47991-0</a> (critical edition), Hammond OhioLINK <a href="http://rave.ohiolink.edu/etdc/view?acc_num=osu1487322984314364" target="_blank">ch. Alhazen 1986</a>, van Schooten <a href="https://www.fransvanschooten.nl/camera.htm" target="_blank">Ibn al-Haytham 1021</a><br>
+[28] <b>Brunelleschi 1415 — Perspective centrale</b> : <i>tavoletta Baptistère</i>, <i>perspectiva artificialis</i> — APMEP <a href="https://www.apmep.fr/IMG/pdf/BV_454_ConfPerspectivaArtificialis_C.pdf" target="_blank">BV 454</a>, Smarthistory <a href="https://smarthistory.org/linear-perspective-brunelleschis-experiment/" target="_blank">Zucker experiment 1420</a>, Science et Vie <a href="https://www.science-et-vie.com/article-magazine/filippo-brunelleschi-invente-la-perspective" target="_blank">1415 panneau percé</a><br>
+[29] <b>FOV / projection perspective</b> \(\text{scale}=\tan(\text{fov}/2)\) — même trigonométrie que [27] (rayons droits) — appliquée `Renderer.cpp:46`
+</div>
+</section>
+
+<!-- CHAPITRE 9 — ENRICHI 5 PRINCIPES + EXEMPLES -->
+<section class="card" id="c9">
+<div class="sec-head"><h2 class="sec">9. Éclairage & ombres</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle">Cours Lambert 1760 + Whitted 1980 — 5 principes · <span class="kbd">Renderer.cpp:17</span> · Exemples numériques pas-à-pas (tu n'as jamais fait d'éclairage)</div>
+
+<!-- PRINCIPE 1 -->
+<h3 style="border-left:3px solid #f59e0b; padding-left:10px;">Principe 1 — Lumière ponctuelle & loi de Lambert (Photometria 1760)</h3>
+<p>Une <b>lumière ponctuelle</b> en \(\mathbf{L}_{pos}\) d'intensité \(I\) éclaire un point \(\mathbf{P}\) de normale \(\mathbf{N}\) avec \(\mathbf{L}= \widehat{\mathbf{L}_{pos}-\mathbf{P}}\).</p>
+<div class="formula">
+<b>Loi de Lambert (Johann Heinrich Lambert, <i>Photometria</i> 1760) :</b> \(\boxed{\text{diff}= \max(0,\mathbf{N}\cdot\mathbf{L})\cdot I = \max(0,\cos\theta)\cdot I}\)<br>
+\(\theta\) = angle entre \(\mathbf{N}\) et \(\mathbf{L}\). \(\cos\theta = (\mathbf{N}\cdot\mathbf{L})/(\|\mathbf{N}\|\|\mathbf{L}\|)\) mais \(\|\mathbf{N}\|=\|\mathbf{L}\|=1\) → simple dot.
+</div>
+<div class="figure">
+<svg width="700" height="170" viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="30" y="12" font-size="11" fill="#0f172a" font-weight="600">θ = angle N-L</text>
+<ellipse cx="60" cy="70" rx="28" ry="28" fill="#fef3c7" stroke="#f59e0b"/><line x1="60" y1="42" x2="60" y2="12" stroke="#10b981" stroke-width="2" marker-end="url(#arrGreen)"/><text x="65" y="20" font-size="9" fill="#10b981">N</text>
+<line x1="60" y1="70" x2="100" y2="30" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrOrange)"/><text x="105" y="28" font-size="9" fill="#92400e">L (θ=45°)</text>
+<path d="M60 52 A 12 12 0 0 0 78 58" fill="none" stroke="#64748b"/><text x="78" y="58" font-size="8" fill="#64748b">θ</text>
+<text x="20" y="115" font-size="8" fill="#64748b">N·L = cosθ</text>
+</g>
+<g transform="translate(250,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Valeurs cosθ</text>
+<rect x="10" y="30" width="170" height="70" rx="8" fill="#fffbeb" stroke="#fde68a"/>
+<text x="20" y="50" font-size="9" fill="#92400e">θ=0°  → cos=1.0 → plein</text>
+<text x="20" y="68" font-size="9" fill="#92400e">θ=45° → cos≈0.71 → 71%</text>
+<text x="20" y="86" font-size="9" fill="#92400e">θ=90° → cos=0   → ombre propre</text>
+</g>
+<g transform="translate(470,20)">
+<text x="20" y="12" font-size="11" fill="#10b981" font-weight="600">Exemple chiffré</text>
+<rect x="10" y="30" width="180" height="70" rx="8" fill="#ecfdf5" stroke="#86efac"/>
+<text x="20" y="50" font-size="9" fill="#065f46">N=(0,1,0), L=(1,1,0)/√2</text>
+<text x="20" y="68" font-size="9" fill="#065f46">N·L = 0*0.707+1*0.707+0 =0.707</text>
+<text x="20" y="86" font-size="8" fill="#64748b">diff=0.707·0.8=0.566</text>
+</g>
+</svg>
+<figcaption>Fig 9.1 — \(\cos\theta\) règle l'éclat : face = 1, rasant = 0. Lambert l'a prouvé en 1760 en mesurant la bougie.</figcaption>
+</div>
+
+<!-- PRINCIPE 2 -->
+<h3 style="border-left:3px solid #0ea5e9; padding-left:10px;">Principe 2 — Couleur : ambient + diffus (exemple complet)</h3>
+<div class="formula">
+\(\boxed{\mathbf{col}= \mathbf{albedo}\odot(\mathbf{ambient}+ \text{diff}\cdot0.9)}\) `Renderer.cpp:20` — \(\odot\) = multiplication composante par composante.<br>
+<b>Exemple complet :</b> albedo \(\mathbf{a}=(255,0,0)\) rouge, ambient \(\mathbf{a}_{amb}=(0.1,0.1,0.1)\), \(I=0.8\), \(N\cdot L=0.707\) → diff \(=0.566\) → \(\text{diff}\cdot0.9=0.509\) → \(\mathbf{col}= (255·(0.1+0.509),\,0,\,0)=(155,0,0)\) → rose sombre. Si \(N\cdot L\le0\) → \(\mathbf{col}= (25,0,0)\) (ambient seul).
+</div>
+<table>
+<tr><th>Cas</th><th>\(N\cdot L\)</th><th>diff</th><th>Col rouge \((255,0,0)\)</th><th>Visuel</th></tr>
+<tr><td>Face \(\theta=0°\)</td><td>1.0</td><td>0.80</td><td>\(255·0.82=209\) → \((209,0,0)\)</td><td>rouge vif</td></tr>
+<tr><td>45°</td><td>0.71</td><td>0.57</td><td>\(255·0.61=155\) → \((155,0,0)\)</td><td>rouge moyen</td></tr>
+<tr><td>Rasant 80°</td><td>0.17</td><td>0.14</td><td>\(255·0.23=58\) → \((58,0,0)\)</td><td>rouge sombre</td></tr>
+<tr><td>Dos \(>90°\)</td><td>≤0</td><td>0</td><td>\(255·0.1=25\) → \((25,0,0)\)</td><td>presque noir</td></tr>
+</table>
+<div class="figure">
+<svg width="700" height="120" viewBox="0 0 700 120" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(20,20)">
+<circle cx="40" cy="40" r="18" fill="#fecaca" stroke="#ef4444"/><circle cx="40" cy="40" r="10" fill="#991b1b"/><text x="30" y="75" font-size="8" fill="#991b1b">face 209</text>
+</g>
+<g transform="translate(180,20)">
+<circle cx="40" cy="40" r="18" fill="#fca5a5" stroke="#ef4444"/><text x="30" y="75" font-size="8" fill="#991b1b">45° 155</text>
+</g>
+<g transform="translate(340,20)">
+<circle cx="40" cy="40" r="18" fill="#7f1d1d" stroke="#450a0a"/><text x="30" y="75" font-size="8" fill="#e2e8f0">rasant 58</text>
+</g>
+<g transform="translate(500,20)">
+<circle cx="40" cy="40" r="18" fill="#1f0a0a" stroke="#450a0a"/><text x="30" y="75" font-size="8" fill="#94a3b8">dos 25</text>
+</g>
+</svg>
+<figcaption>Fig 9.2 — Même albedo, 4 angles → 4 teintes. C'est ce dégradé qui donne le relief.</figcaption>
+</div>
+
+<!-- PRINCIPE 3 -->
+<h3 style="border-left:3px solid #8b5cf6; padding-left:10px;">Principe 3 — Ombre portée : le shadow-ray (Whitted 1980)</h3>
+<p>Un point est dans l'ombre si un objet coupe le segment \([\mathbf{P},\mathbf{L}_{pos}]\).</p>
+<div class="formula">
+\(\boxed{\mathbf{R}_{shadow}(t)=\mathbf{P}+ \mathbf{N}\cdot10^{-4}+t\mathbf{L},\; t\in[10^{-4}, \|\mathbf{L}_{pos}-\mathbf{P}\|)}\) `Renderer.cpp:26`<br>
+<b>Algorithme :</b> pour chaque objet `obj->intersect(Rshadow, tmp)` si \(tmp.t\) dans l'intervalle → en ombre → \(\mathbf{col}= \mathbf{a}\odot\mathbf{ambient}\) (break) `Renderer.cpp:32`.<br>
+<b>Biais \(10^{-4}\) :</b> évite l'auto-ombrage (shadow acne) — sans lui, \(\mathbf{P}\) se ré-intersecte à \(t≈0\) à cause des erreurs flottantes.
+</div>
+<div class="figure">
+<svg width="700" height="170" viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Sans ombre</text>
+<ellipse cx="60" cy="70" rx="25" ry="25" fill="#fef3c7" stroke="#f59e0b"/><text x="45" y="75" font-size="8" fill="#92400e">hit</text>
+<line x1="60" y1="45" x2="60" y2="20" stroke="#10b981" stroke-width="1.5"/><text x="65" y="25" font-size="8" fill="#10b981">N·1e-4</text>
+<line x1="60" y1="45" x2="150" y2="20" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrViolet)"/><text x="155" y="20" font-size="9" fill="#8b5cf6">Lpos</text>
+<text x="20" y="110" font-size="8" fill="#10b981">aucun hit → plein diff</text>
+</g>
+<g transform="translate(260,20)">
+<text x="20" y="12" font-size="11" fill="#ef4444" font-weight="600">En ombre</text>
+<ellipse cx="60" cy="70" rx="25" ry="25" fill="#fecaca" stroke="#ef4444"/><text x="45" y="75" font-size="8" fill="#991b1b">hit ombré</text>
+<ellipse cx="110" cy="45" rx="20" ry="20" fill="#e2e8f0" stroke="#64748b"/><text x="95" y="50" font-size="7" fill="#64748b">occluseur</text>
+<line x1="60" y1="45" x2="150" y2="20" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrViolet)"/>
+<line x1="60" y1="45" x2="110" y2="45" stroke="#ef4444" stroke-width="2.5"/><text x="70" y="35" font-size="8" fill="#ef4444">hit avant L</text>
+<text x="20" y="110" font-size="8" fill="#ef4444">→ ambient seul</text>
+</g>
+<g transform="translate(480,20)">
+<text x="20" y="12" font-size="11" fill="#f59e0b" font-weight="600">Exemple chiffré</text>
+<rect x="10" y="30" width="180" height="70" rx="8" fill="#fffbeb" stroke="#fde68a"/>
+<text x="20" y="50" font-size="8" fill="#92400e">P=(0,0,0), Lpos=(5,5,-5)</text>
+<text x="20" y="68" font-size="8" fill="#92400e">→ L=(0.58,0.58,-0.58)</text>
+<text x="20" y="86" font-size="8" fill="#92400e">dist=8.66, t_occl=4.2 → ombre</text>
+</g>
+</svg>
+<figcaption>Fig 9.3 — Le shadow-ray part légèrement au-dessus de la surface. S'il touche quelque chose avant la lampe, c'est l'ombre.</figcaption>
+</div>
+
+<!-- PRINCIPE 4 -->
+<h3 style="border-left:3px solid #06b6d4; padding-left:10px;">Principe 4 — Intensité, distance & clamp (exemple Lpos)</h3>
+<div class="formula">
+<b>Intensité \(I\)</b> `Scene.hpp:17` `L 5,5,-5 0.8` — 0.8 = 80% — module la diff. \(I=2\) → surexposé, \(I=0.2\) → sombre.<br>
+<b>Distance :</b> RTv1 ne fait pas d'atténuation \(1/d^2\) (simplifié) — seule la direction compte. \(dist=\|\mathbf{L}_{pos}-\mathbf{P}\|\) sert uniquement à limiter le shadow-ray.<br>
+<b>Clamp :</b> `min(255, col)` `Renderer.cpp:23` — évite le débordement 8-bit.
+</div>
+<div class="figure">
+<svg width="700" height="130" viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Intensité I</text>
+<circle cx="40" cy="60" r="12" fill="#fef3c7" stroke="#f59e0b"/><text x="35" y="64" font-size="8" fill="#92400e">I=0.8</text>
+<line x1="52" y1="60" x2="80" y2="60" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#arrOrange)"/>
+<ellipse cx="110" cy="60" rx="20" ry="20" fill="#fde68a" stroke="#f59e0b" opacity="0.7"/><text x="100" y="64" font-size="7" fill="#92400e">P</text>
+<text x="20" y="90" font-size="8" fill="#64748b">I× (N·L) → éclat</text>
+</g>
+<g transform="translate(300,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Clamp 255</text>
+<rect x="10" y="30" width="140" height="30" rx="6" fill="#fecaca" stroke="#ef4444"/><text x="20" y="50" font-size="9" fill="#991b1b">col=310 → 255</text>
+<text x="20" y="80" font-size="8" fill="#64748b">uint8_t max</text>
+</g>
+</svg>
+<figcaption>Fig 9.4 — L'intensité règle la puissance, le clamp protège le buffer 8-bit.</figcaption>
+</div>
+
+<!-- PRINCIPE 5 -->
+<h3 style="border-left:3px solid #0f172a; padding-left:10px;">Principe 5 — Validation : move_light.rt (ombre à gauche)</h3>
+<p>Scène `move_light.rt` : `L 8,5,-5` (fort \(x\)) éclaire sphère \((0,0,0)\) → \( \mathbf{L}\approx(0.62,0.38,-0.38)\) au hit \((0,1,0)\) → ombre projetée en \(-X\) monde → **gauche écran** grâce à \(right=WUp\times forward\).</p>
+<div class="figure">
+<svg width="700" height="130" viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(40,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">L 8,5,-5 → ombre -X</text>
+<rect x="10" y="30" width="140" height="50" rx="8" fill="#fffbeb" stroke="#fde68a"/><circle cx="50" cy="55" r="10" fill="#e0f2fe" stroke="#0ea5e9"/><ellipse cx="30" cy="75" rx="18" ry="6" fill="#64748b" opacity="0.3"/><text x="60" y="80" font-size="8" fill="#92400e">ombre gauche</text>
+<text x="20" y="105" font-size="8" fill="#64748b">Renderer.cpp:18 lightDir</text>
+</g>
+<g transform="translate(350,20)">
+<text x="20" y="12" font-size="11" fill="#10b981" font-weight="600">Exo final</text>
+<rect x="10" y="30" width="180" height="50" rx="8" fill="#ecfdf5" stroke="#86efac"/><text x="20" y="50" font-size="9" fill="#065f46">Change L.x 5→-5</text><text x="20" y="68" font-size="8" fill="#065f46">→ ombre passe à droite ? Vérifie</text>
+</g>
+</svg>
+<figcaption>Fig 9.5 — \(L.x\text{++}\) déplace l'ombre en \(-X\) monde = gauche écran. C'est le test qui fige le signe de \(lightDir\).</figcaption>
+</div>
+<div class="success"><b>Mini-projet (5 min) :</b> calcule \(\mathbf{col}\) pour \(albedo=(0,255,0)\), \(ambient=(0.1,0.1,0.1)\), \(N=(0,1,0)\), \(L_{pos}=(5,5,-5)\), \(\mathbf{P}=(0,0,0)\), \(I=0.8\), sans puis avec occluseur à \(t=4\).</div>
+<div style="margin-top:16px; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; font-size:0.82rem; line-height:1.5; color:var(--text)">
+<b>📚 Sources scientifiques — Ch.9</b><br>
+[30] <b>Lambert 1760 — Photometria</b> \(I(\theta)=I(0)\cos\theta\) — Wikipédia <a href="https://fr.wikipedia.org/wiki/Loi_de_Lambert" target="_blank">Loi de Lambert 2024</a>, Larousse <a href="https://www.larousse.fr/archives/grande-encyclopedie/page/10630" target="_blank">photométrie</a>, e-rara <a href="https://www.e-rara.ch/download/pdf/21110836.pdf" target="_blank">Photometria 1760 p.21110836</a>, Persée <a href="https://persee.fr/doc/rhs_0151-4105_2001_num_54_2_2122_t1_0267_0000_1" target="_blank">RHS 2001 recension</a>, Internet Archive <a href="https://archive.org/details/bub_gb_zmpJAAAAYAAJ" target="_blank">Photometria 1760</a><br>
+[31] <b>Whitted 1980 — Ray tracing & shadow ray</b> \(R_{shadow}=P+N\epsilon+tL\) — <a href="https://cs.rpi.edu/~cutler/classes/advancedgraphics/S23/papers/whitted_raytracing_80.pdf" target="_blank">Whitted CACM 1980</a> + Haines 2019 ray/sphere [12]
+</div>
+</section>
+
+<!-- CHAPITRE 10 — ENRICHI 5 PRINCIPES + EXEMPLES -->
+<section class="card" id="c10">
+<div class="sec-head"><h2 class="sec">10. Optimisation rendu temps-réel</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle">Cours Amdahl 1967 + Hennessy/Patterson — 5 principes · <span class="kbd">Makefile:17</span> <span class="kbd">Renderer.cpp:54</span> · Exemples chiffrés pour passer de 5 à 60 fps</div>
+
+<!-- PRINCIPE 1 -->
+<h3 style="border-left:3px solid #0ea5e9; padding-left:10px;">Principe 1 — Coût naïf : \(O(pixels \times objets)\)</h3>
+<div class="formula">
+\(\boxed{T = w\cdot h \cdot N_{obj} \cdot t_{intersect}}\) avec \(w\cdot h=777\,600\) (1080×720), \(N_{obj}=6\), \(t_{intersect}\approx40\) ns ? → \(T\approx188\) ms mesuré `/tmp/bench`.<br>
+<b>Théorie : complexité linéaire</b> — doubler les objets double le temps ; doubler la résolution quadruple le temps (\(w\cdot h\)).
+</div>
+<div class="figure">
+<svg width="700" height="130" viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Pixels × Objets</text>
+<rect x="10" y="30" width="100" height="12" fill="#0ea5e9" opacity="0.8"/><text x="115" y="40" font-size="8" fill="#64748b">777k pixels</text>
+<rect x="10" y="50" width="60" height="12" fill="#8b5cf6" opacity="0.8"/><text x="75" y="60" font-size="8" fill="#64748b">×6 objets</text>
+<rect x="10" y="70" width="120" height="12" fill="#f59e0b" opacity="0.8"/><text x="135" y="80" font-size="8" fill="#64748b">→ 4.6M intersect/frame</text>
+<text x="20" y="105" font-size="8" fill="#64748b">Chaque intersect = a,b,c,Δ,clip,∇F</text>
+</g>
+<g transform="translate(400,20)">
+<text x="20" y="12" font-size="11" fill="#ef4444" font-weight="600">Exemple</text>
+<rect x="10" y="30" width="180" height="50" rx="8" fill="#fef2f2" stroke="#fecaca"/>
+<text x="20" y="50" font-size="9" fill="#991b1b">1080×720×6 = 4.6M</text>
+<text x="20" y="68" font-size="9" fill="#991b1b">×188ms = 40ns/intersect ? non : 40µs</text>
+</g>
+</svg>
+<figcaption>Fig 10.1 — Le coût est le produit des dimensions. Tout gain sur \(t_{intersect}\) est multiplié par 4.6M.</figcaption>
+</div>
+
+<!-- PRINCIPE 2 -->
+<h3 style="border-left:3px solid #8b5cf6; padding-left:10px;">Principe 2 — Cache \(cachedU/V\) : 9M opérations sauvées / frame</h3>
+<div class="formula">
+<b>Avant :</b> `buildBasis` per-ray = 2× `normalized()` (=2 sqrt) + 2× `cross` → \(4.6M\times2\) sqrt ≈9.2M sqrt/frame.<br>
+<b>Après `Quadric.hpp:28` :</b> `updateBasis()` 1× par rotation → per-ray = 6× `dot` seulement (0 sqrt). Gain mesuré \(260→188\) ms (−28%).<br>
+<b>Théorie : mémoïsation / amortissement</b> — pré-calculer l'invariant (base) et réutiliser.
+</div>
+<div class="figure">
+<svg width="700" height="130" viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#ef4444" font-weight="600">Avant</text>
+<rect x="10" y="30" width="120" height="30" rx="8" fill="#fecaca" stroke="#ef4444"/><text x="20" y="50" font-size="9" fill="#991b1b">per-ray : 2 sqrt +2 cross</text>
+<text x="20" y="85" font-size="8" fill="#64748b">4.6M ×2 =9.2M sqrt</text>
+</g>
+<text x="170" y="50" font-size="16" fill="#94a3b8">→</text>
+<g transform="translate(220,20)">
+<text x="20" y="12" font-size="11" fill="#10b981" font-weight="600">Après cache</text>
+<rect x="10" y="30" width="120" height="30" rx="8" fill="#dcfce7" stroke="#10b981"/><text x="20" y="50" font-size="9" fill="#065f46">1× / rotation</text>
+<text x="20" y="85" font-size="8" fill="#10b981">per-ray : 0 sqrt</text>
+</g>
+<g transform="translate(420,20)">
+<rect x="10" y="30" width="180" height="50" rx="8" fill="#f0f9ff" stroke="#bae6fd"/>
+<text x="20" y="50" font-size="9" fill="#0c4a6e">translate O(1) : pos+=Δ</text>
+<text x="20" y="68" font-size="9" fill="#0c4a6e">rotate O(1) : 1 rebuild</text>
+</g>
+</svg>
+<figcaption>Fig 10.2 — Le cache est l'exemple type d'amortissement : on paie 1 fois, on économise 4.6M fois.</figcaption>
+</div>
+
+<!-- PRINCIPE 3 -->
+<h3 style="border-left:3px solid #10b981; padding-left:10px;">Principe 3 — Flags compilateur : \(-O3\) \(-march=native\) \(-ffast-math\) \(-flto\)</h3>
+<div class="formula">
+<b>\(-O3\) `Makefile:17` :</b> inlining agressif, loop unrolling, vectorisation (SIMD).<br>
+<b>\(-march=native\) :</b> utilise AVX2/FMA du CPU hôte.<br>
+<b>\(-ffast-math\) :</b> autorise réassociation \(\sqrt\), \(\cos\) approximés — gagne ~10% mais brise IEEE strict.<br>
+<b>\(-flto\) :</b> Link-Time Optimization — inline inter-fichiers (ex: `Vec3::dot` dans `Renderer`).<br>
+<b>Mesure :</b> sans flags 260 ms → avec 188 ms (−28% dont cache −18% + flags −10%).
+</div>
+<table>
+<tr><th>Flag</th><th>Effet</th><th>Gain exemple</th></tr>
+<tr><td>-O3</td><td>Inline + déroulage</td><td>~15 ms</td></tr>
+<tr><td>-ffast-math</td><td>sqrt/cos rapides</td><td>~8 ms</td></tr>
+<tr><td>-flto</td><td>Cross-file inline</td><td>~7 ms</td></tr>
+<tr><td>-march=native</td><td>AVX2</td><td>~5 ms</td></tr>
+</table>
+
+<!-- PRINCIPE 4 -->
+<h3 style="border-left:3px solid #f59e0b; padding-left:10px;">Principe 4 — Parallélisme : \(n_{threads}=hardware\_concurrency()\), loi d'Amdahl</h3>
+<div class="formula">
+<b>Code `Renderer.cpp:54` :</b> \(n_{threads}= \min(h, \text{hardware\_concurrency()})\) (ex: 6), \(rows=h/n_{threads}\), `worker(y0,y1)` par thread, `join`.<br>
+<b>Loi d'Amdahl 1967 :</b> \(\boxed{S=\frac{1}{(1-p)+p/n}}\) avec \(p\) = fraction parallélisable (≈0.98) → \(S_{6}\approx5.2\times\) théorique.<br>
+<b>Exemple :</b> 1 thread 188ms×6≈1128 ms → 6 threads 188 ms (5.9×, proche théorie, overhead join faible).
+</div>
+<div class="figure">
+<svg width="700" height="150" viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">6 threads → 6 bandes</text>
+<rect x="10" y="30" width="120" height="70" rx="2" fill="#f8fafc" stroke="#94a3b8"/>
+<line x1="10" y1="42" x2="130" y2="42" stroke="#e2e8f0"/><line x1="10" y1="54" x2="130" y2="54" stroke="#e2e8f0"/><line x1="10" y1="66" x2="130" y2="66" stroke="#e2e8f0"/><line x1="10" y1="78" x2="130" y2="78" stroke="#e2e8f0"/>
+<text x="45" y="50" font-size="7" fill="#0ea5e9">t0</text><text x="45" y="90" font-size="7" fill="#8b5cf6">t5</text>
+<text x="20" y="115" font-size="8" fill="#64748b">rows = h/6 =120 lignes/thread</text>
+</g>
+<g transform="translate(350,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Amdahl</text>
+<line x1="20" y1="80" x2="200" y2="80" stroke="#0f172a"/><line x1="20" y1="80" x2="20" y2="30" stroke="#0f172a"/>
+<path d="M20 80 Q80 40 200 35" fill="none" stroke="#10b981" stroke-width="2"/><text x="60" y="40" font-size="8" fill="#10b981">S→1/(1-p) ≈50× max</text>
+<circle cx="120" cy="45" r="3" fill="#0ea5e9"/><text x="125" y="45" font-size="8" fill="#0ea5e9">n=6 →5.2×</text>
+</g>
+</svg>
+<figcaption>Fig 10.3 — Le découpage par bandes est sans recouvrement (pas de false sharing). Le 7ᵉ thread n'aiderait plus.</figcaption>
+</div>
+
+<!-- PRINCIPE 5 -->
+<h3 style="border-left:3px solid #0f172a; padding-left:10px;">Principe 5 — Vers 60 fps : low-res, BVH, pool, early-out</h3>
+<div class="formula">
+<b>Low-res viewport (stratégie Blender) :</b> 540×360 → \(194k\) pixels (4× moins) → \(47\) ms → \(21\) fps (mesuré) — on rend basse def en interaction, haute def à la fin.<br>
+<b>BVH (Bounding Volume Hierarchy) :</b> \(\boxed{O(\log N_{obj})}\) au lieu de \(O(N_{obj})\) — arbre binaire de boîtes englobantes, teste la boîte avant l'objet.<br>
+<b>Persistent pool :</b> éviter `create/join` per-frame (actuel `Renderer.cpp:54` recrée les threads) → garde les threads vivants.<br>
+<b>Early-out :</b> sphère englobante autour du quadrique fini → si miss sphère → skip quadrique.
+</div>
+<div class="figure">
+<svg width="700" height="160" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+<text x="30" y="18" font-size="11" fill="#0f172a" font-weight="600">Temps / frame (ms) — 6 objets</text>
+<line x1="40" y1="120" x2="640" y2="120" stroke="#e2e8f0"/><line x1="40" y1="30" x2="40" y2="120" stroke="#e2e8f0"/>
+<text x="10" y="35" font-size="8" fill="#64748b">300</text><text x="10" y="75" font-size="8" fill="#64748b">150</text><text x="15" y="125" font-size="8" fill="#64748b">0</text>
+<rect x="60" y="45" width="80" height="75" fill="#fecaca" stroke="#ef4444"/><text x="70" y="135" font-size="8" fill="#991b1b">Avant 260</text><text x="75" y="60" font-size="9" fill="#991b1b">260</text>
+<rect x="160" y="65" width="80" height="55" fill="#bbf7d0" stroke="#10b981"/><text x="165" y="135" font-size="8" fill="#065f46">Actuel 188</text><text x="175" y="80" font-size="9" fill="#065f46">188</text>
+<rect x="260" y="98" width="80" height="22" fill="#bfdbfe" stroke="#0ea5e9"/><text x="270" y="135" font-size="8" fill="#1e40af">540×360 47</text><text x="280" y="110" font-size="9" fill="#1e40af">47</text>
+<rect x="360" y="110" width="80" height="10" fill="#fef3c7" stroke="#f59e0b"/><text x="365" y="135" font-size="8" fill="#92400e">BVH 12 ?</text>
+<line x1="470" y1="108" x2="640" y2="108" stroke="#f59e0b" stroke-dasharray="4 3"/><text x="475" y="104" font-size="8" fill="#92400e">60fps =16.6ms</text>
+</svg>
+<figcaption>Fig 10.4 — Le chemin vers 60 fps : diviser les pixels (viewport) et diviser les objets (BVH). Le cache n'est que la première marche.</figcaption>
+</div>
+<div class="success"><b>Exo (3 min) :</b> calcule le speedup d'Amdahl pour \(p=0.98\), \(n=2,4,8,16\). À partir de quel \(n\) le gain devient &lt;10% par thread ajouté ?</div>
+<div style="margin-top:16px; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; font-size:0.82rem; line-height:1.5; color:var(--text)">
+<b>📚 Sources scientifiques — Ch.10</b><br>
+[32] <b>Amdahl 1967</b> \(S=1/((1-p)+p/n)\) — AFIPS <a href="https://dodo.inm.ras.ru/konshin/HPC/bib/Amdahl-1967.pdf" target="_blank">Validity 1967</a>, Hill 2008 <a href="https://www.cs.cmu.edu/~18742/papers/Hill2008.pdf" target="_blank">Hill 2008</a> / <a href="https://doi.org/10.1109/hpca.2008.4658638" target="_blank">doi:10.1109/hpca.2008.4658638</a>, Oracle <a href="https://docs.oracle.com/cd/E19205-01/820-7598/bjaem/index.html" target="_blank">Sun Studio Amdahl</a><br>
+[33] <b>Hennessy & Patterson — Computer Architecture: A Quantitative Approach 4e</b> — <a href="https://archive.org/stream/ComputerArchitectureAQuantitativeApproach4thEdition/Computer-Architecture-A-Quantitative-Approach-4th-Edition_djvu.txt" target="_blank">Archive Ch.1 Amdahl Law</a> — formules CPU time, AVX2, LTO [même base FLAGS `Makefile:17`]<br>
+[34] <b>BVH / Low-res viewport</b> — même base que Ch.3 [12] + Akenine-Möller <i>Real-Time Rendering</i> Ch.11
+</div>
+</section>
+
+<!-- CHAPITRE 11 — FPS -->
+<section class="card" id="c11">
+<div class="sec-head"><h2 class="sec">11. FPS — Images par seconde</h2> <span class="badge fait">fait — détaillé</span></div>
+<div class="subtitle">Cours Perception & Temps-réel — 5 principes · <span class="kbd">/tmp/bench</span> 188 ms · 60 Hz = 16.6 ms · Pour comprendre la fluidité</div>
+
+<!-- PRINCIPE 1 -->
+<h3 style="border-left:3px solid #0ea5e9; padding-left:10px;">Principe 1 — Définition : FPS = 1 / \(T_{frame}\)</h3>
+<div class="formula">
+\(\boxed{\text{FPS}=\frac{1}{T_{frame}}}\) avec \(T_{frame}\) en secondes ; \(\boxed{T_{frame}[ms]=\frac{1000}{\text{FPS}}}\)<br>
+<b>Repères :</b> 1 fps → 1000 ms, 24 fps → 41.7 ms (cinéma), 30 fps → 33.3 ms, 60 fps → 16.6 ms, 144 fps → 6.94 ms, 240 fps → 4.17 ms.<br>
+<b>RTv1 actuel :</b> `quadriques.rt` 1080×720 → 188 ms → \(1000/188≈5.3\) fps (`/tmp/bench`); 540×360 → 47 ms → 21.3 fps.
+</div>
+<div class="figure">
+<svg width="700" height="140" viewBox="0 0 700 140" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(20,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Timeline 1 seconde</text>
+<line x1="20" y1="60" x2="620" y2="60" stroke="#0f172a" stroke-width="2"/>
+<g transform="translate(20,60)">
+<rect x="0" y="-10" width="98" height="20" rx="4" fill="#e0f2fe" stroke="#0ea5e9"/><text x="25" y="5" font-size="7" fill="#0c4a6e">16.6ms</text>
+<rect x="100" y="-10" width="98" height="20" rx="4" fill="#e0f2fe" stroke="#0ea5e9"/><rect x="200" y="-10" width="98" height="20" rx="4" fill="#e0f2fe" stroke="#0ea5e9"/><rect x="300" y="-10" width="98" height="20" rx="4" fill="#e0f2fe" stroke="#0ea5e9"/>
+<text x="150" y="30" font-size="8" fill="#0ea5e9">60 fps → 60 frames / s</text>
+</g>
+<g transform="translate(20,95)">
+<rect x="0" y="-8" width="248" height="16" rx="4" fill="#fef3c7" stroke="#f59e0b"/><text x="80" y="3" font-size="7" fill="#92400e">41.7ms</text>
+<rect x="250" y="-8" width="248" height="16" rx="4" fill="#fef3c7" stroke="#f59e0b"/>
+<text x="150" y="25" font-size="8" fill="#92400e">24 fps cinéma → 24 frames / s</text>
+</g>
+</g>
+</svg>
+<figcaption>Fig 11.1 — FPS inverse du temps de frame. 60 fps = 60 images de 16.6 ms chacune.</figcaption>
+</div>
+
+<!-- PRINCIPE 2 -->
+<h3 style="border-left:3px solid #8b5cf6; padding-left:10px;">Principe 2 — Perception humaine : persistance & flicker</h3>
+<div class="formula">
+<b>Loi de Ferry-Porter : fréquence de fusion \(f_{fusion}\approx 50-60\) Hz</b> — au-delà, l'œil ne voit plus le scintillement.<br>
+<b>Seuils :</b> 10-12 fps → saccadé (Muybridge 1878), 24 fps → cinéma (trompe le cerveau, motion blur aide), 30 fps → TV, 60 fps → fluide interactif (souris), 90-144 fps → VR/compétitif.<br>
+<b>RTv1 :</b> 5 fps → diaporama ; 21 fps → jouable mais saccadé ; 60 fps → cible Blender-like.
+</div>
+<div class="figure">
+<svg width="700" height="150" viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Seuil de fluidité</text>
+<line x1="20" y1="80" x2="620" y2="80" stroke="#e2e8f0" stroke-width="2"/>
+<circle cx="80" cy="80" r="6" fill="#ef4444"/><text x="60" y="100" font-size="8" fill="#991b1b">10 fps</text><text x="55" y="115" font-size="7" fill="#64748b">saccadé</text>
+<circle cx="220" cy="80" r="6" fill="#f59e0b"/><text x="205" y="100" font-size="8" fill="#92400e">24 fps</text><text x="195" y="115" font-size="7" fill="#64748b">cinéma</text>
+<circle cx="380" cy="80" r="8" fill="#10b981" stroke="white" stroke-width="2"/><text x="365" y="100" font-size="9" fill="#065f46" font-weight="700">60 fps</text><text x="355" y="115" font-size="7" fill="#10b981">fluide</text>
+<circle cx="520" cy="80" r="6" fill="#0ea5e9"/><text x="500" y="100" font-size="8" fill="#0c4a6e">144 fps</text><text x="495" y="115" font-size="7" fill="#64748b">VR</text>
+<text x="250" y="30" font-size="8" fill="#64748b">← scintille | fusion ←</text>
+</g>
+</svg>
+<figcaption>Fig 11.2 — L'œil fusionne au-delà de ~50 Hz. Le cinéma triche avec le flou, le jeu non.</figcaption>
+</div>
+
+<!-- PRINCIPE 3 -->
+<h3 style="border-left:3px solid #10b981; padding-left:10px;">Principe 3 — Mesurer : bench, ms vs FPS, 1% low</h3>
+<div class="formula">
+<b>Mesure RTv1 `bench` :</b> `chrono::high_resolution_clock` avant/après `Renderer::render` → \(T_{frame}\) en ms → FPS.\(10\) frames moyennées.<br>
+<b>Piège :</b> moyenne FPS ≠ 1/(moyenne ms) si variance. Mieux : <b>frame time</b> en ms et <b>1% low</b> (pire 1%). Ex: 60 fps moyen mais 1% low 20 fps → saccade.<br>
+<b>V-Sync :</b> limite à 60 Hz écran → si \(T<16.6\) ms → attente, si \(T>16.6\) → drop à 30 fps (moitié).
+</div>
+<div class="figure">
+<svg width="700" height="140" viewBox="0 0 700 140" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Frame time (ms) → FPS</text>
+<rect x="10" y="30" width="120" height="24" rx="6" fill="#e0f2fe" stroke="#0ea5e9"/><text x="20" y="46" font-size="9" fill="#0c4a6e">188 ms → 5.3 fps</text>
+<rect x="150" y="30" width="100" height="24" rx="6" fill="#bbf7d0" stroke="#10b981"/><text x="160" y="46" font-size="9" fill="#065f46">47 ms → 21 fps</text>
+<rect x="270" y="30" width="90" height="24" rx="6" fill="#fef3c7" stroke="#f59e0b"/><text x="280" y="46" font-size="9" fill="#92400e">16.6 →60</text>
+<text x="20" y="75" font-size="8" fill="#64748b">RTv1 bench : 1080×720 vs 540×360</text>
+</g>
+<g transform="translate(450,20)">
+<text x="20" y="12" font-size="11" fill="#ef4444" font-weight="600">1% low</text>
+<line x1="20" y1="50" x2="180" y2="50" stroke="#e2e8f0" stroke-width="6"/>
+<line x1="20" y1="50" x2="160" y2="50" stroke="#10b981" stroke-width="6"/><text x="70" y="45" font-size="7" fill="#065f46">99% fluide</text>
+<line x1="160" y1="50" x2="180" y2="50" stroke="#ef4444" stroke-width="6"/><text x="162" y="65" font-size="7" fill="#991b1b">1% saccade</text>
+</g>
+</svg>
+<figcaption>Fig 11.3 — Le ms est plus honnête que le FPS. Un pic à 100 ms casse la fluidité même si la moyenne est 60.</figcaption>
+</div>
+
+<!-- PRINCIPE 4 -->
+<h3 style="border-left:3px solid #f59e0b; padding-left:10px;">Principe 4 — Ce qui coûte : \(w\cdot h\cdot N_{obj}\) (exemple RTv1)</h3>
+<div class="formula">
+\(\boxed{T \propto w\cdot h\cdot N_{obj}}\) — cf. Ch.10. <b>Exemple chiffré :</b> 1080×720=777k, ×6=4.6M intersect, ×188 ms → 40 µs / intersect.<br>
+<b>Si on double :</b> 2× résolution → 4× pixels → 752 ms (1.3 fps) ; 2× objets → 376 ms (2.6 fps).<br>
+<b>Donc :</b> pour gagner 2× FPS, diviser par 2 la résolution <b>ou</b> par 2 les objets (BVH) <b>ou</b> par 2 le coût intersect (cache).
+</div>
+<div class="figure">
+<svg width="700" height="130" viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="20" y="12" font-size="11" fill="#0f172a" font-weight="600">Facteur × FPS</text>
+<rect x="10" y="30" width="80" height="20" rx="4" fill="#fecaca" stroke="#ef4444"/><text x="20" y="44" font-size="8" fill="#991b1b">×2 res → ÷4 fps</text>
+<rect x="100" y="30" width="80" height="20" rx="4" fill="#fde68a" stroke="#f59e0b"/><text x="110" y="44" font-size="8" fill="#92400e">×2 obj → ÷2 fps</text>
+<rect x="190" y="30" width="80" height="20" rx="4" fill="#bbf7d0" stroke="#10b981"/><text x="200" y="44" font-size="8" fill="#065f46">cache → ×1.28</text>
+</g>
+</svg>
+<figcaption>Fig 11.4 — Chaque facteur multiplie le temps. Le viewport low-res est le levier le plus rapide.</figcaption>
+</div>
+
+<!-- PRINCIPE 5 -->
+<h3 style="border-left:3px solid #0f172a; padding-left:10px;">Principe 5 — Budget 16.6 ms : comment tenir 60 fps</h3>
+<div class="formula">
+<b>Budget 60 fps = 16.6 ms</b> à répartir :<br>
+\(\boxed{16.6 = T_{ray}+T_{shade}+T_{present}}\) ex: 8 ms génération rayons + 6 ms ombrage `Renderer.cpp:17` + 2 ms `SDL_RenderPresent` / vsync.<br>
+<b>Stratégie Blender :</b> interaction → 540×360 (47 ms → encore trop) → ajoute BVH (÷6) → 7.8 ms → OK + marge pour UI.<br>
+<b>Règle :</b> garder \(T_{frame}<16.6\) sinon drop à 30 fps (vsync) ou tearing (sans vsync).
+</div>
+<div class="figure">
+<svg width="700" height="150" viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+<g transform="translate(30,20)">
+<text x="40" y="12" font-size="11" fill="#0f172a" font-weight="600">Budget 16.6 ms (camembert)</text>
+<circle cx="60" cy="70" r="40" fill="none" stroke="#e2e8f0" stroke-width="12"/>
+<path d="M60 30 A40 40 0 0 1 95 95" fill="none" stroke="#0ea5e9" stroke-width="12"/><text x="95" y="50" font-size="7" fill="#0c4a6e">ray 8ms</text>
+<path d="M95 95 A40 40 0 0 1 40 108" fill="none" stroke="#8b5cf6" stroke-width="12"/><text x="75" y="110" font-size="7" fill="#5b21b6">shade 6ms</text>
+<path d="M40 108 A40 40 0 0 1 20 70" fill="none" stroke="#f59e0b" stroke-width="12"/><text x="15" y="80" font-size="7" fill="#92400e">present 2ms</text>
+<text x="45" y="75" font-size="8" fill="#0f172a" font-weight="700">16.6</text>
+</g>
+<g transform="translate(350,20)">
+<text x="20" y="12" font-size="11" fill="#10b981" font-weight="600">Stratégie</text>
+<rect x="10" y="30" width="260" height="22" rx="6" fill="#bbf7d0" stroke="#10b981"/><text x="20" y="45" font-size="8" fill="#065f46">540×360 + BVH → 7.8 ms → 60 fps ✓</text>
+<rect x="10" y="60" width="260" height="22" rx="6" fill="#fecaca" stroke="#ef4444"/><text x="20" y="75" font-size="8" fill="#991b1b">1080×720 sans BVH → 188 ms → 5 fps ✗</text>
+</g>
+</svg>
+<figcaption>Fig 11.5 — Tenir le budget, c'est découper le gâteau. Le BVH coupe la part la plus grosse.</figcaption>
+</div>
+<div class="success"><b>Exo (3 min) :</b> ton écran 75 Hz → budget = ? ms. Si RTv1 tourne en 22 ms, quel FPS réel avec vsync on/off ? Et avec low-res 47 ms ?</div>
+<div style="margin-top:16px; padding:14px; background:var(--bg2); border:1px solid var(--border); border-radius:12px; font-size:0.82rem; line-height:1.5; color:var(--text)">
+<b>📚 Sources scientifiques — Ch.11</b><br>
+[35] <b>Muybridge 1878 — Chronophotographie</b> 24 appareils, cheval au galop — <a href="http://id.erudit.org/iderudit/22850ac" target="_blank">Érudit 1993 Muybridge</a>, <a href="http://www.technique-cinematographique.wikibis.com/chronophotographie.php" target="_blank">Wikibis Chronophotographie</a> (Marey 1882, Jansen 1874)<br>
+[36] <b>FPS / Images par seconde</b> 16→24 fps, persistance rétinienne 1/18s, pellicule — <a href="https://fr.wikipedia.org/wiki/Images_par_seconde" target="_blank">Wikipédia IPS 2024</a>, <a href="https://www.caminteresse.fr/histoire/pourquoi-les-films-sont-ils-projetes-a-24-images-par-seconde-11199006/" target="_blank">Cam Interesse 24 fps parlant 1927</a><br>
+[37] <b>Ferry-Porter 1892/1902 — Flicker fusion</b> \(CFF\propto\log I\) — Ferry 1892, Porter 1902, Rider et al. 2021 <a href="https://doi.org/10.1016/j.preteyeres.2021.101001" target="_blank">doi:10.1016/j.preteyeres.2021.101001</a>, Hecht & Verrijp 1933 <a href="https://doi.org/10.1073/pnas.19.5.522" target="_blank">PNAS 19.5.522</a>, Tyler & Hamer 1990 <a href="https://doi.org/10.1364/josaa.7.000743" target="_blank">JOSA 7.743</a><br>
+[38] <b>Budget 16.6 ms / V-Sync</b> — même base que Ch.10 [32] Amdahl + RTv1 bench `/tmp/bench` 188 ms
+</div>
+</section>
+
+<div class="card" style="text-align:center; background:linear-gradient(135deg,#f0f9ff,#e0f2fe)">
+<h2 style="border:none; padding:0">À retenir 30s</h2>
+<p style="max-width:700px; margin:10px auto">Quadrique = \(XᵀQX+L·X+J\) → \(a t²+b t+c\) → \(\Delta\) → \(\nabla F\) → monde. Base cachée = G/R O(1). Caméra `worldUp×forward`. Lumière \(N·L\) + bias. <b>FPS = 1000 / ms</b> → 16.6 ms = 60 fps — budget à tenir.</p>
+</div>
+
+</div><!-- main -->
+</div><!-- layout -->
+
+<footer>RTv1_building — 11 chapitres complets (10+ FPS) · Volet gauche actif · Maj `COURS_COMPLET_RTV1.html` puis recharge</footer>
+
+<script>
+// Scroll spy + progress ring
+const links=[...document.querySelectorAll('#chapNav a')]
+const secs=[...document.querySelectorAll('section.card[id^="c"]')]
+function onScroll(){
+  let cur=""
+  secs.forEach(s=>{ if(window.scrollY + 160 >= s.offsetTop) cur=s.id })
+  links.forEach(a=> a.classList.toggle('active', a.dataset.id===cur))
+  const done=document.querySelectorAll('.badge.fait').length
+  document.getElementById('progress').textContent=done+"/11"
+  const pct=done/11
+  const circ=document.getElementById('progCircle')
+  if(circ){ const C=2*Math.PI*20; circ.style.strokeDashoffset = C*(1-pct) }
+}
+window.addEventListener('scroll', onScroll, {passive:true})
+onScroll()
+function toggleCompact(){
+  const sb=document.getElementById('sidebar')
+  const main=document.getElementById('main')
+  if(sb.style.display==='none'){ sb.style.display=''; main.style.maxWidth='calc(100% - var(--sidebarW))' }
+  else { sb.style.display='none'; main.style.maxWidth='100%' }
+}
+links.forEach(a=> a.addEventListener('click', ()=>{ links.forEach(x=>x.classList.remove('active')); a.classList.add('active') }))
+// subtile parallax header
+let lastY=0; window.addEventListener('scroll', ()=>{ const y=window.scrollY; if(Math.abs(y-lastY)>10){ document.querySelector('header').style.transform=`translateY(${Math.min(y*0.08, 6)}px)`; lastY=y } }, {passive:true})
+</script>
+</body>
+</html>

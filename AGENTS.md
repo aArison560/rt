@@ -1,109 +1,62 @@
-# RT — Ray Tracer (C++23)
+# AGENTS.md — RTv1 → Blender-like Roadmap
 
-## Build & Commands
+> Objectif: app quasi-Blender (raytracing CPU). Ne pas se perdre: 1 étape = 1 branche, 1 primitive/texture/lumière à la fois, tests `valgrind` + rendu ref.
 
-| Command | Action |
-|---------|--------|
-| `make` | Build `./rt` with `-Wall -Wextra -Werror -O2` |
-| `make test` | Build `./rt_test` (test binary, **no** strict warning flags) |
-| `make clean` / `make fclean` | Remove objects / all artifacts |
-| `make re` / `make retest` | Clean rebuild (main / test) |
-| `./rt scenes/foo.rt [w] [h]` | Run with scene file |
-| `valgrind --leak-check=full ./rt scenes/simple_spheres.rt 100 100` | Memory check |
+## 0. Socle actuel [FAIT]
+- `Scene`, `Sphere`, `Plane`, `Renderer` multi-thread, `SceneParser .rt`, SDL2 2.30.8
+- Leaks: `still reachable 271k` = SDL/X11 normal, `definitely lost` = `SDL_DBus_Init` (suppression valgrind)
 
-**Dependencies**: `libsdl2-dev`, `libpng-dev`, `libjpeg-dev`.
+## 1. Phase 1 — Quadriques (2 sem)
+- [ ] `src/core/Quadric.cpp` générique: `intersect(Ray,Hit)` résout `a*t²+b*t+c=0`, normale = `grad(F)`
+- [ ] `Cone`, `Cylinder` héritent Quadric (cas limites tronqués `hMin/hMax`)
+- [ ] `Hyperboloid` (1 nappe: `x²/a²+y²/b²-z²/c²=1`, 2 nappes: `...=-1`), `Paraboloid` (`z=x²/a²+y²/b²`)
+- [ ] Parser: `cone`, `cyl`, `hyp`, `parab` + tests `scenes/quadriques.rt`
+- Validation: `make leak_test` + image ref
 
-## Project State — Fully implemented
+## 2. Phase 2 — UV & Textures (2 sem)
+- [ ] `include/core/Material.hpp`: `albedo`, `type` (diffuse/metal/dielectric)
+- [ ] `UV` par primitive: sphere (sphérique), plane (planaire), cylindre/cone (cylindrique)
+- [ ] `Wave` procédural: `sinus`, `Gabor`, `Gerner` (param `freq`, `amp`, `phase` animable)
+- [ ] `Bump/Disruption`: `normal += bumpScale * grad(noise)` (Perlin `stb_perlin.h`)
+- [ ] `Image collage`: `stb_image.h` -> `sampler2D(u,v)` + `repeat/clamp`
+- Parser: `mat` + `tex wave|bump|image <path>`
 
-All modules are **fully implemented**. No stubs remain.
+## 3. Phase 3 — Lumière Physique (3 sem)
+- [ ] `Reflection` récursive (maxDepth 5): `R = I -2(I·N)N`
+- [ ] `Refraction` Snell + Fresnel Schlick: `eta`, `k =1-eta²(1-cos²)`, total internal reflection
+- [ ] `Translucide/SSS` simplifié: `Beer-Lambert` + diffusion
+- [ ] Ombres douces + `Light` queue (multi-lights)
+- Fichiers: `src/core/Material.cpp`, `Renderer::trace(Ray,depth)`
 
-### What was implemented
+## 4. Phase 4 — CSG Combinaison (2 sem)
+- [ ] `CSGObject : Object` avec `op=UNION|INTER|DIFF` + `left/right: unique_ptr<Object>`
+- [ ] Interval merging: collecter `t[]` des 2 enfants, trier, tester `inside` (ray marching intervals)
+- [ ] Parser: `csg union { sphere ... } { cone ... }`
+- Tests: trou, lunette, etc.
 
-| Module | Status |
-|--------|--------|
-| **Core** — Vec3, Ray, Matrix4x4, HitRecord, Material | Arithmetic, reflect/refract, transforms, data plumbing |
-| **Geometry** — Sphere, Plane, Cylinder, Cone | Full intersection, normals, UV, bounding boxes |
-| **Lighting** — AmbientLight, PointLight, DirectionalLight | Phong-ready with attenuation |
-| **Scene** — Camera, Scene, SceneParser, Transform | Ray generation, `.rt` file parsing (all directives), camera movement |
-| **Renderer** — Renderer, ImageBuffer | Full ray tracing with shadows, reflections, refractions, PNG export |
-| **Platform** — Window, EventHandler (SDL2) | Display with WASD camera controls, resize, ESC quit |
+## 5. Phase 5 — Slice / Clipping (1 sem)
+- [ ] `Slice` = `CSG DIFF` avec `Plane` infini OU `ClipPlane` dans `Object::intersect` (`dot(P - p0, N)>0` => discard)
+- [ ] UI: `pl clip 0,1,0 5` par objet
+- Bonus: `cap` (fermer coupe avec disque)
 
-### `.rt` Scene Format — All Directives
+## 5.5 Phase Mouvements — Blender-like Statique (0.5 sem) [A FAIRE AVANT INTERACTIF]
+> Reste statique (édition `.rt` + relance) mais fige les conventions Blender pour éviter régressions miroir.
 
-| Directive | Example | Description |
-|-----------|---------|-------------|
-| `bg r g b` | `bg 0.3 0.3 0.35` | Background color |
-| `A r g b` | `A 0.4 0.4 0.4` | Ambient light (or `A intensity` for white) |
-| `L px py pz r g b intensity` | `L 8.0 8.0 8.0 1.0 1.0 0.9 1.0` | Point light |
-| `directional dx dy dz r g b intensity` | `directional 1.0 1.0 0.5 1.0 1.0 0.8 0.95` | Directional light |
-| `c px py pz lx ly lz ux uy uz fov` | `c 0.0 2.5 10.0 0.0 1.0 -1.2 0.0 1.0 0.0 45.0` | Camera (10 values) |
-| `c px py pz lx ly lz fov` | `c 0.0 3.0 12.0 0.0 0.5 -2.0 40.0` | Camera (7 values, up=(0,1,0)) |
-| `sp cx cy cz radius` | `sp 0.0 0.5 0.0 1.0` | Sphere |
-| `pl px py pz nx ny nz` | `pl 0.0 -2.0 0.0 0.0 1.0 0.0` | Plane |
-| `cy cx cy cz ax ay az radius height` | `cy 0.0 -1.5 -4.0 0.0 1.0 0.0 0.5 1.5` | Cylinder |
-| `co ax ay az dx dy dz halfAngle height` | `co 2.5 -1.8 -6.0 0.0 1.0 0.0 25.0 1.8` | Cone |
-| `material r g b amb diff spec shininess reflect` | `material 0.9 0.2 0.1 0.8 0.6 0.1 32.0 0.1` | Postfix material |
+- [ ] Repère: `Y up` RTv1 ↔ `Z up` Blender : doc `RTv1 (X,Y,Z) ↔ Blender (X,Z,-Y)`, `worldUp{0,1,0}` `src/core/Renderer.cpp:48`
+- [ ] Caméra: `right = worldUp×forward` `Renderer.cpp:52` (fix miroir), `up = forward×right`, `forward=dir.normalized()` `Scene.hpp:9` — `cam.x++` ⇒ objet écran gauche (pan Blender `Shift+MMB`)
+- [ ] Lumière: `lightDir = (Lpos - hit).normalized()` `Renderer.cpp:18`, ombre `Ray{hit+ N*1e-4, lightDir}` — `L.x++` ⇒ ombre monde `-X` donc écran gauche
+- [ ] Objet: `sp/cyl/cone pos` translation pure `G X/Y/Z` Blender, `dir` normalisée, `SceneParser` doit appliquer `pos += delta`
+- [ ] Tests statiques: `scenes/move_camera.rt` (`C 1,0,-5` vs `C 0,0,-5` → sphère gauche), `scenes/move_light.rt` (`L 8,5,-5` → ombre gauche), `scenes/move_object.rt` (`sp 1,0,0` → droite écran)
+- [ ] Validation: pas d'interactif SDL (`sdl_events.cpp:1` reste vide), `make && ./bin/rtv1 scenes/move_*.rt` + image ref
 
-**Parser quirk**: `material` is **postfix** — applies to the most recently declared object.
+## 6. Workflow Agent
+- Stack: C++17, SDL2 local, `std::thread`, pas Qt/GTK tant que rendu OK
+- Chaque étape: `src/core/*` + `include/core/*` + `scenes/test_etape.rt` + `Renderer` inchangé
+- Commandes: `make`, `make leak_test`, `./bin/rtv1 scenes/*.rt` (10s auto-quit)
+- Git: 1 feature = 1 commit, pas de `new` nu (utiliser `unique_ptr`), `Scene::clear()` obligatoire
+- Valgrind: filtrer SDL via `valgrind --suppressions=./tools/sdl.supp --errors-for-leak-kinds=definite`
 
-### Runtime Controls
+## 7. Ordre d'implémentation strict
+`Cylinder` -> `Cone` -> `Paraboloid` -> `Hyperboloid` -> `Mouvements Statique (5.5)` -> `UV` -> `Image` -> `Wave/Bump` -> `Reflexion` -> `Refraction` -> `CSG` -> `Slice`
 
-| Input | Action |
-|-------|--------|
-| **W/A/S/D** | Move camera forward/left/back/right |
-| **Q/E** | Move camera down/up |
-| **↑/↓/←/→** | Rotate camera pitch/yaw |
-| **ESC** | Quit |
-| **S** | Save screenshot (`screenshot_N.png`) |
-| **R** | Force re-render |
-
-### Reflections & Refractions
-
-- Reflection: `ray.getDirection().reflect(normal)` via Vec3::reflect, weighted by `material.getReflectivity()`
-- Refraction: `ray.getDirection().refract(normal, n1/n2, ...)` via Vec3::refract (Snell's law), weighted by `material.getTransparency()`
-- Recursion depth capped at `maxRecursionDepth` (default 4)
-- Total internal reflection: discriminant check in Vec3::refract
-
-### Rendering Pipeline
-
-`main` loop: poll SDL events → detect camera movement → `Renderer::render()` → `trace()` per pixel → `castRay()` finds closest hit → `calculateLighting()` (Phong) + optional reflection/refraction → `window.updateDisplay()`
-
-## Architecture
-
-- **Entrypoint**: `src/app/main.cpp` → includes `"scene/Scene.hpp"` etc.
-- **Module layout** (include/ and src/ mirror this structure):
-  - `core/` — Vec3, Ray, Matrix4x4, HitRecord, Material
-  - `geometry/` — AObject base + Sphere, Plane, Cylinder, Cone
-  - `lighting/` — ALight base + PointLight, DirectionalLight, AmbientLight
-  - `scene/` — Camera, Scene, SceneParser, Transform
-  - `rendering/` — Renderer, ImageBuffer, Texture
-  - `platform/` — Window, EventHandler (SDL2)
-- **Include style**: `#include "module/File.hpp"` (path relative to `include/`)
-- **All includes use `#pragma once`**.
-- **Smart pointers throughout** (`std::shared_ptr` for objects, lights, materials).
-- **`Vec3::EPSILON = 1e-6`** for float comparisons.
-
-## Scene File Format (`.rt`)
-
-Custom grammar in `scenes/`. Example directives: `bg`, `A`, `L`, `sp`, `pl`, `cy`, `co`, `c`, `material`. 5 example scenes provided. Parsed by `SceneParser`.
-
-**Parser quirk**: The `material` directive is **postfix** — it applies to the most recently declared object. The parser must track the last created object to attach the material to it.
-
-## Testing
-
-- `tests/` has **`test_main.cpp`** with 13 tests (Cylinder + Cone intersection, normals, caps).
-- `make test` → `./rt_test` — test binary (excludes `src/app/main.cpp`, includes `tests/*.cpp`).
-
-## Git Conventions (from docs)
-
-- **Branch naming**: `<type>/<developer>/<feature>` — e.g. `feature/dev-a/vec3-implementation`
-- **Commits**: `<type>(<scope>): <subject>` — e.g. `feat(dev-a): implement Vec3 dot product`
-- **PR target**: merge into `develop`, then to `main` at releases
-- **Three workstreams**: Dev A (math/camera), Dev B (geometry/objects), Dev C (rendering/parsing)
-
-## Notable
-
-- `.gitignore` ignores **all `rt*` executables** (matches both `rt` and `rt_test`).
-- Build uses `-fPIC` even for executables (keep as-is to match Makefile).
-- Doxygen comments on **all public methods** are expected.
-- The `default.rt` scene contains a **complex demo scene** (not a minimal default); the `createDefaultScene()` in main is also a stub.
+Ne jamais attaquer CSG/lumière avant quadriques+UV+Mouvements statiques stables.

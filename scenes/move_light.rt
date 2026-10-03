@@ -1,0 +1,19 @@
+# ============================================================
+# move_light.rt — test Phase 5.5 : déplacement lumière façon Blender (G)
+# Usage : make run move_light.rt (compare avec exemple.rt = L 5,5,-5)
+# Sens : lightDir = (Lpos - hit).normalisée (Renderer.cpp) :
+#        L.x++ => ombre portée glisse côté -X monde = GAUCHE écran.
+# Ici L 8,5,-5 (plus à droite) => ombre plus franche à gauche de la sphère.
+# ============================================================
+
+# Caméra standard
+C 0,0,-5 0,0,1 60
+
+# Lumière poussée à droite : ombre attendue à GAUCHE de la sphère
+L 8,5,-5 0.8
+
+# Sphère rouge (révèle l'ombre sur le sol)
+sp 0,0,0 1 255,0,0
+
+# Sol gris (reçoit l'ombre)
+pl 0,-1,0 0,1,0 200,200,200

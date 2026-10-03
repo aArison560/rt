@@ -1,0 +1,20 @@
+# ============================================================
+# move_camera.rt — test Phase 5.5 : pan caméra façon Blender (Shift+MMB)
+# Usage : make run move_camera.rt (compare avec exemple.rt = caméra 0,0,-5)
+# Sens : right = worldUp × forward (fix miroir Renderer.cpp) :
+#        cam.x++ => objet glisse à GAUCHE de l'écran.
+# Réf : C 0,0,-5 = sphère centrée · C 1,0,-5 = sphère à gauche (ici)
+#       C -1,0,-5 = sphère à droite (teste en éditant la ligne C).
+# ============================================================
+
+# Caméra décalée +X : sphère attendue à GAUCHE de l'écran
+C 1,0,-5 0,0,1 60
+
+# Lumière standard
+L 5,5,-5 0.8
+
+# Sphère rouge à l'origine (ne bouge pas : c'est la caméra qui panne)
+sp 0,0,0 1 255,0,0
+
+# Sol gris
+pl 0,-1,0 0,1,0 200,200,200
