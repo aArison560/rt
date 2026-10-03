@@ -178,29 +178,28 @@ dans `src/rendering/`, `src/geometry/`, `src/core/`* (hors construction de scèn
 
 ## 5. Cibles Makefile à copier
 
+> **Implémentées en T002** — recette réelle ci-dessous ; les cibles passent par `$(MAKE) re`
+> pour garantir une compilation homogène (mêmes flags pour tous les objets).
+
 ```make
-# À ajouter au Makefile de RT (inspiré de Webserv)
-DEBUG = -g -O0 -DDEBUG_MODE -Wpedantic -Wcast-qual -Wfloat-equal -Wsign-conversion
-ASAN  = -fsanitize=address,undefined -fno-omit-frame-pointer
-TSAN  = -fsanitize=thread -fno-omit-frame-pointer
-FAST  = -march=native -O3 -ffast-math -fstrict-aliasing
+# Dans le Makefile de RT (inspiré de Webserv)
+ASANFLAGS = -g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer
+TSANFLAGS = -g -O0 -fsanitize=thread -fno-omit-frame-pointer
+FASTFLAGS = -O3 -march=native
 
-debug:  CXXFLAGS += $(DEBUG)
-debug:  clean all
+asan:
+	$(MAKE) re CXXFLAGS="$(CXXFLAGS) $(ASANFLAGS)" LDFLAGS="$(ASANFLAGS)"
 
-asan:   CXXFLAGS += $(DEBUG) $(ASAN)
-asan:   LDFLAGS  += $(ASAN)
-asan:   clean all
+tsan:
+	$(MAKE) re CXXFLAGS="$(CXXFLAGS) $(TSANFLAGS)" LDFLAGS="$(TSANFLAGS)"
 
-tsan:   CXXFLAGS += $(DEBUG) $(TSAN)      # INDISPENSABLE : rendu multithread
-tsan:   LDFLAGS  += $(TSAN)
-tsan:   clean all
+fast:
+	$(MAKE) re CXXFLAGS="$(CXXFLAGS) $(FASTFLAGS)"
 
-fast:   CXXFLAGS += $(FAST)               # pour l'item "really fast"
-fast:   clean all
-
-compdb: | $(BUILD_DIR)
-	bear --output compile_commands.json -- $(MAKE) clean all   # alimente clangd
+compdb:
+	@command -v bear >/dev/null 2>&1 || \
+		{ echo "bear introuvable : installe-le (sudo apt install bear)…"; exit 1; }
+	bear --output compile_commands.json -- $(MAKE) re
 ```
 
 > ⚠ `-ffast-math` peut briser les NaN/infinais nécessaires à certaines détections de

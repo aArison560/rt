@@ -171,27 +171,34 @@ jobs:
 | `make compdb` | `bear` → `compile_commands.json` | éditeur/clangd |
 | `make bench` | exécute `hyperfine` sur les scènes de démo | avant la soutenance |
 
+> **État (T002)** : `asan`, `tsan`, `fast`, `compdb` sont **implémentées** dans le `Makefile`.
+> Chaque cible repart de zéro (`$(MAKE) re CXXFLAGS=… LDFLAGS=…`) : pas de mélange d'objets
+> compilés avec des flags différents. `compdb` échoue avec un message explicite si `bear` est absent
+> (le `compile_commands.json` est nettoyé par `make fclean`). `make bench` arrivera avec T019.
+
 ---
 
 ## 9. Vérification rapide de l'environnement
 
 ```bash
-#!/bin/sh
-# scripts/check_env.sh — vérifie tout ce dont le projet a besoin
-ok() { printf '  ✔ %s\n' "$1"; }
-ko() { printf '  ✖ %s\n' "$1"; }
-for c in g++ clang++ make valgrind git rsync ssh montage convert \
-         python3 pkg-config clang-format bear clang-tidy perf ffmpeg \
-         tmux hyperfine; do
-  command -v "$c" >/dev/null 2>&1 && ok "$c" || ko "$c (optionnel)"
-done
-pkg-config --exists sdl2   && ok "libsdl2"  || ko "libsdl2-dev MANQUANT"
-pkg-config --exists libpng && ok "libpng"   || ko "libpng-dev MANQUANT"
-pkg-config --exists libjpeg && ok "libjpeg" || ko "libjpeg-dev MANQUANT"
-echo
-echo "Build :"; make re >/dev/null && ok "make re" || ko "make re"
-echo "Tests :"; make test >/dev/null && ./rt_test >/dev/null && ok "tests" || ko "tests"
+sh scripts/check_env.sh
 ```
+
+Le script (créé en T002) inspecte : compilateurs (`c++`, `g++`, `clang++`), `make`, `valgrind`,
+SDL2 / libpng / libjpeg via `pkg-config`, ImageMagick (`magick`/`convert`, `identify`, `montage`),
+`git`, `rsync`, `ssh`, `docker`, et l'outillage optionnel de mesure (`hyperfine`, `perf`, `ffmpeg`,
+`bear`, `clang-format`, `clang-tidy`, `tmux`, `cppcheck`).
+
+Trois niveaux de sortie, et un code retour fiable pour la CI :
+
+| Marque | Sens |
+|--------|------|
+| `✔` | présent |
+| `✖` | **obligatoire** manquant → code retour `1` |
+| `⚠` | optionnel absent — le projet continue sans |
+
+> L'ancien pseudo-script de cette section est remplacé par le vrai script versionné
+> `scripts/check_env.sh` (même logique, sortie groupée par thème et code retour exploitable).
 
 ---
 
