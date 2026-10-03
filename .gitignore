@@ -44,3 +44,6 @@ rt*
 # Object folders
 obj/
 obj_test/
+
+# Prompt files
+*.pdb

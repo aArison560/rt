@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<!-- saved from url=(0033)https://www.42evalhub.com/spec/rt -->
+<html lang="fr" class="dark"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>42 EvalHub</title>
+		<link rel="stylesheet" href="./42 EvalHub_files/styles.css">
+		<link rel="icon" type="image/png" href="https://www.42evalhub.com/assets/favicon.png">
+		<script defer="" src="./42 EvalHub_files/script.js" data-website-id="75594f04-23ae-41a0-b89c-d98db62e2f47"></script>
+	</head>
+	<body>
+		<header>
+			<nav class="navbar">
+				<div class="nav-container">
+					<a href="https://www.42evalhub.com/" data-route="" class="nav-logo">42 EvalHub</a>
+					<ul class="nav-menu">
+						<li><a href="https://www.42evalhub.com/home" data-route="" class="nav-link">Home</a></li>
+						<li><a href="https://www.42evalhub.com/common-core" data-route="" class="nav-link">Common Core</a></li>
+						<li><a href="https://www.42evalhub.com/specs" data-route="" class="nav-link">Specs</a></li>
+					</ul>
+				</div>
+			</nav>
+		</header>
+		<main id="content" class="content"><div class="spec-detail-wrapper"><div class="spec-detail-header"><button class="spec-back-btn">← Back</button><h1 class="spec-detail-title">rt</h1></div><div class="spec-detail-content"><h3 class="font-weight-bold mb-1">Introduction</h3>
+<p>
+	Please respect the following rules:<br><br>- Remain polite, courteous, respectful and constructive
+	throughout the correction process. The well-being of the community depends on it.<br><br>- Identify with the person
+	(or the group) graded the eventual dysfunctions of the work. Take the time to discuss and debate the problems you
+	have identified.<br><br>- You must consider that there might be some difference in how your peers might have
+	understood the project's instructions and the scope of its functionalities. Always keep an open mind and grade
+	him/her as honestly as possible. The pedagogy is valid only if peer-evaluation is conducted seriously.<br>
+</p>
+
+<div class="p-0 scale-guidelines dancer from-down">
+	<h3 class="font-weight-bold mb-1">Guidelines</h3>
+	<p>
+		- Only grade the work that is in the student or group's GiT repository.<br><br>- Double-check that the GiT
+		repository belongs to the student or the group. Ensure that the work is for the relevant project and also check
+		that "git clone" is used in an empty folder.<br><br>- Check carefully that no malicious aliases was used to
+		fool you and make you evaluate something other than the content of the official repository.<br><br>- To avoid
+		any surprises, carefully check that both the correcting and the corrected students have reviewed the possible
+		scripts used to facilitate the grading.<br><br>- If the correcting student has not completed that particular
+		project yet, it is mandatory for this student to read the entire subject prior to starting the defence.<br><br>-
+		Use the flags available on this scale to signal an empty repository, non-functioning program, norm error,
+		cheating etc. In these cases, the grading is over and the final grade is 0 (or -42 in case of cheating).
+		However, with the exception of cheating, you are encouraged to continue to discuss your work (even if you have
+		not finished it) in order to identify any issues that may have caused this failure and avoid repeating the same
+		mistake in the future.<br>
+	</p>
+</div>
+
+<hr>
+<div class="dancer from-down">
+	<h3 class="font-weight-bold mb-1">Attachments</h3>
+	<div class="project-attachments-list">
+		<div class="project-attachment-item">
+			<h4 class="attachment-name">
+				<span class="icon-note-paper-2"></span>
+				<a target="_blank" href="https://cdn.intra.42.fr/video/video/921/rtv1-rt_en.mp4">General presentation of
+					RTv1 and RT</a>
+			</h4>
+		</div>
+		<div class="project-attachment-item">
+			<h4 class="attachment-name">
+				<span class="icon-note-paper-2"></span>
+				<a target="_blank" href="https://cdn.intra.42.fr/video/video/101/rtv1-rt.mp4">Présentation générale RTv1
+					et RT</a>
+			</h4>
+		</div>
+		<div class="project-attachment-item">
+			<h4 class="attachment-name">
+				<span class="icon-note-paper-2"></span>
+				<a target="_blank" href="https://cdn.intra.42.fr/pdf/pdf/1873/rt.en.pdf">Subject</a>
+			</h4>
+		</div>
+		<div class="project-attachment-item">
+			<h4 class="attachment-name">
+				<span class="icon-note-paper-2"></span>
+				<a>Demo (link not available)</a>
+			</h4>
+		</div>
+	</div>
+</div>
+
+
+<form class="simple_form form-horizontal">
+	<div class="scale-section-answers col-sm-12 scale-div">
+		<section class="scale-section-item dancer from-down">
+			<div class="section-header">
+				<h3 class="font-weight-bold mb-1">Preliminaries</h3>
+				<p class="font-italic">Reminder: Remember that for the duration of the defence, no segfault, nor other
+					unexpected, premature, uncontrolled or unexpected termination of the program, else the final grade
+					is
+					0. Use the appropriate flag. This rule is active throughout the whole defence.</p>
+			</div>
+		</section>
+		<section class="scale-section-item dancer from-down">
+			<div class="section-header">
+				<h3 class="font-weight-bold mb-1">Basic stuff</h3>
+				<p class="font-italic">Check the following:</p>
+			</div>
+			<ul>
+				<li>Something was submitted</li>
+				<li>The author file is at the root of the repository and formatted as explained in the subject</li>
+				<li>Norm is OK (using the norminette)</li>
+				<li>The whole group is present</li>
+			</ul>
+			<p>If at least one isn't ok, defence is over and final grade is 0.</p>
+
+			<h4 class="scale-question-name">Basic stuff check</h4>
+			<p class="scale-section-guidelines"></p>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<input type="radio" name="[scale_team][answers_attributes][0][value]" value="1" class="btn-input">
+					<label for="yes_0" class="btn btn-yes">Yes</label>
+					<input type="radio" name="[scale_team][answers_attributes][0][value]" value="0" class="btn-input" checked="">
+					<label for="no_0" class="btn btn-no">No</label>
+				</div>
+			</div>
+		</section>
+
+		<section class="scale-section-item dancer from-down">
+			<div class="section-header">
+				<h3 class="font-weight-bold mb-1">Mandatory part</h3>
+				<p class="font-italic">This part match up the RTv1. It is mandatory and eliminatory. If parts are
+					missing, the defense ends, the final grade is 0. As stipulated in the subject: "The mandatory part
+					is
+					worth 0 and options will reward points only if the mandatory part is 100% complete". The subjects
+					requires 3 scenes (see illustration in the subject) to validate quickly and easily the mandatory
+					part.
+					That's when the group is supposed to raytrace them.</p>
+			</div>
+
+			<h4 class="scale-question-name">Exposes without recalculation</h4>
+			<p class="scale-section-guidelines">Drag a window above the window of rt, change the keyboard focus from
+				one window to another. Does it draw again? with or without calculation? Check if there is indeed an
+				event
+				management implemented =&gt; mlx: use of mlx_expose_hook with a dedicated function, ask the student to
+				convince yourself by modifying the code (adding a printf at each expose for example). Verify that the
+				calculations are not done again. =&gt; Whatever the method, it should go faster to display again without
+				recalculation. If any doubt, see the code. The great classic is the use of images of the minilibX.</p>
+			<div class="btn-group block">
+				<input type="radio" name="[scale_team][answers_attributes][1][value]" value="1" class="btn-input">
+				<label for="yes_1" class="btn btn-yes">Yes</label>
+				<input type="radio" name="[scale_team][answers_attributes][1][value]" value="0" class="btn-input" checked="">
+				<label for="no_1" class="btn btn-no">No</label>
+			</div>
+	</section></div>
+
+	<h4 class="scale-question-name">Objets</h4>
+	<p class="scale-section-guidelines">Verify that the 4 basic shapes are present, that they can be in the
+		same scene, and that several objects of the same type can also coexist. Check that each object has its
+		own simple intersection function. All objects must be able to be in any position and direction (undergo
+		translations and rotations). Finally, the intersections between objects must look coherent (between a
+		plane and a sphere, it must be similar to what you can see in the demo / intro video).</p>
+	<div class="scale-question-answers">
+		<div class="btn-group block">
+			<input type="radio" name="[scale_team][answers_attributes][2][value]" value="1" class="btn-input">
+			<label for="yes_2" class="btn btn-yes">Yes</label>
+			<input type="radio" name="[scale_team][answers_attributes][2][value]" value="0" class="btn-input" checked="">
+			<label for="no_2" class="btn btn-no">No</label>
+		</div>
+	</div>
+
+	<h4 class="scale-question-name">Did you know?</h4>
+	<p class="scale-section-guidelines">REM are the initials of Rapid Eye Movement. Can the eye be placed
+		anywhere in the scene? And looking to any direction? Verify that image 2 to be realized is indeed the
+		same scene as image 1, with only a shift of the eye.</p>
+	<div class="scale-question-answers">
+		<div class="btn-group block">
+			<input type="radio" name="[scale_team][answers_attributes][3][value]" value="1" class="btn-input">
+			<label for="yes_3" class="btn btn-yes">Yes</label>
+			<input type="radio" name="[scale_team][answers_attributes][3][value]" value="0" class="btn-input" checked="">
+			<label for="no_3" class="btn btn-no">No</label>
+		</div>
+	</div>
+
+	<h4 class="scale-question-name">Lights</h4>
+	<p class="scale-section-guidelines">Is brightness present on the objects? (color gradient on the object:
+		from the brightest on the side of the spot, to the darkest on the non-illuminated sides). Shadows are
+		present? Shine effects are present? (Or specular light: the color of the spot is added to the color of
+		the object, often creating a small white spot == saturation of the light at this location) Finally,
+		proper multi-spot management: brightness is mixed, multiple gradients according to the position of the
+		spots, shadows are shaded according to the number of visible / hidden light sources. Image 3 makes it
+		possible to verify these aspects.</p>
+	<div class="scale-question-answers">
+		<div class="btn-group block">
+			<input type="radio" name="[scale_team][answers_attributes][4][value]" value="1" class="btn-input">
+			<label for="yes_4" class="btn btn-yes">Yes</label>
+			<input type="radio" name="[scale_team][answers_attributes][4][value]" value="0" class="btn-input" checked="">
+			<label for="no_4" class="btn btn-no">No</label>
+		</div>
+	</div>
+	
+
+	<section class="scale-section-item dancer from-down">
+		<div class="section-header">
+			<h3 class="font-weight-bold mb-1">Options</h3>
+			<p class="font-italic">Reminder: Remember that for the duration of the defence, no segfault, nor other
+				unexpected, premature, uncontrolled or unexpected termination of the program, else the final grade is
+				0. Use the appropriate flag. This rule is active throughout the whole defence. There is a lot of
+				options. Since the large possibility and range of possible options for the RT, the success grade
+				isn't very high. With a fair number of option it should be a pass but less XP than with MORE
+				options.</p>
+		</div>
+
+		<h4 class="scale-question-name">Scene files</h4>
+		<p class="scale-section-guidelines">There is a description file for the scene.</p>
+		<div class="scale-question-answers">
+			<div class="btn-group block">
+				<input type="radio" name="[scale_team][answers_attributes][5][value]" value="1" class="btn-input">
+				<label for="yes_5" class="btn btn-yes">Yes</label>
+				<input type="radio" name="[scale_team][answers_attributes][5][value]" value="0" class="btn-input" checked="">
+				<label for="no_5" class="btn btn-no">No</label>
+			</div>
+		</div>
+
+		<h4 class="scale-question-name">File ++</h4>
+		<p class="scale-section-guidelines">Scene files are in XML, or following a proper structure or hierarchy.
+			To make it simple it's not just a file with one information per line or basic blocks separated by just
+			an empty line.</p>
+		<div class="scale-question-answers">
+			<div class="btn-group block">
+				<input type="radio" name="[scale_team][answers_attributes][6][value]" value="1" class="btn-input">
+				<label for="yes_6" class="btn btn-yes">Yes</label>
+				<input type="radio" name="[scale_team][answers_attributes][6][value]" value="0" class="btn-input" checked="">
+				<label for="no_6" class="btn btn-no">No</label>
+			</div>
+		</div>
+
+		<h4 class="scale-question-name">Ambiance light</h4>
+		<p class="scale-section-guidelines">No objects is never really in the dark.</p>
+		<div class="scale-question-answers">
+			<div class="form-group hidden scale_team_answer_id">
+				<div class="btn-group block">
+					<input type="radio" name="[scale_team][answers_attributes][7][value]" value="1" class="btn-input">
+					<label for="yes_7" class="btn btn-yes">Yes</label>
+					<input type="radio" name="[scale_team][answers_attributes][7][value]" value="0" class="btn-input" checked="">
+					<label for="no_7" class="btn btn-no">No</label>
+				</div>
+			</div>
+
+			<h4 class="scale-question-name">Ambiance ++</h4>
+			<p class="scale-section-guidelines">More points if the ambiance light can be managed from the
+				configuration file.</p>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<input type="radio" name="[scale_team][answers_attributes][8][value]" value="1" class="btn-input">
+					<label for="yes_8" class="btn btn-yes">Yes</label>
+					<input type="radio" name="[scale_team][answers_attributes][8][value]" value="0" class="btn-input" checked="">
+					<label for="no_8" class="btn btn-no">No</label>
+				</div>
+			</div>
+
+			<h4 class="scale-question-name">Limited objects</h4>
+			<p class="scale-section-guidelines">For this section give one point for each of the following:</p>
+			<ul>
+				<li>It's possible to slice objects on the x, y, z axes</li>
+				<li>It's possible to choose the slice from simple or really position (a cylinder can be sliced following
+					its own axis or following a real axis)</li>
+				<li>Rotations and translations still works after the slice</li>
+				<li>The slice effect is unique to every object and not applied on all of them</li>
+				<li>It's possible to slice the plane differently than on the axes (if you limit it on x and y, you'll
+					get a square) like for example a triangle or a disc</li>
+			</ul>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<select name="[scale_team][answers_attributes][9][value]" class="form-control score-select">
+						<option value=""></option>
+						<option value="0">0 - Failed</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+						<option value="5">5 - Excellent</option>
+					</select>
+				</div>
+			</div>
+
+			<h4 class="scale-question-name">Disruptions</h4>
+			<p class="scale-section-guidelines">One point per implemented disturbance:</p>
+			<ul>
+				<li>Normal disruption: using sine for example which gives a wave effect</li>
+				<li>Color disruption: checkerboard for example</li>
+				<li>Color disruption: a more complicated algo to disrupt the color</li>
+				<li>Color disruption: a very complicated algo for example Perlin noise (this one is worth 2 point except
+					if it's the only one implemented then don't count the last point)</li>
+			</ul>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<select name="[scale_team][answers_attributes][10][value]" class="form-control score-select">
+						<option value=""></option>
+						<option value="0">0 - Failed</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+						<option value="5">5 - Excellent</option>
+					</select>
+				</div>
+			</div>
+
+			<h4 class="scale-question-name">Direct light</h4>
+			<p class="scale-section-guidelines">We're blinded by light spot facing us.</p>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<input type="radio" name="[scale_team][answers_attributes][11][value]" value="1" class="btn-input">
+					<label for="yes_11" class="btn btn-yes">Yes</label>
+					<input type="radio" name="[scale_team][answers_attributes][11][value]" value="0" class="btn-input" checked="">
+					<label for="no_11" class="btn btn-no">No</label>
+				</div>
+			</div>
+
+			<h4 class="scale-question-name">Parallel light</h4>
+			<p class="scale-section-guidelines">A parallel light can light up the scene, following a precise
+				direction. (Unlike a spot that will emit light to a point).</p>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<input type="radio" name="[scale_team][answers_attributes][12][value]" value="1" class="btn-input">
+					<label for="yes_12" class="btn btn-yes">Yes</label>
+					<input type="radio" name="[scale_team][answers_attributes][12][value]" value="0" class="btn-input" checked="">
+					<label for="no_12" class="btn btn-no">No</label>
+				</div>
+			</div>
+
+			<h4 class="scale-question-name">Reflection and transparency</h4>
+			<p class="scale-section-guidelines">One point per implemented option:</p>
+			<ul>
+				<li>Reflection works, there is a mirror effect</li>
+				<li>It's possible to change the % of reflection (it's not all or nothing)</li>
+				<li>Transparency work we can see through</li>
+				<li>The refraction index works (if required check the Descartes formula in the code)</li>
+				<li>It's possible to change the transparency %</li>
+			</ul>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<select name="[scale_team][answers_attributes][13][value]" class="form-control score-select">
+						<option value=""></option>
+						<option value="0">0 - Failed</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+						<option value="5">5 - Excellent</option>
+					</select>
+				</div>
+			</div>
+
+			<h4 class="scale-question-name">Shadows and transparency</h4>
+			<p class="scale-section-guidelines">Is the shadow more or less darken if the object is transparent?</p>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<input type="radio" name="[scale_team][answers_attributes][14][value]" value="1" class="btn-input">
+					<label for="yes_14" class="btn btn-yes">Yes</label>
+					<input type="radio" name="[scale_team][answers_attributes][14][value]" value="0" class="btn-input" checked="">
+					<label for="no_14" class="btn btn-no">No</label>
+				</div>
+			</div>
+
+			<h4 class="scale-question-name">Textures</h4>
+			<p class="scale-section-guidelines">For this section give one point for each of the following:</p>
+			<ul>
+				<li>It's possible to apply a texture on at least one of the 4 basic objects</li>
+				<li>It's possible to apply a texture on the 4 basic objects</li>
+				<li>It's possible to stretch (or the opposite) a texture on an object</li>
+				<li>It's possible to shift a texture on an object</li>
+				<li>Another library than minilibX and its xpm was used to load texture (jpeg, png, ...)</li>
+			</ul>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<select name="[scale_team][answers_attributes][15][value]" class="form-control score-select">
+						<option value=""></option>
+						<option value="0">0 - Failed</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+						<option value="5">5 - Excellent</option>
+					</select>
+				</div>
+			</div>
+
+			<h4 class="scale-question-name">More texture applications</h4>
+			<p class="scale-section-guidelines">One point per implemented option:</p>
+			<ul>
+				<li>A texture can be projected on is roughly mapped</li>
+				<li>A texture can be used for its transparency</li>
+				<li>A texture can be used to disrupt an object's normal (bump mapping)</li>
+				<li>A texture can be used to modify a at some places of an object</li>
+				<li>A texture can be used to limit or slice an object</li>
+				<li>A semi-transparent object serve as a slide and another object</li>
+			</ul>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<select name="[scale_team][answers_attributes][16][value]" class="form-control score-select">
+						<option value=""></option>
+						<option value="0">0 - Failed</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+						<option value="5">5 - Excellent</option>
+					</select>
+				</div>
+			</div>
+
+			<h4 class="scale-question-name">Composed elements</h4>
+			<p class="scale-section-guidelines">It is possible to define a composed element using simple objects.
+				For example a cube can be made with 6 limited planes, a "glass" can be made with limited cone +
+				cylinder + sphere. It's possible to put several time the same composed elements but at different
+				positions or orientations (if it's not the case, the composed element is useless...).</p>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<input type="radio" name="[scale_team][answers_attributes][17][value]" value="1" class="btn-input">
+					<label for="yes_17" class="btn btn-yes">Yes</label>
+					<input type="radio" name="[scale_team][answers_attributes][17][value]" value="0" class="btn-input" checked="">
+					<label for="no_17" class="btn btn-no">No</label>
+				</div>
+			</div>
+
+			<h4 class="scale-question-name">Negative objects</h4>
+			<p class="scale-section-guidelines">It's possible to substract an object from an object with another one.
+				For example:</p>
+			<ul>
+				<li>A negative sphere that will make a hole in another or deform plane</li>
+				<li>A cylinder will deform to its core. another perpendicular cylinder</li>
+			</ul>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<input type="radio" name="[scale_team][answers_attributes][18][value]" value="1" class="btn-input">
+					<label for="yes_18" class="btn btn-yes">Yes</label>
+					<input type="radio" name="[scale_team][answers_attributes][18][value]" value="0" class="btn-input" checked="">
+					<label for="no_18" class="btn btn-no">No</label>
+				</div>
+			</div>
+
+			<h4 class="scale-question-name">Simple native objects</h4>
+			<p class="scale-section-guidelines">Everything that can be solved with a smaller or equal complexity than
+				sphere/cylinder/cone (which are of second degree of complexity), mostly paraboloid and hyperboloid. If
+				at least one object of this nature this section is validated.</p>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<input type="radio" name="[scale_team][answers_attributes][19][value]" value="1" class="btn-input">
+					<label for="yes_19" class="btn btn-yes">Yes</label>
+					<input type="radio" name="[scale_team][answers_attributes][19][value]" value="0" class="btn-input" checked="">
+					<label for="no_19" class="btn btn-no">No</label>
+				</div>
+			</div>
+
+			<h4 class="scale-question-name">Usual visual effects</h4>
+			<p class="scale-section-guidelines">One point per implemented effect:</p>
+			<ul>
+				<li>Antialiasing</li>
+				<li>Cartoon effect</li>
+				<li>Motion blur</li>
+				<li>Sepia or any other color filter</li>
+				<li>Simple stereoscopy (like red/green glasses)</li>
+			</ul>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<select name="[scale_team][answers_attributes][20][value]" class="form-control score-select">
+						<option value=""></option>
+						<option value="0">0 - Failed</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+						<option value="5">5 - Excellent</option>
+					</select>
+				</div>
+			</div>
+
+			<h4 class="scale-question-name">Technical effects</h4>
+			<p class="scale-section-guidelines">Here again one point per implemented effect:</p>
+			<ul>
+				<li>Clustering rendering (computed on several computers) (2 points)</li>
+				<li>Multi thread computing</li>
+				<li>The rendering is really fast</li>
+				<li>It's possible inside the RT to save, screenshot the rendered image</li>
+			</ul>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<select name="[scale_team][answers_attributes][21][value]" class="form-control score-select">
+						<option value=""></option>
+						<option value="0">0 - Failed</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+						<option value="5">5 - Excellent</option>
+					</select>
+				</div>
+			</div>
+
+			<h4 class="scale-question-name">Environment</h4>
+			<p class="scale-section-guidelines">5 possibility for 5 points:</p>
+			<ul>
+				<li>There is a summary interface: a graphic loading message, a progress bar, something more than just
+					terminal messages</li>
+				<li>There is a cool interface (made with gtk or QT) with configuration elements like file loading,
+					render control, etc. (if true also count for the first point)</li>
+				<li>It's possible to interact with the scene live (camera or object position, colors or textures...)
+					without rerunning the program</li>
+				<li>It's possible to automatically render with modification between the rendering (no interface needed,
+					a serie of scripts can be used here)</li>
+				<li>It's possible to automatically render objects for a scene for example a torus made of a serie of
+					sphere, and helix made of spheres and cylinders...</li>
+			</ul>
+			<div class="scale-question-answers">
+				<div class="btn-group block">
+					<select name="[scale_team][answers_attributes][22][value]" class="form-control score-select">
+						<option value=""></option>
+						<option value="0">0 - Failed</option>
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="3">3</option>
+						<option value="4">4</option>
+						<option value="5">5 - Excellent</option>
+					</select>
+				</div>
+			</div>
+	</div></section>
+
+	<!-- INTERLUDE -->
+	<section class="scale-section-item dancer from-down">
+		<div class="section-header">
+			<h3 class="font-weight-bold mb-1">Interlude</h3>
+			<p class="font-italic">Let's take a break to evaluate the group organization.</p>
+		</div>
+
+		<h4 class="scale-question-name">Group organization</h4>
+		<p class="scale-section-guidelines">Evaluate here how the was the group organised to work through the RT
+			project. Here again a lot of scenarios are acceptable, stay open. Don't validate this if you feel like
+			the group is messy and didn't really show any bit of organisation, or time management. This question is
+			purely objective and is recognized as such. Know that subjective judgment of a hierarchy is part of your
+			professional future and even if you don't understand it yet, you can act on it.</p>
+		<div class="scale-question-answers">
+			<div class="btn-group block">
+				<input type="radio" name="[scale_team][answers_attributes][23][value]" value="1" class="btn-input">
+				<label for="yes_23" class="btn btn-yes">Yes</label>
+				<input type="radio" name="[scale_team][answers_attributes][23][value]" value="0" class="btn-input" checked="">
+				<label for="no_23" class="btn btn-no">No</label>
+			</div>
+		</div>
+	</section>
+
+	<!-- MORE OPTIONS -->
+	<section class="scale-section-item dancer from-down">
+		<div class="section-header">
+			<h3 class="font-weight-bold mb-1">More options</h3>
+			<p class="font-italic">It's possible to make a lot of cool stuff with a RT.</p>
+		</div>
+
+		<h4 class="scale-question-name">Exotic objects</h4>
+		<p class="scale-section-guidelines">One point per implemented exotic object:</p>
+		<ul>
+			<li>Perforated cube</li>
+			<li>Table cloth</li>
+			<li>Torus</li>
+			<li>Random equation resolution from a configuration file (the GNU lib does it well)</li>
+			<li>More (fractal objects, etc.)</li>
+		</ul>
+		<div class="scale-question-answers">
+			<div class="btn-group block">
+				<select name="[scale_team][answers_attributes][24][value]" class="form-control score-select">
+					<option value=""></option>
+					<option value="0">0 - Failed</option>
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5 - Excellent</option>
+				</select>
+			</div>
+		</div>
+
+		<h4 class="scale-question-name">In bulk</h4>
+		<p class="scale-section-guidelines">Here again one point per implemented option:</p>
+		<ul>
+			<li>A video made from your RT (share the love on the forum)</li>
+			<li>Modelers files: it's possible to import pov or 3ds files (for example), and you can render them with
+				your RT</li>
+			<li>Using 3D TV technology or OculusRift</li>
+			<li>Infrequent spot: like a light bulb filament, the light source is infrequent and shadows don't have
+				sharpness</li>
+			<li>Any other crazy stuff</li>
+		</ul>
+		<div class="scale-question-answers">
+			<div class="btn-group block">
+				<select name="[scale_team][answers_attributes][25][value]" class="form-control score-select">
+					<option value=""></option>
+					<option value="0">0 - Failed</option>
+					<option value="1">1</option>
+					<option value="2">2</option>
+					<option value="3">3</option>
+					<option value="4">4</option>
+					<option value="5">5 - Excellent</option>
+				</select>
+			</div>
+		</div>
+
+		<h4 class="scale-question-name">The Moebius ribbon</h4>
+		<p class="scale-section-guidelines">A cool and well implemented Moebius ribbon!!</p>
+		<div class="scale-question-answers">
+			<div class="btn-group block">
+				<input type="radio" name="[scale_team][answers_attributes][26][value]" value="1" class="btn-input">
+				<label for="yes_26" class="btn btn-yes">Yes</label>
+				<input type="radio" name="[scale_team][answers_attributes][26][value]" value="0" class="btn-input" checked="">
+				<label for="no_26" class="btn btn-no">No</label>
+			</div>
+		</div>
+
+		<h4 class="scale-question-name">Caustics and/or Global illumination</h4>
+		<p class="scale-section-guidelines">That's super cool don't forget to share images on the forum and
+			slack.</p>
+		<div class="scale-question-answers">
+			<div class="btn-group block">
+				<input type="radio" name="[scale_team][answers_attributes][27][value]" value="1" class="btn-input">
+				<label for="yes_27" class="btn btn-yes">Yes</label>
+				<input type="radio" name="[scale_team][answers_attributes][27][value]" value="0" class="btn-input" checked="">
+				<label for="no_27" class="btn btn-no">No</label>
+			</div>
+		</div>
+
+		<h4 class="scale-question-name">The last.... and the least</h4>
+		<p class="scale-section-guidelines">Is it beautiful? It's 100% subjective, but everyone has different
+			tastes.</p>
+		<div class="scale-question-answers">
+			<div class="btn-group block">
+				<input type="radio" name="[scale_team][answers_attributes][28][value]" value="1" class="btn-input">
+				<label for="yes_28" class="btn btn-yes">Yes</label>
+				<input type="radio" name="[scale_team][answers_attributes][28][value]" value="0" class="btn-input" checked="">
+				<label for="no_28" class="btn btn-no">No</label>
+			</div>
+		</div>
+	</section>
+
+	
+</form></div><div><a class="spec-contribute-button" target="_blank" href="mailto:contact@42evalhub.com">Outdated ? Contribute to update</a></div></div></main>
+		<script type="module" src="./42 EvalHub_files/main.js"></script>
+	
+
+</body></html>
