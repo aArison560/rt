@@ -239,8 +239,8 @@ rt/
 - **Dépend** : T000 · **Sert** : M1 · **Doc** : [OUTILS.md §8](OUTILS.md)
 - **DoD** : `make re` → 0 warning, 0 erreur ; `./rt` → code retour 0 ; `make fclean` nettoie tout.
 
-#### T002 ⬜ — Cibles de qualité et script d'environnement
-> **Fait le** : — · **Commit** : —
+#### T002 ✅ — Cibles de qualité et script d'environnement
+> **Fait le** : 2026-10-03 · **Commit** : f2f5e3c
 - **Prompt** : « Ajoute au Makefile les cibles `asan` (`-fsanitize=address,undefined -g -O0`), `tsan` (`-fsanitize=thread`), `fast` (`-O3 -march=native`), `test` (Catch2) et `compdb` (`bear` si présent, sinon message explicite). Écris `scripts/check_env.sh` qui teste compilateurs, SDL2, libpng/libjpeg, valgrind, ImageMagick et affiche ✔/✖. »
 - **Dépend** : T001 · **Sert** : qualité · **Doc** : [OUTILS.md §9](OUTILS.md), [MEMORY_STRATEGY.md §5](MEMORY_STRATEGY.md)
 - **DoD** : `make asan && ./rt` fonctionne ; `sh scripts/check_env.sh` affiche un rapport complet (les outils absents sont signalés « optionnel »).
@@ -1124,6 +1124,7 @@ Chaque point doit être tranché **avant** la tâche listée, et le résultat é
 | 2026-10-03 | création de la checklist | — | Départ : dépôt sans code, branche `dev`, 149 tâches, 13 phases |
 | 2026-10-03 | session 1 | T000 | Point de départ validé : branche `dev`, arbre propre, pas de code résiduel ; rapport dans `docs/T000_rapport.md` |
 | 2026-10-03 | session 2 | T001 | Arborescence 2.2 + Makefile 42 + `./rt` minimal ; DoD vert (`make re`, exit 0, `make fclean`) ; fix `.gitignore` |
+| 2026-10-03 | session 3 | T002 | Cibles `asan`/`tsan`/`fast`/`compdb` (rebuild homogène via `$(MAKE) re`, LDFLAGS) + `scripts/check_env.sh` ✔/✖/⚠ avec code retour ; DoD vert (`make asan && ./rt` exit 0, `sh scripts/check_env.sh` exit 0) ; docs OUTILS/MEMORY/README à jour |
 
 ---
 
