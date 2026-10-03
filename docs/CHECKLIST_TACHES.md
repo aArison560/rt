@@ -233,8 +233,8 @@ rt/
 - **Dépend** : — · **Sert** : organisation · **Doc** : [README.md](README.md)
 - **DoD** : rapport court écrit ; `git status` propre ; branche `dev`.
 
-#### T001 ⬜ — Arborescence vide + Makefile minimal
-> **Fait le** : — · **Commit** : —
+#### T001 ✅ — Arborescence vide + Makefile minimal
+> **Fait le** : 2026-10-03 · **Commit** : 5af727c
 - **Prompt** : « Crée l'arborescence de la [section 2.2](#22-arborescence-du-dépôt) avec un `src/app/main.cpp` qui affiche `rt <version>` et sort 0, et un `Makefile` standard 42 (`NAME=rt`, `CC=c++`, `CXXFLAGS=-Wall -Wextra -Werror -O2 -std=c++2c`, cibles `all clean fclean re test`, `OBJDIR`, `VPATH`). Aucune dépendance externe pour l'instant. »
 - **Dépend** : T000 · **Sert** : M1 · **Doc** : [OUTILS.md §8](OUTILS.md)
 - **DoD** : `make re` → 0 warning, 0 erreur ; `./rt` → code retour 0 ; `make fclean` nettoie tout.
@@ -1123,6 +1123,7 @@ Chaque point doit être tranché **avant** la tâche listée, et le résultat é
 |------|---------|--------|-------|
 | 2026-10-03 | création de la checklist | — | Départ : dépôt sans code, branche `dev`, 149 tâches, 13 phases |
 | 2026-10-03 | session 1 | T000 | Point de départ validé : branche `dev`, arbre propre, pas de code résiduel ; rapport dans `docs/T000_rapport.md` |
+| 2026-10-03 | session 2 | T001 | Arborescence 2.2 + Makefile 42 + `./rt` minimal ; DoD vert (`make re`, exit 0, `make fclean`) ; fix `.gitignore` |
 
 ---
 
