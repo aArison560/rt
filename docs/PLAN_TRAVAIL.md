@@ -206,6 +206,11 @@ meilleur moyen d'introduire un crash (→ note 0).
 > ⚠ **Audit statique** du code sur la branche `main` (lecture de fichiers, sans compilation ni
 > exécution). **À revalider par un test** lors du J1 avant d'être considéré comme vrai.
 >
+> **Documents associés à ce backlog** : [OUTILS.md](OUTILS.md) (environnement et qualité),
+> [MEMORY_STRATEGY.md](MEMORY_STRATEGY.md) (allocation, sanitizers, bug des exceptions),
+> [DISTRIBUTED_RENDERING.md](DISTRIBUTED_RENDERING.md) (cluster, 2 points),
+> [INSPIRATION_BLENDER.md](INSPIRATION_BLENDER.md) (transferts d'architecture).
+>
 > Légende — **État** : ✔ probablement fait · △ partiellement fait · ✖ absent · ? à vérifier
 > — **P** : priorité (P0 = bloquant noté, P1 = gros points, P2 = points moyens, P3 = dernier).
 
@@ -252,7 +257,7 @@ meilleur moyen d'introduire un crash (→ note 0).
 | Negative objects | ✖ | CSG difference/union | P2 | M2 |
 | Simple native objects | ✖ | Paraboloïde **ou** hyperboloïde (un suffit) | P2 | M2 |
 | Usual visual effects | ✖ | **Antialiasing** (le plus rentable), sépia, cartoon, motion blur, stéréo | P1/P2 | M3 |
-| Technical effects | △ | multithreading ✔, screenshot ✔, **perf mesurée**, **cluster** (2 pts) | P1/P3 | M3 |
+| Technical effects | △ | multithreading ✔, screenshot ✔, **perf mesurée**, **cluster** (2 pts) → [DISTRIBUTED_RENDERING.md](DISTRIBUTED_RENDERING.md) | P1/P3 | M3 |
 | Environment (5) | △ | microui ✔ ; **progress bar** ; chargement de fichier depuis l'UI ; **scripts** batch ; **générateur** de scènes | P1/P2 | M3 |
 | **Group organization** | à construire | Ce document + journal | P1 | responsable organisation |
 | Exotic objects | ✖ | tore (prioritaire), cube perforé, nappe, solveur d'équations | P3 | M2 |

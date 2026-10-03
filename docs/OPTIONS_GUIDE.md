@@ -437,6 +437,9 @@ autre perpendiculaire).
 
 ### 9.1 Clustering (2 points — le meilleur ratio de la grille)
 
+> **Guide complet, script SSH prêt à l'emploi et plan d'action :**
+> [DISTRIBUTED_RENDERING.md](DISTRIBUTED_RENDERING.md).
+
 ```bash
 # découper l'image en tuiles et rendre sur N machines
 rt scenes/showcase.rt --tile 0/2 --out tile_0.png     # machine 1
@@ -448,6 +451,9 @@ montage tile_*.png -tile 2x1 final.png                # montage
   assemblée.
 
 ### 9.2 Performance
+
+> **Outils de mesure et cibles Makefile :** [OUTILS.md §4](OUTILS.md) et
+> [MEMORY_STRATEGY.md §4.4](MEMORY_STRATEGY.md).
 
 - Continuer le travail déjà en place : BVH, tiling 32×32, `ThreadPool`, *Russian roulette*.
 - Ajouter l'**affichage** des métriques : temps de rendu, rays/s, nombre de traversées BVH

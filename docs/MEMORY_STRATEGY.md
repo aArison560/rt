@@ -1,0 +1,229 @@
+# RT — Stratégie mémoire et méthode « sans malloc » (apports de Webserv)
+
+> **Projet source analysé** : `/home/nherimam/Git/Webserv` — serveur HTTP/1.1 en C++,
+> **sans une seule allocation dynamique** (`malloc`, `new`, `free`, `std::vector`,
+> `std::string` : **0 occurrence** dans `src/`, vérifié par grep).
+>
+> **Question** : leur méthode est-elle intéressante pour RT ?
+>
+> **Réponse courte** : **oui, sélectivement**. Le sujet RT **autorise toute la libstdc++**
+> ([SPECIFICATIONS.md §2.2](SPECIFICATIONS.md)) : « sans malloc » n'est pas une contrainte,
+> c'est un **choix d'ingénierie**. Son bénéfice réel est le **déterminisme**, pas l'économie.
+> À adopter sur le *hot path* ; à refuser comme principe global.
+
+---
+
+## Sommaire
+
+1. [Ce que fait Webserv (constaté dans le code)](#1-ce-que-fait-webserv-constaté-dans-le-code)
+2. [Verdict : à adopter / à adapter / à refuser](#2-verdict--à-adopter--à-adapter--à-refuser)
+3. [🚨 Bug repéré : exceptions dans la boucle de rendu](#-bug-reperté-exceptions-dans-la-boucle-de-rendu)
+4. [Plan mémoire concret pour RT](#4-plan-mémoire-concret-pour-rt)
+5. [Cibles Makefile à copier](#5-cibles-makefile-à-copier)
+6. [Comment en parler à la soutenance](#6-comment-en-parler-à-la-soutenance)
+
+---
+
+## 1. Ce que fait Webserv (constaté dans le code)
+
+| Technique | Preuve dans le code | Principe |
+|-----------|---------------------|----------|
+| **0 allocation dynamique** | aucun `malloc`/`new`/`free`/`std::vector`/`std::string` dans `src/` | tout est prévu à l'avance |
+| **2 arenas** | `Server.hpp` : `alpha = {(u8*)&connections, 0, sizeof(connections)}` (64 Mo) ; `beta = {storage, …}` (4 Mo) | *bump allocator* : `size += ALIGN_UP(bytes, 64)` → un simple ajout |
+| **Pool fixe** | `ConnectionPool.hpp` : `Connection connections[4096]` ; `Connection.hpp` : `STATIC_ASSERT(sizeof(Connection) == 16384)` | 16 Ko/connexion, 64 Mo, **mémoire contiguë** |
+| **Recouvrement d'états** | `Connection.hpp` : `union { {recvBuffer, sendBuffer}; {parseBuffer, Request req}; }` | les mêmes octets servent à 2 phases exclusives → moitié de mémoire |
+| **Allocation O(1) à bitmaps** | `ConnectionPool::acquire_slot()` : `block.find_first_clear()` puis `element[…].find_first_clear()` | recherche de slot libre en quelques instructions (2 niveaux : 64 blocs × 64 connexions) |
+| **POD + `init/reset/clear`** | convention documentée dans `docs/README.md` | zéro constructeur utilisateur ; tout est réinitialisable sans realloc |
+| **Spans compressés** | README : 6 vues de chaînes passent de 96 à 24 octets (4 B par vue au lieu de 16) | encodage relatif → plus d'objets tiennent dans le cache |
+| **SIMD + padding « clobberable »** | intrinsics SSE/AVX, `ascii_memchr`, `Xoroshiro128_simd` | lecture au-delà de la fin assumée, **protégée par un padding alloué en amont** |
+| **Branchless / LUT** | `Status::num_to_status` : table de 64 octets (1 cache line), 18 lignes d'asm, **aucune branche** | ID HTTP → index linéaire sans `if` |
+| **Build agressif** | `Makefile` : `-fno-exceptions`, `-nostdlib++` (70 Ko d'exceptions économisés), cibles `asan`/`tsan`/`fast`/`compdb` | le lien avec la stdlib n'est pas gratuit |
+| **Boucle I/O** | `epoll` limité au FD client, IO atomiques `ATOMIC_IOSIZE` | supprimer les états intermédiaires = moins de bugs |
+| **Invariants documentés** | `docs/README.md` : *Parsing Invariants*, *Padding Invariants*, *Location Invariants* | chaque contrainte mémoire est **écrite et justifiée** |
+
+### 1.1 L'idée maîtresse
+
+> **Une allocation = un ajout d'entier.** Une *arena* (bloc unique + compteur d'offset)
+> remplace l'appel à l'allocateur système : ni fragmentation, ni verrouillage entre threads,
+> ni fuite possible (on libère tout d'un coup en remettant `size = 0`).
+>
+> Corollaire pour un ray tracer : **pendant le rendu, aucun appel à `malloc`**.
+
+---
+
+## 2. Verdict : à adopter / à adapter / à refuser
+
+### ✅ À adopter (fort impact, faible risque)
+
+| # | Principe | Bénéfice concret pour RT | Effort |
+|---|----------|--------------------------|--------|
+| 1 | **Arena par thread** pour le *hot path* (rayons, `HitRecord`, file de tuiles) | le rendu multithread **ne touche jamais `malloc`** → pas de contention de l'allocateur *ptmalloc* (verrou par thread), meilleure localité cache, et **valgrind propre par construction** (exigence « no memory leaks ») | 1 j |
+| 2 | **Framebuffer et tuiles préalloués une seule fois** | zéro allocation par frame ; mémoire **préditable** : `W × H × 4` octets | déjà partiel |
+| 3 | **`static_assert(sizeof(…))`** sur `Ray`, `HitRecord`, `Tuile` | détecte toute croissance silencieuse d'une structure dans la boucle | 1 h |
+| 4 | **Convention `init/reset/clear`** | recharger une scène ou réinitialiser l'état **sans realloc** → parfait pour l'item *Environment 3* (interaction live) | 2 h |
+| 5 | **Cibles `asan`/`tsan`/`fast`/`compdb`** | **TSan est critique** : les tuiles sont partagées entre threads | 1 h |
+| 6 | **Benchmarks avec variance** (idée du `TODO.md` de Webserv : *« un profiler doit prendre la variance en compte »*) | item *Technical effects* « le rendu est vraiment rapide » : 10 runs + écart-type, pas un ressenti | 2 h |
+| 7 | **Invariants mémoire documentés** (style *Padding Invariants*) | preuve d'organisation et de rigueur → *Group organization* + crédibilité | 2 h |
+
+### ⚠️ À adapter
+
+| # | Principe | Adaptation requise |
+|---|----------|--------------------|
+| 8 | **Tailles fixes** | OK pour les **structures** ; mauvais pour les **données de scène** (objets/textures inconnus à l'avance). Solution : capacité déclarée dans le fichier (`limits { max_objects 256 }`) + **erreur propre si dépassée** |
+| 9 | **Codes de retour au lieu d'exceptions** | leur `Status.hpp` / `result.hpp` est un bon modèle pour le **parser** — mais il faut être **cohérent** : soit on migre tout, soit on garde les exceptions. Voir §3 |
+| 10 | **LUT *branchless*** | utile pour les patterns (`checker`, `perlin`), tables de couleurs, index de matériau — pas pour tout |
+| 11 | **« 16 Ko par connexion »** | équivalent RT : **« N octets par pixel/tuile »** budgété à l'avance, affiché dans l'UI |
+
+### ❌ À refuser
+
+| # | Principe | Pourquoi |
+|---|----------|----------|
+| 12 | **64 Mo statiques globaux** | nos scènes sont *data-driven* ; allouer selon la résolution et la scène |
+| 13 | **Supprimer RAII partout** | SDL, fichiers, textures PNG = **ressources OS** → RAII obligatoire, sinon fuites de *handles* |
+| 14 | **SIMD écrite à la main partout** | conclusion de leurs propres auteurs : *« definitely not worth the headache »* ; le `__m128d` déjà présent dans `src/core/Vec3.cpp` suffit tant qu'il est testé |
+| 15 | **Boucle `epoll`** | Webserv est *I/O-bound*, RT est *CPU-bound* ; notre boucle SDL + drapeaux `dirty` est déjà le bon modèle |
+| 16 | **`-fno-exceptions` brut** | incompatible avec le code actuel **et** avec la règle « aucun arrêt inattendu → 0 » |
+
+---
+
+## 3. 🚨 Bug repéré : exceptions dans la boucle de rendu
+
+### 3.1 Le constat
+
+Des exceptions sont levées **au cœur du calcul**, dans des chemins atteignables à chaque rayon :
+
+| Fichier | Code |
+|---------|------|
+| `src/core/Vec3.cpp` | `if (std::abs(scalar) <= EPSILON) throw std::runtime_error("Division by zero in Vec3::operator/");` |
+| `src/core/Vec3.cpp` | `if (mag <= EPSILON) throw std::runtime_error("Cannot normalize zero-length vector");` (×2) |
+| `src/core/Matrix4x4.cpp` | `throw std::runtime_error("Matrix4x4::inverse singular matrix");` |
+| `src/core/Ray.cpp`, `src/scene/Camera.cpp` | `try { … }` imbriqués dans la génération de rayons |
+
+### 3.2 Pourquoi c'est un risque « note = 0 »
+
+Direction nulle après une réfraction dégénérée, normale nulle sur un sommet de cône, matrice
+singulière après une transformation d'objet → exception levée dans `trace()` → si elle n'est
+pas attrapée **au bon niveau** : `std::terminate` → `abort` →
+> « no segfault, nor other **unexpected, premature, uncontrolled or unexpected termination**
+> of the program, else the final grade is **0** » ([SPECIFICATIONS.md §4.1](SPECIFICATIONS.md)).
+
+Un `catch` trop large a l'inverse du problème : il **masque** le bug et produit une image
+incorrecte sans prévenir.
+
+### 3.3 Correctifs (à faire avant tout le reste — priorité P0)
+
+| Option | Fait | Recommandation |
+|--------|------|----------------|
+| **A. Comportement défini sans exception** | `operator/` par un scalaire quasi nul → renvoyer le vecteur inchangé ou `Vec3{0,0,0}` documenté ; `normalize()` d'un vecteur nul → renvoyer `(0,0,0)` + `frontFace` corrigé | **✔ recommandé** pour les chemins chauds : c'est exactement l'esprit « sentinel sans branche » de Webserv |
+| **B. Code d'erreur propagé** | `intersect()` renvoie `bool`/`std::optional`, pas d'exception | pour le **parser** et le chargement de fichiers (déjà le cas : `reportError()`) |
+| **C. Garde-fou unique** | un `try/catch` **au niveau `Renderer::render()`** seulement, avec message clair + code retour non nul | filet de sécurité, **pas** le mécanisme principal |
+
+**Ordre de traitement :** A sur `Vec3`/`Matrix4x4` → vérifier `Ray.cpp`/`Camera.cpp` → C en
+filet de sécurité → tester avec une scène volontairement dégénérée.
+
+---
+
+## 4. Plan mémoire concret pour RT
+
+### 4.1 Ce qui doit être alloué **une fois** au démarrage
+
+| Bloc | Taille | Remarque |
+|------|--------|----------|
+| Framebuffer | `W × H × 4` | 1920×1080 → **8 Mo** |
+| Trames de travail (par thread) | `nthreads × (rayons + HitRecords)` | arena de 1–4 Mo par thread |
+| Scène | `maxObjects × sizeof(AObject)` + lumières | capacité déclarée dans le fichier |
+| BVH | `2 × maxObjects × sizeof(BVNode)` | reconstruite uniquement quand `objectVersion` change |
+| Cache de textures | `Σ (w × h × 3)` | **poinsons partagés `shared_ptr`**, sinon fuite |
+| File de tuiles | `nTuiles × sizeof(Tuile)` | `static_assert` sur `sizeof(Tuile)` |
+
+### 4.2 Ce qui ne doit **jamais** allouer pendant le rendu
+
+```
+Renderer::render()
+ └─ par pixel : Ray, HitRecord          → trames locales (registres / arena)
+ └─ par lumière : calculs scalaires     → aucune allocation
+ └─ récursion : rayons réfléchis/réfractés → pile + profondeur bornée
+ └─ écriture : framebuffer[i]           → mémoire déjà réservée
+```
+
+**Règle à écrire dans le code et à vérifier** : *aucun appel à `malloc`/`new`/`std::vector::push_back`
+dans `src/rendering/`, `src/geometry/`, `src/core/`* (hors construction de scène).
+
+### 4.3 Ce qui reste libre (data-driven)
+
+| Élément | Pourquoi | Comment |
+|---------|----------|---------|
+| Scène (objets, lumières, matériaux) | nombre inconnu à l'avance | `std::vector` avec `reserve()` à la capacité annoncée |
+| Textures | fichiers externes | cache `std::map<path, shared_ptr<Texture>>` + RAII |
+| Fenêtre / contexte SDL | ressources OS | RAII (destructeur = `SDL_Destroy*`) |
+| Images exportées | ponctuel | RAII fichier |
+
+> **Pourquoi ne pas tout fixer ?** Parce que nous devons pouvoir charger une scène créée par le
+> correcteur pendant la démo : une capacité **déclarée dans le fichier** + une erreur propre
+> si elle est dépassée donne la prévisibilité de Webserv **sans** la rigidité d'une constante
+> globale.
+
+### 4.4 Mesures à publier (item *Technical effects* « vraiment rapide »)
+
+| Métrique | Outil | Où l'afficher |
+|----------|-------|---------------|
+| Temps de rendu, rays/s | compteurs déjà présents (`bvhCount`, `shadowRayCount`) | UI + logs |
+| Variance sur 10 runs | `hyperfine --runs 10 './rt scenes/x.rt --out /tmp/x.png'` | doc de benchmark |
+| Mémoire pic | `/usr/bin/time -v` (RSS) | README |
+| Fuites | `valgrind --leak-check=full` | CI |
+| Races | **TSan** | CI |
+| Cache misses | `perf stat -e cache-misses,cycles,instructions` | si `perf` dispo (absent ici) |
+
+---
+
+## 5. Cibles Makefile à copier
+
+```make
+# À ajouter au Makefile de RT (inspiré de Webserv)
+DEBUG = -g -O0 -DDEBUG_MODE -Wpedantic -Wcast-qual -Wfloat-equal -Wsign-conversion
+ASAN  = -fsanitize=address,undefined -fno-omit-frame-pointer
+TSAN  = -fsanitize=thread -fno-omit-frame-pointer
+FAST  = -march=native -O3 -ffast-math -fstrict-aliasing
+
+debug:  CXXFLAGS += $(DEBUG)
+debug:  clean all
+
+asan:   CXXFLAGS += $(DEBUG) $(ASAN)
+asan:   LDFLAGS  += $(ASAN)
+asan:   clean all
+
+tsan:   CXXFLAGS += $(DEBUG) $(TSAN)      # INDISPENSABLE : rendu multithread
+tsan:   LDFLAGS  += $(TSAN)
+tsan:   clean all
+
+fast:   CXXFLAGS += $(FAST)               # pour l'item "really fast"
+fast:   clean all
+
+compdb: | $(BUILD_DIR)
+	bear --output compile_commands.json -- $(MAKE) clean all   # alimente clangd
+```
+
+> ⚠ `-ffast-math` peut briser les NaN/infinais nécessaires à certaines détections de
+> discrimination : à valider sur les tests avant de l'adopter comme build de démonstration.
+
+---
+
+## 6. Comment en parler à la soutenance
+
+| Question probable | Réponse préparée |
+|-------------------|------------------|
+| « D'où viennent ces techniques ? » | Analyse d'un serveur HTTP écrit par l'équipe (Webserv) : arenas à bump allocator, pool à bitmaps, POD réinitialisable — nous en avons repris **le principe d'allocation déterministe**, pas le code |
+| « Pourquoi ne pas tout allouer dynamiquement ? » | Pendant le rendu, un `malloc` par rayon coûterait plus que le calcul lui-même (verrouillage par thread) ; en plus, la mémoire devient **prévisible** : on sait exactement combien de mémoire une scène consomme avant de la lancer |
+| « Montre-moi la preuve qu'il n'y a pas de fuite » | `valgrind` sur toutes les scènes + `ASan` + règle « aucune allocation dans le hot path » vérifiée par revue |
+| « Pourquoi avoir gardé des `std::vector` ? » | Les données de scène sont *data-driven* : imposer une taille fixe rendrait impossible le chargement d'une scène inconnue pendant la démo |
+| « Tu utilises l'IA ? » | Voir [PLAN_TRAVAIL.md §5](PLAN_TRAVAIL.md) : transparence sur ce qui a été généré, relu et compris |
+
+---
+
+## Voir aussi
+
+- Contrainte mémoire du sujet : [SPECIFICATIONS.md §2](SPECIFICATIONS.md)
+- Architecture et hot path : [ARCHITECTURE.md §4](ARCHITECTURE.md)
+- Outils de mesure et de qualité : [OUTILS.md](OUTILS.md)
+- Rendu distribué : [DISTRIBUTED_RENDERING.md](DISTRIBUTED_RENDERING.md)
+- Organisation et preuves : [PLAN_TRAVAIL.md](PLAN_TRAVAIL.md)

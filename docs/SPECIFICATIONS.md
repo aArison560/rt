@@ -450,3 +450,15 @@ PRIORITÉ 3 — Gros effort / à réserver au dernier temps :
 
 La ventilation détaillée (implémentation, fichiers touchés, test de preuve) se trouve dans
 **[OPTIONS_GUIDE.md](OPTIONS_GUIDE.md)**.
+
+Documents d'accompagnement :
+
+| Besoin | Document |
+|--------|----------|
+| Architecture, algorithmes, format de scène | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Planning, rôles, règles de collaboration | [PLAN_TRAVAIL.md](PLAN_TRAVAIL.md) |
+| Environnement, outils de qualité et de mesure | [OUTILS.md](OUTILS.md) |
+| Stratégie mémoire (« hot path » sans allocation) | [MEMORY_STRATEGY.md](MEMORY_STRATEGY.md) |
+| Rendu sur plusieurs machines (2 pts *Clustering*) | [DISTRIBUTED_RENDERING.md](DISTRIBUTED_RENDERING.md) |
+| Transferts d'architecture depuis Blender | [INSPIRATION_BLENDER.md](INSPIRATION_BLENDER.md) |
+| Déroulement de la démonstration | [CHECKLIST_DEFENSE.md](CHECKLIST_DEFENSE.md) |

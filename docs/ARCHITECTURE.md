@@ -437,6 +437,9 @@ outils ») imposent une vraie surface d'interaction.
 
 ## 8. Performance : BVH, multithreading, tiling
 
+> Outils de mesure, sanitizers et cibles Makefile : **[OUTILS.md](OUTILS.md)**.
+> Stratégie mémoire et « hot path » sans allocation : **[MEMORY_STRATEGY.md](MEMORY_STRATEGY.md)**.
+
 ### 8.1 BVH
 
 - Structure construite une fois par version de scène (`Scene::getObjectVersion()` incrémente à
@@ -512,7 +515,7 @@ c'est faux ».
 | Natifs (paraboloïde, hyperboloïde) | Nouvelle classe `AObject` : forme quadratique générique `ax² + by² + cz² + … = 0` |
 | Tore / Möbius | Quartique (tore) — résolution par Newton sur le polynôme de degré 4 |
 | Fichiers `.pov`/`.3ds` | Importeur **converti vers primitives équationnelles** (jamais de triangles pour les objets du mandat) |
-| Cluster | Découpage d'image par tuiles → exécutions `rt --tile x y w h -o out.png` + montage |
+| Cluster | Découpage d'image par tuiles → exécutions `rt --tile x y w h -o out.png` + montage — **guide complet : [DISTRIBUTED_RENDERING.md](DISTRIBUTED_RENDERING.md)** |
 | Caustics / GI | Estimation de photon mapping ou bidirectionnelle — **hors périmètre raisonnable** sauf temps excédentaire |
 
 ---

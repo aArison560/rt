@@ -202,6 +202,10 @@ Remplir **avant** la soutenance. Colonne « commande » = ce qu'on tape devant l
 - [ ] `make fclean && make` → **0 warning**, 0 erreur
 - [ ] `make test` → tous les tests verts
 - [ ] `valgrind --leak-check=full ./rt scenes/<chacune>.rt 100 100` → **0 fuite**
+- [ ] `make asan` (ASan + UBSan) et **`make tsan`** (rendu multithread) → 0 erreur
+      → flags et cibles : [OUTILS.md §8](OUTILS.md)
+- [ ] **Aucune exception** n'est levée dans la boucle de rendu
+      (`Vec3::operator/`, `normalize()`, `Matrix4x4::inverse()`) → [MEMORY_STRATEGY.md §3](MEMORY_STRATEGY.md)
 - [ ] `./rt` sans argument → comportement défini (message d'aide ou scène par défaut), **pas de crash**
 - [ ] `./rt fichier_inexistant.rt` → message d'erreur + exit code ≠ 0, **pas de crash**
 - [ ] `./rt fichier_corrompu.rt` → message avec **numéro de ligne**, **pas de crash**

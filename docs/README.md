@@ -23,6 +23,8 @@ En cas d'écart entre les deux, la fiche d'évaluation prime pour l'organisation
 
 ## 2. Ordre de lecture conseillé
 
+### Documents principaux (ordre imposé)
+
 | # | Document | À lire quand | Réponse à la question |
 |---|----------|--------------|------------------------|
 | 1 | **[SPECIFICATIONS.md](SPECIFICATIONS.md)** | Immédiatement | *Que faut-il faire, et combien de points ça vaut ?* |
@@ -31,13 +33,26 @@ En cas d'écart entre les deux, la fiche d'évaluation prime pour l'organisation
 | 4 | **[OPTIONS_GUIDE.md](OPTIONS_GUIDE.md)** | Pendant le développement | *Comment implémenter chaque option, et comment la prouver ?* |
 | 5 | **[CHECKLIST_DEFENSE.md](CHECKLIST_DEFENSE.md)** | 2 semaines avant la soutenance | *Sommes-nous prêts ? Comment dérouler la démonstration ?* |
 
+### Documents d'approfondissement (au fil du projet)
+
+| # | Document | À lire quand | Réponse à la question |
+|---|----------|--------------|------------------------|
+| 6 | **[OUTILS.md](OUTILS.md)** | Configuration de l'environnement | *Quels outils installer et pour quoi faire ?* |
+| 7 | **[MEMORY_STRATEGY.md](MEMORY_STRATEGY.md)** | Avant d'optimiser la mémoire | *Faut-il suivre la méthode « sans malloc » de Webserv ?* |
+| 8 | **[DISTRIBUTED_RENDERING.md](DISTRIBUTED_RENDERING.md)** | Après le jalon J2 | *Comment lancer les calculs sur d'autres PC (2 points) ?* |
+| 9 | **[INSPIRATION_BLENDER.md](INSPIRATION_BLENDER.md)** | Pour consolider le design | *Comment un logiciel 3D de référence est-il architecturé ?* |
+
 ```
-SPECIFICATIONS  ──►  ARCHITECTURE  ──►  OPTIONS_GUIDE
-       │                   │                   │
-       └──────────►  PLAN_TRAVAIL  ◄────────────┘
-                            │
-                            ▼
-                   CHECKLIST_DEFENSE
+SPECIFICATIONS ──► ARCHITECTURE ──► OPTIONS_GUIDE ──► CHECKLIST_DEFENSE
+       │                │                                     ▲
+       └──────────► PLAN_TRAVAIL ◄─────────────────────────────┘
+                        │
+        ┌───────────────┼────────────────┐
+        ▼               ▼                ▼
+     OUTILS   MEMORY_STRATEGY   DISTRIBUTED_RENDERING
+                                          │
+                                          ▼
+                                  INSPIRATION_BLENDER
 ```
 
 ---
