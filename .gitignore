@@ -36,7 +36,7 @@
 *.exe
 *.out
 *.app
-rt*
+/rt
 
 # debug information files
 *.dwo
