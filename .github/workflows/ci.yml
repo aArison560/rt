@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: build, tests et valgrind
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer les dépendances
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev libpng-dev libjpeg-dev g++-14 valgrind
+
+      - name: Build (0 warning, -Werror)
+        run: make re CC=g++-14
+
+      - name: Tests
+        run: make test CC=g++-14
+
+      - name: Valgrind (0 fuite)
+        run: valgrind --leak-check=full --error-exitcode=1 ./rt --version
+
+  sanitizers:
+    name: address + undefined
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer g++-14
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-14
+
+      - name: Build ASan/UBSan
+        run: make asan CC=g++-14
+
+      - name: Tests sous sanitizers
+        run: make test CC=g++-14
+
+      - name: Exécution sous ASan/UBSan
+        run: ./rt
