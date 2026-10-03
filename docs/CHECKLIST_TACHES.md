@@ -228,7 +228,7 @@ rt/
 ### Phase P0 — Fondations du dépôt
 
 #### T000 ✅ — Valider le point de départ
-> **Fait le** : 2026-10-03 · **Commit** : 7a638f6
+> **Fait le** : 2026-10-03 · **Commit** : 2997efa
 - **Prompt** : « Vérifie l'état du dépôt avant de commencer : `git branch --show-current` = `dev`, `git status` propre, `docs/CHECKLIST_TACHES.md` présent et lisible, `main` inchangé (archive v1), aucun fichier de code résiduel (`src/`, `include/`, `tests/` absents de `dev`). Liste ce qui manque pour démarrer un projet C++23 propre. »
 - **Dépend** : — · **Sert** : organisation · **Doc** : [README.md](README.md)
 - **DoD** : rapport court écrit ; `git status` propre ; branche `dev`.
