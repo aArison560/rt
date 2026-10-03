@@ -23,6 +23,10 @@ En cas d'écart entre les deux, la fiche d'évaluation prime pour l'organisation
 
 ## 2. Ordre de lecture conseillé
 
+> **Point d'entrée opérationnel** : **[CHECKLIST_TACHES.md](CHECKLIST_TACHES.md)** — le projet
+> repart de zéro sur la branche `dev` ; chaque session OpenCode y reprend la prochaine tâche `⬜`
+> et met le fichier à jour après l'avoir réalisée.
+
 ### Documents principaux (ordre imposé)
 
 | # | Document | À lire quand | Réponse à la question |
