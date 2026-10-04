@@ -11,8 +11,7 @@
 //        de la mémoire brute, l'appelant place ses objets (placement new)
 //        ou utilise FixedVector qui value-initialise.
 
-#ifndef RT_BASE_ARENA_HPP
-#define RT_BASE_ARENA_HPP
+#pragma once
 
 #include <array>
 #include <cstddef>
@@ -94,5 +93,3 @@ template <typename T, std::size_t N> class FixedVector {
 };
 
 } // namespace rt
-
-#endif // RT_BASE_ARENA_HPP
