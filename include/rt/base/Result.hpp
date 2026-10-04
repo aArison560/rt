@@ -37,19 +37,21 @@ template <typename T> class Result {
     [[nodiscard]] const Status& status() const noexcept { return status_; }
     [[nodiscard]] bool hasValue() const noexcept { return value_.has_value(); }
 
-    // Précondition : `isOk()` (vérifiée par l'appelant, pas d'exception).
+    // Précondition : `isOk()` (vérifiée par l'appelant, pas d'exception) ; le
+    // NOLINT porte sur la ligne fautive (clang-tidy 19 ignore un NOLINT placé
+    // après l'accolade fermante).
     [[nodiscard]] const T& value() const noexcept {
-	return *value_;
-    } // NOLINT(bugprone-unchecked-optional-access)
+	return *value_; // NOLINT(bugprone-unchecked-optional-access)
+    }
     [[nodiscard]] T& value() noexcept {
-	return *value_;
-    } // NOLINT(bugprone-unchecked-optional-access)
+	return *value_; // NOLINT(bugprone-unchecked-optional-access)
+    }
     [[nodiscard]] const T& operator*() const noexcept {
-	return *value_;
-    } // NOLINT(bugprone-unchecked-optional-access)
+	return *value_; // NOLINT(bugprone-unchecked-optional-access)
+    }
     [[nodiscard]] T& operator*() noexcept {
-	return *value_;
-    } // NOLINT(bugprone-unchecked-optional-access)
+	return *value_; // NOLINT(bugprone-unchecked-optional-access)
+    }
     [[nodiscard]] const T* operator->() const noexcept { return value_.operator->(); }
     [[nodiscard]] T* operator->() noexcept { return value_.operator->(); }
 
