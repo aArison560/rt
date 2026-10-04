@@ -142,7 +142,8 @@ Détails et script complet : [DISTRIBUTED_RENDERING.md](DISTRIBUTED_RENDERING.md
 
 | Outil | Usage |
 |-------|-------|
-| `make test` → `./rt_test` | tests unitaires (Catch2) |
+| `make test` → `./rt_test` | tests unitaires (Catch2, vendored dans `thirdparty/catch2/`) |
+| `make test-asan` → `./rt_test_asan` | mêmes tests sous ASan/UBSan |
 | **GitHub Actions / GitLab CI** | à chaque push : `make && make test && valgrind` → le dépôt est **toujours** vert |
 | `./scripts/check_env.sh` | vérifie l'environnement avant une session de travail |
 | **pre-commit** (optionnel) | bloque un push si `make` échoue |

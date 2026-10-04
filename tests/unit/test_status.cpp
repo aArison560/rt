@@ -1,9 +1,10 @@
-// Tests de `rt::Status`, `rt::Result<T>` et `rt::log` (T015).
-// Programme autonome (Catch2 en T017) : renvoie ≠ 0 si un contrôle échoue.
+// Tests de `rt::Status`, `rt::Result<T>` et `rt::log` (T015), Catch2 (T017).
 
-#include <cstdlib>
+#define _POSIX_C_SOURCE 200809L // setenv/unsetenv avec -std=c++2c strict
+
+#include <catch2/catch_amalgamated.hpp>
+
 #include <exception>
-#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -12,18 +13,6 @@
 #include "rt/base/Log.hpp"
 #include "rt/base/Result.hpp"
 #include "rt/base/Status.hpp"
-
-namespace {
-
-int g_failures = 0;
-
-#define CHECK(cond)                                                                                \
-    do {                                                                                           \
-	if (!(cond)) {                                                                             \
-	    ++g_failures;                                                                          \
-	    std::cerr << "FAIL line " << __LINE__ << ": " #cond << '\n';                           \
-	}                                                                                          \
-    } while (false)
 
 // --- Propagation sur 3 niveaux (Status) --------------------------------------------------
 rt::Status level1Status(bool fail) {
@@ -104,113 +93,107 @@ int runWithUnknownFilet(bool doThrow) {
     }
 }
 
-} // namespace
+TEST_CASE("Status et Result<T> sont trivialement déplaçables", "[status]") {
+    static_assert(std::is_move_constructible_v<rt::Result<int>>);
+    static_assert(std::is_move_constructible_v<rt::Status>);
+    SUCCEED();
+}
 
-int main() {
+TEST_CASE("Status : ok vs erreur", "[status]") {
     using namespace rt;
 
-    static_assert(std::is_move_constructible_v<Result<int>>);
-    static_assert(std::is_move_constructible_v<Status>);
+    const Status ok = Status::ok();
+    REQUIRE(ok.isOk());
+    REQUIRE_FALSE(ok.isError());
+    REQUIRE(ok.code == StatusCode::Ok);
 
-    // --- Status : ok vs erreur ------------------------------------------------------------
-    {
-	const Status ok = Status::ok();
-	CHECK(ok.isOk());
-	CHECK(!ok.isError());
-	CHECK(ok.code == StatusCode::Ok);
-    }
-    {
-	const Status err = RT_ERROR(StatusCode::InvalidArgument, "bad width");
-	CHECK(err.isError());
-	CHECK(!err.isOk());
-	CHECK(err.code == StatusCode::InvalidArgument);
-	CHECK(!err.message.empty()); // aucun chemin d'erreur muet
-	CHECK(err.message == "bad width");
-	CHECK(err.line > 0);
-	CHECK(toString(err.code) == "invalid_argument");
-    }
-    CHECK(toString(StatusCode::Ok) == "ok");
-    CHECK(toString(StatusCode::Unknown) == "unknown");
+    const Status err = RT_ERROR(StatusCode::InvalidArgument, "bad width");
+    REQUIRE(err.isError());
+    REQUIRE_FALSE(err.isOk());
+    REQUIRE(err.code == StatusCode::InvalidArgument);
+    REQUIRE_FALSE(err.message.empty()); // aucun chemin d'erreur muet
+    REQUIRE(err.message == "bad width");
+    REQUIRE(err.line > 0);
+    REQUIRE(toString(err.code) == "invalid_argument");
+    REQUIRE(toString(StatusCode::Ok) == "ok");
+    REQUIRE(toString(StatusCode::Unknown) == "unknown");
+}
 
-    // --- Result<T> : valeur et erreur -------------------------------------------------------
-    {
-	const Result<int> good = Result<int>::ok(7);
-	CHECK(good.isOk());
-	CHECK(good.hasValue());
-	CHECK(good.value() == 7);
-	CHECK((*good) == 7);
-	CHECK(good.status().isOk());
-	CHECK(good.valueOr(0) == 7);
-    }
-    {
-	const Result<int> bad = Result<int>::fail(RT_ERROR(StatusCode::NotFound, "no texture"));
-	CHECK(bad.isError());
-	CHECK(!bad.hasValue());
-	CHECK(bad.status().code == StatusCode::NotFound);
-	CHECK(!bad.status().message.empty());
-	CHECK(bad.valueOr(99) == 99);
-    }
-    {
-	// Déplacement : le contenu suit, sans exception.
-	Result<std::string> src = Result<std::string>::ok("hello");
-	const Result<std::string> dst = std::move(src);
-	CHECK(dst.isOk());
-	CHECK(dst.value() == "hello");
-    }
-    {
-	// Défaut = erreur explicite, jamais un succès silencieux sans valeur.
-	const Result<int> empty;
-	CHECK(empty.isError());
-	CHECK(!empty.status().message.empty());
-    }
+TEST_CASE("Result<T> : valeur et erreur", "[status]") {
+    using namespace rt;
 
-    // --- Propagation 3 niveaux --------------------------------------------------------------
-    {
-	CHECK(level3Status(false).isOk());
-	const Status err = level3Status(true);
-	CHECK(err.isError());
-	CHECK(err.code == StatusCode::ParseError);
-	CHECK(err.message == "level1 failed"); // message d'origine préservé
-	CHECK(err.line > 0);
-    }
-    {
-	const Result<int> good = level3Result(false);
-	CHECK(good.isOk());
-	CHECK(good.value() == 43); // 41 + 1 + 1
-    }
-    {
-	const Result<int> bad = level3Result(true);
-	CHECK(bad.isError());
-	CHECK(bad.status().code == StatusCode::IoError);
-	CHECK(bad.status().message == "disk gone");
-    }
+    const Result<int> good = Result<int>::ok(7);
+    REQUIRE(good.isOk());
+    REQUIRE(good.hasValue());
+    REQUIRE(good.value() == 7);
+    REQUIRE((*good) == 7);
+    REQUIRE(good.status().isOk());
+    REQUIRE(good.valueOr(0) == 7);
 
-    // --- Logger : niveaux et variable d'environnement ----------------------------------------
-    CHECK(std::string(log::levelName(log::Level::Info)) == "info");
-    CHECK(std::string(log::levelName(log::Level::Warning)) == "warning");
-    CHECK(std::string(log::levelName(log::Level::Error)) == "error");
-    CHECK(log::levelFromEnv() == log::Level::Info); // défaut sans RT_LOG
-    ::setenv("RT_LOG", "error", 1);                 // NOLINT(misc-include-cleaner)
-    CHECK(log::levelFromEnv() == log::Level::Error);
-    ::setenv("RT_LOG", "warn", 1); // NOLINT(misc-include-cleaner)
-    CHECK(log::levelFromEnv() == log::Level::Warning);
-    ::setenv("RT_LOG", "info", 1); // NOLINT(misc-include-cleaner)
-    CHECK(log::levelFromEnv() == log::Level::Info);
-    ::unsetenv("RT_LOG"); // NOLINT(misc-include-cleaner)
-    CHECK(log::levelFromEnv() == log::Level::Info);
+    const Result<int> bad = Result<int>::fail(RT_ERROR(StatusCode::NotFound, "no texture"));
+    REQUIRE(bad.isError());
+    REQUIRE_FALSE(bad.hasValue());
+    REQUIRE(bad.status().code == StatusCode::NotFound);
+    REQUIRE_FALSE(bad.status().message.empty());
+    REQUIRE(bad.valueOr(99) == 99);
+
+    // Déplacement : le contenu suit, sans exception.
+    Result<std::string> src = Result<std::string>::ok("hello");
+    const Result<std::string> dst = std::move(src);
+    REQUIRE(dst.isOk());
+    REQUIRE(dst.value() == "hello");
+
+    // Défaut = erreur explicite, jamais un succès silencieux sans valeur.
+    const Result<int> empty;
+    REQUIRE(empty.isError());
+    REQUIRE_FALSE(empty.status().message.empty());
+}
+
+TEST_CASE("propagation d'erreur à travers 3 niveaux", "[status]") {
+    using namespace rt;
+
+    REQUIRE(level3Status(false).isOk());
+    const Status err = level3Status(true);
+    REQUIRE(err.isError());
+    REQUIRE(err.code == StatusCode::ParseError);
+    REQUIRE(err.message == "level1 failed"); // message d'origine préservé
+    REQUIRE(err.line > 0);
+
+    const Result<int> good = level3Result(false);
+    REQUIRE(good.isOk());
+    REQUIRE(good.value() == 43); // 41 + 1 + 1
+
+    const Result<int> bad = level3Result(true);
+    REQUIRE(bad.isError());
+    REQUIRE(bad.status().code == StatusCode::IoError);
+    REQUIRE(bad.status().message == "disk gone");
+}
+
+TEST_CASE("logger : niveaux et variable d'environnement RT_LOG", "[status]") {
+    using namespace rt;
+
+    REQUIRE(std::string(log::levelName(log::Level::Info)) == "info");
+    REQUIRE(std::string(log::levelName(log::Level::Warning)) == "warning");
+    REQUIRE(std::string(log::levelName(log::Level::Error)) == "error");
+    REQUIRE(log::levelFromEnv() == log::Level::Info); // défaut sans RT_LOG
+    ::setenv("RT_LOG", "error", 1);
+    REQUIRE(log::levelFromEnv() == log::Level::Error);
+    ::setenv("RT_LOG", "warn", 1);
+    REQUIRE(log::levelFromEnv() == log::Level::Warning);
+    ::setenv("RT_LOG", "info", 1);
+    REQUIRE(log::levelFromEnv() == log::Level::Info);
+    ::unsetenv("RT_LOG");
+    REQUIRE(log::levelFromEnv() == log::Level::Info);
     // Ces appels ne doivent ni crasher ni lancer (flux unique = stderr).
-    log::info("t015 info probe");
-    log::warn("t015 warn probe");
-    log::error("t015 error probe");
+    log::info("t017 info probe");
+    log::warn("t017 warn probe");
+    log::error("t017 error probe");
+    SUCCEED();
+}
 
-    // --- Filet : une exception devient un code ≠ 0, jamais un crash --------------------------
-    CHECK(runWithFilet(false) == 0);
-    CHECK(runWithFilet(true) == 1);
-    CHECK(runWithUnknownFilet(false) == 0);
-    CHECK(runWithUnknownFilet(true) == 1);
-
-    if (g_failures == 0) {
-	std::cout << "test_status: OK\n";
-    }
-    return g_failures == 0 ? 0 : 1;
+TEST_CASE("filet : une exception devient un code ≠ 0, jamais un crash", "[status]") {
+    REQUIRE(runWithFilet(false) == 0);
+    REQUIRE(runWithFilet(true) == 1);
+    REQUIRE(runWithUnknownFilet(false) == 0);
+    REQUIRE(runWithUnknownFilet(true) == 1);
 }

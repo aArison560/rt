@@ -1,0 +1,9 @@
+# tests/cases/invalid/bad_number.rt — INVALIDE : valeur numérique mal formée
+# (« abc » attendu nombre). Le parser (T022+) doit signaler l'erreur avec sa
+# position, sans crash.
+scene {
+    limits {
+        width abc
+        height 480
+    }
+}

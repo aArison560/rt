@@ -1,0 +1,7 @@
+# tests/cases/invalid/missing_brace.rt — INVALIDE : accolade fermante manquante.
+# Le parser (T022+) doit rejeter ce fichier avec une erreur localisée
+# (fichier:ligne:colonne), sans crash.
+scene {
+    limits {
+        width 640
+        height 480

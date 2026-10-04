@@ -1,0 +1,61 @@
+# tests/cases/valid/group.rt — scène avec groupe d'objets et deux lumières.
+# Format cible (T020). Fixture rejouée par le parser (T022+).
+scene {
+    limits {
+        width 320
+        height 240
+        samples 2
+    }
+    camera {
+        position (0 2 6)
+        target (0 0 0)
+        fov 50
+    }
+    background {
+        color (0.02 0.02 0.05)
+    }
+    lights {
+        light {
+            position (3 5 2)
+            color (1 1 1)
+            intensity 0.8
+        }
+        light {
+            position (-3 3 2)
+            color (0.4 0.5 1)
+            intensity 0.5
+        }
+    }
+    objects {
+        group {
+            name "sol"
+            object {
+                type plane
+                point (0 -1 0)
+                normal (0 1 0)
+                material {
+                    albedo (0.5 0.5 0.5)
+                }
+            }
+        }
+        group {
+            name "boules"
+            object {
+                type sphere
+                center (-1.2 0 0)
+                radius 1
+                material {
+                    albedo (0.9 0.3 0.2)
+                }
+            }
+            object {
+                type sphere
+                center (1.2 0 0)
+                radius 1
+                material {
+                    albedo (0.2 0.3 0.9)
+                }
+            }
+        }
+    }
+}

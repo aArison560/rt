@@ -17,6 +17,25 @@
 | `make compdb` | `compile_commands.json` pour clangd |
 | `sh scripts/check_env.sh` | état de l'environnement (✔ / ✖ / ⚠) |
 
+## Structure des tests (T017)
+
+```
+tests/
+├── unit/          # un fichier test_<module>.cpp par module (Catch2)
+├── integration/   # tests de bout en bout (parser, rendu headless)
+└── cases/         # fixtures .rt : valid/ et invalid/ (+ README)
+```
+
+- **Catch2** est vendored (versionné) dans `thirdparty/catch2/`
+  (`catch_amalgamated.hpp` + `.cpp`, v3.16.0). Ne pas le régénérer à la main.
+- `make test` : build + exécution de `./rt_test` ; **code retour ≠ 0 si échec**.
+- `make test-asan` : mêmes tests compilés/exécutés sous ASan/UBSan
+  (objets et binaire séparés : `obj-test-asan/`, `rt_test_asan`).
+- Les fixtures `tests/cases/` suivent le format cible (T020) et seront rejouées
+  par le parser (T022+) : `valid/` acceptées, `invalid/` rejetées **sans crash**.
+- Les tests sont compilés avec les mêmes flags que le projet
+  (`-Wall -Wextra -Werror`) : aucun warning toléré sur `tests/`.
+
 Outils de formatage : `clang-format` / `clang-tidy` (noms versionnés acceptés :
 `clang-format-19`, `clang-tidy-19`…). Si absent : `sudo apt install clang-format-19 clang-tidy-19`,
 ou surcharge manuelle `make lint CLANG_TIDY=/chemin/vers/clang-tidy`.

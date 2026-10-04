@@ -1,0 +1,9 @@
+# tests/cases/invalid/unknown_directive.rt — INVALIDE : directive inconnue
+# (faute de frappe « witdh »). Le parser (T022+) doit signaler la directive
+# inconnue avec sa position, sans crash.
+scene {
+    limits {
+        witdh 640
+        height 480
+    }
+}

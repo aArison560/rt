@@ -44,6 +44,12 @@
 # Object folders
 obj/
 obj_test/
+obj-test/
+obj-test-asan/
+
+# Test binaries (Catch2, T017)
+rt_test
+rt_test_asan
 
 # Prompt files
 *.pdb

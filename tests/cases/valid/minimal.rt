@@ -1,0 +1,35 @@
+# tests/cases/valid/minimal.rt — scène minimale valide.
+# Format cible (spécifié en T020) : blocs imbriqués {}, commentaires #,
+# nombres, vecteurs (x y z). Fixture rejouée par le parser (T022+).
+scene {
+    limits {
+        width 640
+        height 480
+        samples 4
+    }
+    camera {
+        position (0 1 4)
+        target (0 0 0)
+        fov 60
+    }
+    background {
+        color (0.05 0.05 0.1)
+    }
+    lights {
+        light {
+            position (2 4 3)
+            color (1 1 1)
+            intensity 1.0
+        }
+    }
+    objects {
+        object {
+            type sphere
+            center (0 0 0)
+            radius 1
+            material {
+                albedo (0.8 0.2 0.2)
+            }
+        }
+    }
+}

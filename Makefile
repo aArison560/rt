@@ -27,8 +27,36 @@ $(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
 	$(CC) $(CXXFLAGS) -Iinclude -c $< -o $@
 
-test: $(NAME)
-	@echo "No tests yet (Catch2 integrated in T017)"
+# --- Tests (Catch2 vendored, T017) -----------------------------------------------
+#
+# `rt_test` : binaire de tests = amalgame Catch2 (fournit main) + tests/unit/*.cpp.
+# Le calque `base` est header-only : aucun objet de `src/` à linker pour l'instant.
+# Les flags sont les mêmes que le projet (-Wall -Wextra -Werror exigés sur tests/).
+
+CATCHDIR    = thirdparty/catch2
+TESTDIR     = tests/unit
+TESTBIN     = rt_test
+TEST_OBJDIR = obj-test
+
+TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp)
+TEST_OBJS   = $(TEST_SRCS:%.cpp=$(TEST_OBJDIR)/%.o)
+
+$(TESTBIN): $(TEST_OBJS)
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $(TEST_OBJS) -o $(TESTBIN)
+
+$(TEST_OBJDIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CC) $(CXXFLAGS) -Iinclude -Ithirdparty -c $< -o $@
+
+# Build + exécution ; le code retour de Catch2 (≠ 0 si échec) est propagé.
+test: $(TESTBIN)
+	./$(TESTBIN)
+
+# Tests sous ASan/UBSan : objets et binaire séparés pour ne pas mélanger les
+# jeux de flags (même discipline que asan/tsan/fast).
+test-asan:
+	$(MAKE) test CXXFLAGS="$(CXXFLAGS) $(ASANFLAGS)" LDFLAGS="$(ASANFLAGS)" \
+		TEST_OBJDIR=obj-test-asan TESTBIN=rt_test_asan
 
 # --- Cibles de qualité -------------------------------------------------------
 
@@ -81,9 +109,12 @@ lint:
 clean:
 	rm -rf $(OBJDIR)
 
-fclean: clean
+fclean-test:
+	rm -rf $(TEST_OBJDIR) obj-test-asan rt_test rt_test_asan
+
+fclean: clean fclean-test
 	rm -f $(NAME) compile_commands.json
 
 re: fclean all
 
-.PHONY: all clean fclean re test asan tsan fast compdb format lint
+.PHONY: all clean fclean fclean-test re test test-asan asan tsan fast compdb format lint
