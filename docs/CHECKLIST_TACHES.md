@@ -307,8 +307,8 @@ rt/
 - **Dépend** : T013 · **Sert** : M2, cluster · **Doc** : [DISTRIBUTED_RENDERING.md §2.2](DISTRIBUTED_RENDERING.md)
 - **DoD** : test de couture vert (une image rendue en 2 bandes == image pleine, octet par octet) ; déterminisme sur 3 exécutions.
 
-#### T017 ⬜ — Structure des tests et couverture du noyau
-> **Fait le** : — · **Commit** : —
+#### T017 ✅ — Structure des tests et couverture du noyau
+> **Fait le** : 2026-10-04 · **Commit** : 5b37efa
 - **Prompt** : « Organise `tests/` : `unit/`, `integration/`, `cases/` (fichiers `.rt` valides et invalides). Intègre Catch2 dans `thirdparty/`, branche `make test` (build + exécution, code retour non nul si échec). Ajoute les tests des modules `base` déjà écrits, une cible `make test-asan`. »
 - **Dépend** : T002, T010–T016 · **Sert** : qualité · **Doc** : [OUTILS.md §7](OUTILS.md)
 - **DoD** : `make test` vert et rapide (< 5 s) ; `make test-asan` vert ; la structure est documentée dans `AGENTS.md`.
