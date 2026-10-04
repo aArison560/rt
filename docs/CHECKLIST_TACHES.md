@@ -289,8 +289,8 @@ rt/
 - **Dépend** : T011, T012 · **Sert** : M2 · **Doc** : —
 - **DoD** : tests verts ; tailles des structures consignées dans `docs/ARCHITECTURE.md`.
 
-#### T014 ⬜ — Mémoire : arena et préallocations
-> **Fait le** : — · **Commit** : —
+#### T014 ✅ — Mémoire : arena et préallocations
+> **Fait le** : 2026-10-04 · **Commit** : ab5601c
 - **Prompt** : « Implémente `rt::Arena` (bump allocator : `alloc(n, alignment)`, `reset()`, libération en bloc, O(1), **zéro appel `malloc` après l'initialisation**) dans `include/rt/base/Arena.hpp`, plus `rt::FixedVector<T,N>` (capacité fixe, `push` → code d'erreur si plein). Documente les invariants (style *Padding Invariants* de Webserv) dans `docs/MEMORY_STRATEGY.md §4`. Tests : alignement, reset réutilisable, débordement → code d'erreur et non crash. »
 - **Dépend** : T013 · **Sert** : M1, qualité · **Doc** : [MEMORY_STRATEGY.md §1](MEMORY_STRATEGY.md)
 - **DoD** : tests verts ; `grep -R "new \|malloc" src/rendering src/base` n'affiche rien d'attendu dans le hot path ; ASan propre.
@@ -1135,6 +1135,8 @@ Chaque point doit être tranché **avant** la tâche listée, et le résultat é
 | 2026-10-04 | session 10 | T013 | `include/rt/base/Ray.hpp` : `Ray` (origine, direction, `at(t)`, `depth`), `Interval` (`contains`/`surrounds`/`clamp`/`merged`/`expanded`), `AABB` (`hit` par dalles, `merged`, `padded`), `HitRecord` (`setFaceNormal` → `frontFace` cohérent, plus `materialIndex`/`uv`) ; POD trivialement copiables, tout `noexcept`, aucun `throw` ; `static_assert` taille/copie ; tailles consignées dans `ARCHITECTURE.md` §3.2 (Vec3=12 o, Ray=28 o, Interval=8 o, AABB=24 o, HitRecord=44 o) ; `tests/unit/test_ray.cpp` autonome (hit AABB des 6 côtés, manqué, origine intérieure, frontFace, fusion/padding) ; DoD vert (test exit 0 sous `-Wall -Wextra -Werror`, ASan/UBSan + TSan verts, `make re`/`make test` verts, `make lint` 0 diagnostic, `make format` idempotent) |
 
 | 2026-10-04 | session 8 | T011 | `include/rt/base/Vec.hpp` : `Vec2/Vec3/Vec4` header-only noexcept (+ - * / scalaire/composant, `dot`, `cross` (Vec3), `lengthSquared`/`length`, `normalize`, `reflect`, `refract`, `min`/`max` composantes, `nearZero`) ; politique sentinel documentée (division par `|s| <= kEpsilon` → vecteur inchangé, `normalize` nul → (0,0,0), réflexion totale → (0,0,0)) = correctif du bug v1 §3.3 ; `static_assert(is_trivially_copyable_v)` ×3 ; `tests/unit/test_vec.cpp` autonome (division quasi nulle, vecteur nul, orthogonalité `cross·a == 0`, reflect 45°, refract verre→air + réflexion totale) ; DoD vert (test asan vert, `grep -R "throw" src/base` vide, `make asan` vert, `make lint` 0 diagnostic après `clang-tidy --fix` → 48 `modernize-return-braced-init-list` + 17 `misc-const-correctness`) |
+
+| 2026-10-04 | session 11 | T014 | `include/rt/base/Arena.hpp` : `Arena` bump allocator (stockage `std::vector<std::byte>` alloué une fois au constructeur, `alloc(n, align)` O(1) → `nullptr` si overflow/alignement invalide/n==0, `reset()`, `used/capacity/remaining`) + `FixedVector<T,N>` (`std::array`, `push` → false si plein) ; invariants I1–I5 documentés dans `docs/MEMORY_STRATEGY.md` §4.5 ; `tests/unit/test_arena.cpp` autonome (alignement 8/16, reset réutilisation du même offset, overflow → nullptr sans crash, push plein → false) ; DoD vert (test exit 0 sous `-Wall -Wextra -Werror`, ASan/UBSan vert, grep `src/base` vide, `make lint` 0 diagnostic, `make format` idempotent) |
 
 ---
 
