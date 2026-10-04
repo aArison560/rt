@@ -199,6 +199,13 @@ intersections.
 **Preuve obligatoire** : démontrer qu'une sphère déclarée `(0,0,0)` se rend correctement en
 `(42,42,42)` (exemple littéral du sujet).
 
+> Implémenté (T012) : `include/rt/base/Mat4.hpp` — `rt::Mat4` (produit, transposée,
+> `inverse()` à pivot partiel renvoyant `std::optional`, jamais de throw — `nullopt` si
+> singulier), `rt::Transform` (translate/rotateX/Y/Z/scale/compose) et les helpers
+> `transformPoint` (w=1), `transformVector` (w=0), `transformNormal` (inverse-transposée
+> de la partie 3×3, renormalisée). Approche A retenue : rayons en espace objet,
+> normales via `(M⁻¹)ᵀ`. Tests : `tests/unit/test_mat4.cpp`.
+
 ### 4.4 Modèle d'ombrage (exigence M7)
 
 **Phong** (composantes additivas, pour chaque lumière) :
