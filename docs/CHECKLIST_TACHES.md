@@ -271,8 +271,8 @@ rt/
 - **Dépend** : T005 · **Sert** : M1 · **Doc** : [MEMORY_STRATEGY.md §4](MEMORY_STRATEGY.md)
 - **DoD** : `make test` vert ; 0 warning ; `static_assert` sur quelques cas constexpr.
 
-#### T011 ⬜ — Vec2/Vec3/Vec4 sans exception
-> **Fait le** : — · **Commit** : —
+#### T011 ✅ — Vec2/Vec3/Vec4 sans exception
+> **Fait le** : 2026-10-04 · **Commit** : 8bc4243
 - **Prompt** : « Implémente `rt::Vec2/Vec3/Vec4` (`include/rt/base/Vec.hpp`) : opérateurs arithmétiques, `dot`, `cross`, `length`, `normalize`, `reflect`, `refract`, `min/max`, `nearZero`. **Aucune exception** : `operator/(s)` avec `|s| <= epsilon` renvoie le vecteur inchangé (documenté) et `normalize()` d'un vecteur nul renvoie `(0,0,0)` — voir `docs/MEMORY_STRATEGY.md §3` pour le bug de la v1 à ne pas reproduire. `static_assert(std::is_trivially_copyable_v<Vec3>)`. Tests : division quasi nulle, vecteur nul, orthogonalité. »
 - **Dépend** : T010 · **Sert** : M1 · **Doc** : [MEMORY_STRATEGY.md §3](MEMORY_STRATEGY.md)
 - **DoD** : tests verts ; `grep -R "throw" src/base/` vide ; `make asan` vert.
@@ -1129,6 +1129,8 @@ Chaque point doit être tranché **avant** la tâche listée, et le résultat é
 | 2026-10-04 | session 5 | T004 | `.clang-format` (base LLVM, indent 4, col 100) + `.clang-tidy` (`bugprone-* modernize-* performance-*` + analyzer/cert/misc) versionnés à la racine ; cibles `make format` (**idempotence prouvée** : md5 identique sur 2 passes) et `make lint` (`--warnings-as-errors=*` → 0 diagnostic), noms versionnés `-19`/`-18` détectés, message d'installation sinon ; `AGENTS.md` créé avec la section « Revue de code » (1 relecteur minimum par PR + checklist tests/0 warning/style/doc) ; fix `std::endl` → `'\n'` (`performance-avoid-endl`) ; docs README/OUTILS §2-§8/PLAN_TRAVAIL §4 à jour ; DoD vert (`make re && make test` exit 0) |
 | 2026-10-04 | session 6 | T005 | `docs/ADR/001-decisions.md` : 7 questions tranchées (C++23+Makefile, erreurs par codes + try/catch unique dans `main` = R2, format `.rt` structuré imbriqué pour File++, **arbitrage norminette écrit : non applicable au C++**, calques §2.1, branches `dev`/`main`, répartition Dev A/B/C sur P1–P8) ; `author` à la racine (3 logins, un par ligne) ; points ouverts §4 #1/#2/#8 cochés ; DoD vert |
 | 2026-10-04 | session 7 | T010 | `include/rt/base/Scalar.hpp` : `rt::Real = float` (tranché, ADR-001 §7), `kEpsilon`/`kPi` (`std::numbers::pi_v`)/`kInfinity`, `clamp`/`lerp`/`almostEqual` (abs+rel)/`degreesToRadians`/`radiansToDegrees`, tout `constexpr noexcept` + `static_assert` constexpr ; `tests/unit/test_scalar.cpp` programme autonome (Catch2 reporté à T017) ; DoD vert : `make test` exit 0, 0 warning, `grep -R "throw" src/base` vide, `make asan` vert, `make lint` 0 diagnostic |
+
+| 2026-10-04 | session 8 | T011 | `include/rt/base/Vec.hpp` : `Vec2/Vec3/Vec4` header-only noexcept (+ - * / scalaire/composant, `dot`, `cross` (Vec3), `lengthSquared`/`length`, `normalize`, `reflect`, `refract`, `min`/`max` composantes, `nearZero`) ; politique sentinel documentée (division par `|s| <= kEpsilon` → vecteur inchangé, `normalize` nul → (0,0,0), réflexion totale → (0,0,0)) = correctif du bug v1 §3.3 ; `static_assert(is_trivially_copyable_v)` ×3 ; `tests/unit/test_vec.cpp` autonome (division quasi nulle, vecteur nul, orthogonalité `cross·a == 0`, reflect 45°, refract verre→air + réflexion totale) ; DoD vert (test asan vert, `grep -R "throw" src/base` vide, `make asan` vert, `make lint` 0 diagnostic après `clang-tidy --fix` → 48 `modernize-return-braced-init-list` + 17 `misc-const-correctness`) |
 
 ---
 
