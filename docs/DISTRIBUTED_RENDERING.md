@@ -74,12 +74,28 @@ Sans ces points, aucune stratégie de distribution ne fonctionne correctement.
 
 | Exigence | Pourquoi | Implémentation |
 |----------|----------|----------------|
-| **RNG seedée en coordonnées pixel absolues** | sinon **coutures visibles** aux bords de tuiles (l'antialiasing de la tuile 1 ne voit pas les pixels de la tuile 2) | `seed = hash(globalX, globalY, sampleIndex)` — jamais `hash(localX, localY)` |
+| **RNG seedée en coordonnées pixel absolues** | sinon **coutures visibles** aux bords de tuiles (l'antialiasing de la tuile 1 ne voit pas les pixels de la tuile 2) | `rt::seedFor(globalX, globalY, sample, sceneSeed)` (`include/rt/base/Rng.hpp`, PCG32) — jamais `hash(localX, localY)` |
 | **Mêmes `spp`, même binaire, mêmes scènes** | sinon niveau de bruit hétérogène dans l'image finale | hashes vérifiés par le coordinateur |
 | **`fps`/résolution/FOV identiques** | sinon décalage géométrique entre tuiles | tout vient du même fichier de scène |
 | **Checksum par tuile** | détecter un worker défaillant ou un fichier corrompu | `sha256` du PNG transmis avec |
 | **Idempotence** | une tuile peut être rejouée si un worker meurt | la 1ʳᵉ réponse **vérifiée** gagne, les suivantes sont ignorées |
 | **Fallback local** | jamais de blocage le jour de la démo | 0 worker → rendu local complet |
+
+#### 2.2.1 Implémentation de la graine (T016)
+
+`include/rt/base/Rng.hpp` fournit le contrat ci-dessus, sans allocation et sans exception :
+
+| Élément | Rôle |
+|---------|------|
+| `splitMix64(z)` | finaliseur d'avalanche `constexpr` (Steele et al.) |
+| `seedFor(globalX, globalY, sample, sceneSeed)` | graine 64 bits dépendant **uniquement** des coordonnées absolues |
+| `rngFor(...)` | `Rng` PCG32 déjà seedé pour le pixel `(x, y)` et l'échantillon `sample` |
+| `Rng::nextUint32 / nextFloat / nextRange / discard` | tirages `noexcept`, période 2⁶⁴, état 16 octets (`static_assert`) |
+
+Règle d'or pour les calques supérieurs (`render/`, `sched/`) : la fonction de rendu d'une
+région reçoit des coordonnées **globales** (`x0`, `y0` de l'image, jamais de la tuile).
+`tests/unit/test_rng.cpp` le vérifie en rendant une image de 32×16 px en 2 bandes puis en
+image pleine, et compare les valeurs **octet par octet** (DoD T016).
 
 ### 2.3 Ajouts de build
 
