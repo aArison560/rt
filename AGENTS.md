@@ -63,3 +63,5 @@ Points de vigilance spécifiques au projet :
   `grep -R "throw" src/` doit rester vide hors `src/app/main.cpp`.
 - **Calques** : un calque ne voit que celui du dessous (`render/` ignore SDL et microui).
 - **Preuves** : image = régénérée par script (`scripts/…`), jamais fabriquée à la main.
+- **Journal** : une ligne par session dans [`docs/JOURNAL.md`](docs/JOURNAL.md)
+  (ajoutée en fin de session, jamais réécrite, committée avec le traçage de la tâche).
