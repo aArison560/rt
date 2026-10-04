@@ -123,7 +123,7 @@ git push origin develop
 ```
 
 **Branches** : `main` (stable) ← `develop` (intégration) ← `feature/*`.
-**Checklist PR** : build propre ✔ · tests ✔ · valgrind ✔ · Doxygen ✔ · revue ✔.
+**Checklist PR** : build propre ✔ · tests ✔ · valgrind ✔ · `make format` + `make lint` ✔ · Doxygen ✔ · revue ✔.
 
 **Règle pratique de la semaine** : **merger au moins une fois par jour sur `develop`** pour
 limiter les conflits entre les 3 (jamais de branche qui vit plus de 48 h sans merge).

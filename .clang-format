@@ -1,0 +1,9 @@
+# Style de code RT — base LLVM, ajustée pour l'équipe (voir docs/OUTILS.md §2).
+# Référence d'origine : .clang-format de Webserv (projet voisin, même house style).
+# Application : `make format` (idempotent — une 2e passe ne change rien).
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 100
+UseTab: ForIndentation
+PointerAlignment: Left
+SortIncludes: true

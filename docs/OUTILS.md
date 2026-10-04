@@ -45,17 +45,23 @@ pip install --user hyperfine          # ou : cargo install hyperfine
 |-------|-------|----------|-------------|
 | `g++` / `clang++` | C++23, `-Wall -Wextra -Werror -O2` | `make` | M1 (code C++ moderne) |
 | `make` | build, `clean`, `fclean`, `re`, `test` | `make re` | — |
-| `clang-format` | formatage automatique, style homogène dans l'équipe | `clang-format -i src/**/*.cpp` | *Group organization* |
-| `clang-tidy` | analyse statique (`bugprone`, `modernize`) | `clang-tidy -p build src/**` | qualité de code |
+| `clang-format` | formatage automatique, style homogène dans l'équipe | `make format` | *Group organization* |
+| `clang-tidy` | analyse statique (`bugprone`, `modernize`, `performance`) | `make lint` | qualité de code |
 | `bear` → `compile_commands.json` | alimente **clangd** : autocomplétion, aller-à-la-définition, refs | `make compdb` | vélocité |
 | `clangd` | LSP C++ dans l'éditeur | — | — |
 | `git` | branches `feature/<dev>/<feat>`, revues | voir [PLAN_TRAVAIL.md §4](PLAN_TRAVAIL.md) | *Group organization* |
 
 ```bash
-# Fichier .clang-format à copier depuis Webserv (déjà présent là-bas)
-cp /home/nherimam/Git/Webserv/.clang-format ./clang-format
-cp /home/nherimam/Git/Webserv/.clang-tidy   ./clang-tidy
+# Les deux fichiers de configuration sont versionnés à la racine (créés en T004) :
+#   .clang-format  base LLVM (IndentWidth 4, ColumnLimit 100, tabs d'indentation)
+#   .clang-tidy    bugprone-* modernize-* performance-* + analyzer/cert/misc
+make format   # écrit en place, idempotent
+make lint     # échoue si un diagnostic tombe sur src/ include/ tests/
 ```
+
+> Installe l'outil s'il manque : `sudo apt install clang-format-19 clang-tidy-19`
+> (les noms versionnés `clang-format-19`, `clang-tidy-19`, `…-18` sont détectés
+> automatiquement ; sinon `make lint CLANG_TIDY=/chemin`).
 
 ---
 
@@ -169,12 +175,17 @@ jobs:
 | `make tsan` | `-fsanitize=thread -g -O0` | **obligatoire** (rendu multithread) |
 | `make fast` | `-march=native -O3 -ffast-math` | mesures de performance |
 | `make compdb` | `bear` → `compile_commands.json` | éditeur/clangd |
+| `make format` | `.clang-format` (base LLVM) → reformate en place | avant chaque commit |
+| `make lint` | `.clang-tidy` → analyse statique, 0 diagnostic exigé | avant chaque merge |
 | `make bench` | exécute `hyperfine` sur les scènes de démo | avant la soutenance |
 
-> **État (T002)** : `asan`, `tsan`, `fast`, `compdb` sont **implémentées** dans le `Makefile`.
-> Chaque cible repart de zéro (`$(MAKE) re CXXFLAGS=… LDFLAGS=…`) : pas de mélange d'objets
-> compilés avec des flags différents. `compdb` échoue avec un message explicite si `bear` est absent
-> (le `compile_commands.json` est nettoyé par `make fclean`). `make bench` arrivera avec T019.
+> **État (T002/T004)** : `asan`, `tsan`, `fast`, `compdb`, `format`, `lint` sont **implémentées**
+> dans le `Makefile`. Chaque cible de build repart de zéro (`$(MAKE) re CXXFLAGS=… LDFLAGS=…`) :
+> pas de mélange d'objets compilés avec des flags différents. `compdb` échoue avec un message
+> explicite si `bear` est absent (le `compile_commands.json` est nettoyé par `make fclean`).
+> `format`/`lint` détectent `clang-format`/`clang-tidy` **et** leurs noms versionnés
+> (`-19`, `-18`) et donnent la commande d'installation s'ils manquent ; `make bench` arrivera
+> avec T019.
 
 ---
 

@@ -12,6 +12,8 @@ make asan    # build Address+UBSan (-g -O0) pour déboguer
 make tsan    # build ThreadSanitizer (rendu multithread)
 make fast    # build -O3 -march=native pour les mesures
 make compdb  # compile_commands.json via bear (clangd)
+make format  # reformate le code (.clang-format, idempotent)
+make lint    # analyse statique (.clang-tidy) : 0 diagnostic exigé
 make fclean  # nettoyage complet
 ```
 

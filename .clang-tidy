@@ -1,0 +1,24 @@
+# Analyse statique RT — base : checks demandés par la checklist T004
+# (bugprone-*, modernize-*, performance-*) + les familles utiles de Webserv.
+# Application : `make lint`. Les diagnostics ne doivent jamais augmenter :
+# toute nouvelle anomalie se corrige avant merge (AGENTS.md § Revue de code).
+Checks: >-
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  performance-*,
+  portability-*,
+  clang-analyzer-*,
+  cert-*,
+  -cert-err58-cpp,
+  misc-*,
+  -misc-definitions-in-headers,
+  -misc-non-private-member-variables-in-classes,
+  -misc-use-anonymous-namespace,
+  -misc-use-internal-linkage
+
+WarningsAsErrors: ''
+HeaderFilterRegex: '^(src|include|tests)/'
+FormatStyle: file
