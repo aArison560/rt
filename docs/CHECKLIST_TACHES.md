@@ -265,8 +265,8 @@ rt/
 
 ### Phase P1 — Noyau `base` (maths, mémoire, erreurs, RNG)
 
-#### T010 ⬜ — Scalaires, constantes et utilitaires
-> **Fait le** : — · **Commit** : —
+#### T010 ✅ — Scalaires, constantes et utilitaires
+> **Fait le** : 2026-10-04 · **Commit** : f23169c
 - **Prompt** : « Crée `include/rt/base/Scalar.hpp` : alias `rt::Real` (float ou double, tranché dans l'ADR), `kEpsilon`, `kPi`, `kInfinity`, fonctions `clamp`, `lerp`, `almostEqual(a,b,eps)`, `degrees/radians`. Tout est `constexpr`/`noexcept`, header-only. Tests : `tests/unit/test_scalar.cpp`. »
 - **Dépend** : T005 · **Sert** : M1 · **Doc** : [MEMORY_STRATEGY.md §4](MEMORY_STRATEGY.md)
 - **DoD** : `make test` vert ; 0 warning ; `static_assert` sur quelques cas constexpr.
@@ -1128,6 +1128,7 @@ Chaque point doit être tranché **avant** la tâche listée, et le résultat é
 | 2026-10-03 | session 4 | T003 | `.github/workflows/ci.yml` : jobs `quality` (build+test+valgrind) et `sanitizers` (ASan/UBSan) sur `ubuntu-24.04` avec `g++-14` explicite (GCC 13 refuse `-std=c++2c`) ; CI reproduite verte en conteneur puis **pushée** → run [37125671545](https://github.com/aArison560/rt/actions/runs/37125671545) **success** (2/2 jobs) ; README documenté |
 | 2026-10-04 | session 5 | T004 | `.clang-format` (base LLVM, indent 4, col 100) + `.clang-tidy` (`bugprone-* modernize-* performance-*` + analyzer/cert/misc) versionnés à la racine ; cibles `make format` (**idempotence prouvée** : md5 identique sur 2 passes) et `make lint` (`--warnings-as-errors=*` → 0 diagnostic), noms versionnés `-19`/`-18` détectés, message d'installation sinon ; `AGENTS.md` créé avec la section « Revue de code » (1 relecteur minimum par PR + checklist tests/0 warning/style/doc) ; fix `std::endl` → `'\n'` (`performance-avoid-endl`) ; docs README/OUTILS §2-§8/PLAN_TRAVAIL §4 à jour ; DoD vert (`make re && make test` exit 0) |
 | 2026-10-04 | session 6 | T005 | `docs/ADR/001-decisions.md` : 7 questions tranchées (C++23+Makefile, erreurs par codes + try/catch unique dans `main` = R2, format `.rt` structuré imbriqué pour File++, **arbitrage norminette écrit : non applicable au C++**, calques §2.1, branches `dev`/`main`, répartition Dev A/B/C sur P1–P8) ; `author` à la racine (3 logins, un par ligne) ; points ouverts §4 #1/#2/#8 cochés ; DoD vert |
+| 2026-10-04 | session 7 | T010 | `include/rt/base/Scalar.hpp` : `rt::Real = float` (tranché, ADR-001 §7), `kEpsilon`/`kPi` (`std::numbers::pi_v`)/`kInfinity`, `clamp`/`lerp`/`almostEqual` (abs+rel)/`degreesToRadians`/`radiansToDegrees`, tout `constexpr noexcept` + `static_assert` constexpr ; `tests/unit/test_scalar.cpp` programme autonome (Catch2 reporté à T017) ; DoD vert : `make test` exit 0, 0 warning, `grep -R "throw" src/base` vide, `make asan` vert, `make lint` 0 diagnostic |
 
 ---
 
