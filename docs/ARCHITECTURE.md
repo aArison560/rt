@@ -137,6 +137,14 @@ struct HitRecord {
 `frontFace` est **indispensable** pour la réfraction (orientation de la normale selon le sens de
 traversal) et pour le *shadow bias*.
 
+> Implémenté (T013) : `include/rt/base/Ray.hpp` — `rt::Ray` (origine, direction, `at(t)`,
+> `depth` = génération), `rt::Interval` (`contains`/`surrounds`/`clamp`/`merged`), `rt::AABB`
+> (`hit` par dalles, `merged`, `padded` contre les boîtes dégénérées), `rt::HitRecord`
+> (point, normale orientée contre le rayon via `setFaceNormal`, `t`, `frontFace`,
+> `materialIndex`, `uv`). Tous trivialement copiables et noexcept. Tailles mesurées
+> (g++ 14, `Real = float`) : `Vec3` = 12 o, `Ray` = 28 o, `Interval` = 8 o,
+> `AABB` = 24 o, `HitRecord` = 44 o. Tests : `tests/unit/test_ray.cpp`.
+
 ---
 
 ## 4. Algorithmes cœur
