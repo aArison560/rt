@@ -283,8 +283,8 @@ rt/
 - **Dépend** : T011 · **Sert** : M4 · **Doc** : [ARCHITECTURE.md §4](ARCHITECTURE.md)
 - **DoD** : tests verts (tolérance 1e-5) ; aucun `throw` ; `make asan` vert.
 
-#### T013 ⬜ — Ray, Interval, AABB, HitRecord
-> **Fait le** : — · **Commit** : —
+#### T013 ✅ — Ray, Interval, AABB, HitRecord
+> **Fait le** : 2026-10-04 · **Commit** : 252ab4d
 - **Prompt** : « Crée `rt::Ray` (origine, direction, `at(t)`, profondeur/génération), `rt::Interval` (`tMin/tMax`, `surrounds`, `clamp`), `rt::AABB` (union, hit par axe, `pad`), `rt::HitRecord` (point, normale, `t`, `frontFace`, index de matériau, coordonnées uv). Structures POD compactes avec `static_assert(sizeof(...))`. Tests : hit d'AABB de tous côtés, `frontFace` cohérent selon le sens du rayon. »
 - **Dépend** : T011, T012 · **Sert** : M2 · **Doc** : —
 - **DoD** : tests verts ; tailles des structures consignées dans `docs/ARCHITECTURE.md`.
@@ -1131,6 +1131,8 @@ Chaque point doit être tranché **avant** la tâche listée, et le résultat é
 | 2026-10-04 | session 7 | T010 | `include/rt/base/Scalar.hpp` : `rt::Real = float` (tranché, ADR-001 §7), `kEpsilon`/`kPi` (`std::numbers::pi_v`)/`kInfinity`, `clamp`/`lerp`/`almostEqual` (abs+rel)/`degreesToRadians`/`radiansToDegrees`, tout `constexpr noexcept` + `static_assert` constexpr ; `tests/unit/test_scalar.cpp` programme autonome (Catch2 reporté à T017) ; DoD vert : `make test` exit 0, 0 warning, `grep -R "throw" src/base` vide, `make asan` vert, `make lint` 0 diagnostic |
 
 | 2026-10-04 | session 9 | T012 | `include/rt/base/Mat4.hpp` : `Mat4` (produit, transposée, `determinant`, `inverse()` Gauss-Jordan pivot partiel → `std::optional`, jamais de throw) + `Transform` (translate/rotateX/Y/Z/scale/compose) + `transformPoint` (w=1)/`transformVector` (w=0)/`transformNormal` (inverse-transposée 3×3, renormalisée) ; `static_assert(is_trivially_copyable_v)` ; `tests/unit/test_mat4.cpp` autonome (identité, inverse×matrice ≈ I tolérance 1e-5, singulière → nullopt, ordre de composition, rotation 90°, normale préservée sous scale+rotation non uniforme, longueur conservée) ; ARCHITECTURE.md §4.3 note l'approche A implémentée ; DoD vert (test exit 0 sous -Wall -Wextra -Werror, ASan/UBSan vert, `make lint` 0 diagnostic, `make format` idempotent) |
+
+| 2026-10-04 | session 10 | T013 | `include/rt/base/Ray.hpp` : `Ray` (origine, direction, `at(t)`, `depth`), `Interval` (`contains`/`surrounds`/`clamp`/`merged`/`expanded`), `AABB` (`hit` par dalles, `merged`, `padded`), `HitRecord` (`setFaceNormal` → `frontFace` cohérent, plus `materialIndex`/`uv`) ; POD trivialement copiables, tout `noexcept`, aucun `throw` ; `static_assert` taille/copie ; tailles consignées dans `ARCHITECTURE.md` §3.2 (Vec3=12 o, Ray=28 o, Interval=8 o, AABB=24 o, HitRecord=44 o) ; `tests/unit/test_ray.cpp` autonome (hit AABB des 6 côtés, manqué, origine intérieure, frontFace, fusion/padding) ; DoD vert (test exit 0 sous `-Wall -Wextra -Werror`, ASan/UBSan + TSan verts, `make re`/`make test` verts, `make lint` 0 diagnostic, `make format` idempotent) |
 
 | 2026-10-04 | session 8 | T011 | `include/rt/base/Vec.hpp` : `Vec2/Vec3/Vec4` header-only noexcept (+ - * / scalaire/composant, `dot`, `cross` (Vec3), `lengthSquared`/`length`, `normalize`, `reflect`, `refract`, `min`/`max` composantes, `nearZero`) ; politique sentinel documentée (division par `|s| <= kEpsilon` → vecteur inchangé, `normalize` nul → (0,0,0), réflexion totale → (0,0,0)) = correctif du bug v1 §3.3 ; `static_assert(is_trivially_copyable_v)` ×3 ; `tests/unit/test_vec.cpp` autonome (division quasi nulle, vecteur nul, orthogonalité `cross·a == 0`, reflect 45°, refract verre→air + réflexion totale) ; DoD vert (test asan vert, `grep -R "throw" src/base` vide, `make asan` vert, `make lint` 0 diagnostic après `clang-tidy --fix` → 48 `modernize-return-braced-init-list` + 17 `misc-const-correctness`) |
 
