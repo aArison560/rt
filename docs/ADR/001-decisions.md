@@ -27,6 +27,14 @@
   l'erreur inattendue et renvoie un code ≠ 0 (jamais de crash muet).
 - Justification : latence prévisible, hot path sans coût d'exception, traçage
   systématique des chemins d'erreur (tests de propagation obligatoires, T015).
+- Concrétisation (T015) : `include/rt/base/Status.hpp` (`StatusCode`, `Status`
+  avec `message` + `line`, macro `RT_ERROR` qui capture `__LINE__`),
+  `include/rt/base/Result.hpp` (`Result<T>` déplaçable, sans exception,
+  `fail()` propage le `Status` d'origine), `include/rt/base/Log.hpp`
+  (`rt::log::{info,warn,error}` sur `stderr`, niveau par `RT_LOG`),
+  filet unique dans `src/app/main.cpp`, propagation sur 3 niveaux testée dans
+  `tests/unit/test_status.cpp` (aucun chemin d'erreur muet : message toujours
+  non vide et préservé).
 
 ## 3. Format de scène : **`.rt` structuré imbriqué** (item *File ++*)
 
