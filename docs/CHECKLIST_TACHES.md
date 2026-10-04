@@ -295,8 +295,8 @@ rt/
 - **Dépend** : T013 · **Sert** : M1, qualité · **Doc** : [MEMORY_STRATEGY.md §1](MEMORY_STRATEGY.md)
 - **DoD** : tests verts ; `grep -R "new \|malloc" src/rendering src/base` n'affiche rien d'attendu dans le hot path ; ASan propre.
 
-#### T015 ⬜ — Codes d'erreur, logging et filet de sécurité
-> **Fait le** : — · **Commit** : —
+#### T015 ✅ — Codes d'erreur, logging et filet de sécurité
+> **Fait le** : 2026-10-04 · **Commit** : 618bc81
 - **Prompt** : « Définis `rt::Status` (enum de codes + `message` + `ligne`) et `rt::Result<T>` (petit type déplaçable, sans exception), le logger `rt::log::{info,warn,error}` (flux unique, niveau par variable d'environnement), et l'usage : **toutes** les fonctions du hot path renvoient `Status`/`bool`, `main` possède un unique `try/catch(...)` de filet qui logge et renvoie un code ≠ 0. Écris la règle dans `docs/ADR/001-decisions.md` (rèle R2). Tests : propagation d'erreur à travers 3 niveaux. »
 - **Dépend** : T011 · **Sert** : M1, anti-crash · **Doc** : [MEMORY_STRATEGY.md §3](MEMORY_STRATEGY.md), [SPECIFICATIONS.md §4.1](SPECIFICATIONS.md)
 - **DoD** : `grep -R "throw" src/ | grep -v "app/main"` vide ; le test de filet passe ; aucun chemin d'erreur muet.
@@ -1137,6 +1137,7 @@ Chaque point doit être tranché **avant** la tâche listée, et le résultat é
 | 2026-10-04 | session 8 | T011 | `include/rt/base/Vec.hpp` : `Vec2/Vec3/Vec4` header-only noexcept (+ - * / scalaire/composant, `dot`, `cross` (Vec3), `lengthSquared`/`length`, `normalize`, `reflect`, `refract`, `min`/`max` composantes, `nearZero`) ; politique sentinel documentée (division par `|s| <= kEpsilon` → vecteur inchangé, `normalize` nul → (0,0,0), réflexion totale → (0,0,0)) = correctif du bug v1 §3.3 ; `static_assert(is_trivially_copyable_v)` ×3 ; `tests/unit/test_vec.cpp` autonome (division quasi nulle, vecteur nul, orthogonalité `cross·a == 0`, reflect 45°, refract verre→air + réflexion totale) ; DoD vert (test asan vert, `grep -R "throw" src/base` vide, `make asan` vert, `make lint` 0 diagnostic après `clang-tidy --fix` → 48 `modernize-return-braced-init-list` + 17 `misc-const-correctness`) |
 
 | 2026-10-04 | session 11 | T014 | `include/rt/base/Arena.hpp` : `Arena` bump allocator (stockage `std::vector<std::byte>` alloué une fois au constructeur, `alloc(n, align)` O(1) → `nullptr` si overflow/alignement invalide/n==0, `reset()`, `used/capacity/remaining`) + `FixedVector<T,N>` (`std::array`, `push` → false si plein) ; invariants I1–I5 documentés dans `docs/MEMORY_STRATEGY.md` §4.5 ; `tests/unit/test_arena.cpp` autonome (alignement 8/16, reset réutilisation du même offset, overflow → nullptr sans crash, push plein → false) ; DoD vert (test exit 0 sous `-Wall -Wextra -Werror`, ASan/UBSan vert, grep `src/base` vide, `make lint` 0 diagnostic, `make format` idempotent) |
+| 2026-10-04 | session 12 | T015 | `Status`/`Result<T>`/`log` + filet `main`, propagation 3 niveaux ; DoD vert (`test_status` exit 0 + ASan, `grep throw` hors `main` vide, `make lint` 0 diagnostic, `make format` idempotent) |
 
 ---
 
