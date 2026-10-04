@@ -176,6 +176,21 @@ dans `src/rendering/`, `src/geometry/`, `src/core/`* (hors construction de scèn
 
 ---
 
+### 4.5 Invariants d'`Arena` / `FixedVector` (T014)
+
+Implémentés dans `include/rt/base/Arena.hpp` (header-only) :
+
+| # | Invariant | Conséquence |
+|---|-----------|-------------|
+| I1 | Le stockage est alloué **une seule fois** au constructeur | zéro `malloc`/`new` pendant le rendu (vérifié par grep, DoD T014) |
+| I2 | `alloc()` ne lève **jamais** d'exception : overflow → `nullptr` | conforme R2, pas de `terminate` dans le hot path |
+| I3 | L'alignement demandé doit être une **puissance de 2** (sinon `nullptr`) | pas de UB sur arrondi |
+| I4 | `reset()` invalide **tous** les pointeurs servis depuis la dernière construction | durée de vie des objets bornée par le reset, jamais de pointeur persistant |
+| I5 | `alloc()` renvoie de la mémoire **brute** (placement new / POD trivial) | la responsabilité d'initialisation est explicite |
+
+`FixedVector<T,N>` : capacité fixe, `push` → `false` si plein (code d'erreur,
+jamais de crash), `clear()` → réutilisation sans realloc.
+
 ## 5. Cibles Makefile à copier
 
 > **Implémentées en T002** — recette réelle ci-dessous ; les cibles passent par `$(MAKE) re`
