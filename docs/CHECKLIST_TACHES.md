@@ -301,8 +301,8 @@ rt/
 - **Dépend** : T011 · **Sert** : M1, anti-crash · **Doc** : [MEMORY_STRATEGY.md §3](MEMORY_STRATEGY.md), [SPECIFICATIONS.md §4.1](SPECIFICATIONS.md)
 - **DoD** : `grep -R "throw" src/ | grep -v "app/main"` vide ; le test de filet passe ; aucun chemin d'erreur muet.
 
-#### T016 ⬜ — RNG déterministe par pixel global
-> **Fait le** : — · **Commit** : —
+#### T016 ✅ — RNG déterministe par pixel global
+> **Fait le** : 2026-10-04 · **Commit** : f9bd1c0
 - **Prompt** : « Implémente un générateur rapide (PCG32 ou xoroshiro128+, header-only) avec une fonction `seedFor(globalX, globalY, sample, sceneSeed)` qui ne dépend **que de coordonnées absolues** — indispensable pour que les tuiles d'un rendu distribué s'assemblent sans couture (voir `docs/DISTRIBUTED_RENDERING.md §2.2`). Tests : même entrée → même suite, deux pixels voisins indépendants, et surtout **le même échantillon qu'il soit calculé dans une tuile pleine ou dans une bande**. »
 - **Dépend** : T013 · **Sert** : M2, cluster · **Doc** : [DISTRIBUTED_RENDERING.md §2.2](DISTRIBUTED_RENDERING.md)
 - **DoD** : test de couture vert (une image rendue en 2 bandes == image pleine, octet par octet) ; déterminisme sur 3 exécutions.
@@ -1138,6 +1138,7 @@ Chaque point doit être tranché **avant** la tâche listée, et le résultat é
 
 | 2026-10-04 | session 11 | T014 | `include/rt/base/Arena.hpp` : `Arena` bump allocator (stockage `std::vector<std::byte>` alloué une fois au constructeur, `alloc(n, align)` O(1) → `nullptr` si overflow/alignement invalide/n==0, `reset()`, `used/capacity/remaining`) + `FixedVector<T,N>` (`std::array`, `push` → false si plein) ; invariants I1–I5 documentés dans `docs/MEMORY_STRATEGY.md` §4.5 ; `tests/unit/test_arena.cpp` autonome (alignement 8/16, reset réutilisation du même offset, overflow → nullptr sans crash, push plein → false) ; DoD vert (test exit 0 sous `-Wall -Wextra -Werror`, ASan/UBSan vert, grep `src/base` vide, `make lint` 0 diagnostic, `make format` idempotent) |
 | 2026-10-04 | session 12 | T015 | `Status`/`Result<T>`/`log` + filet `main`, propagation 3 niveaux ; DoD vert (`test_status` exit 0 + ASan, `grep throw` hors `main` vide, `make lint` 0 diagnostic, `make format` idempotent) |
+| 2026-10-04 | session 13 | T016 | `include/rt/base/Rng.hpp` : PCG32 (XSH-RR, état 16 o, période 2⁶⁴) + finaliseur `splitMix64` `constexpr`, `seedFor(globalX, globalY, sample, sceneSeed)` (graines **absolues** uniquement) et `rngFor(...)` ; tout `noexcept`, sans allocation ; 5 `static_assert` (déterminisme + sensibilité par entrée) ; `tests/unit/test_rng.cpp` autonome : même entrée → même suite, voisins 8/8 décorrélés, `nextFloat` ∈ [0,1) sans NaN, **test de couture 32×16 @4 spp comparé octet par octet entre image pleine et 2 bandes**, déterminisme sur 3 exécutions, garde de sensibilité (graine locale ≠ graine absolue) ; `docs/DISTRIBUTED_RENDERING.md` §2.2.1 ajouté ; au passage **fix du filet de qualité** : `NOLINT` de `Result.hpp` mal placé → `make lint` échouait sur `dev` avant toute nouvelle tâche (clang-tidy 19 n'honore un `NOLINT` que sur la ligne fautive), corrigé dans `7d66d92` ; DoD vert (`test_rng` exit 0 sous `-Wall -Wextra -Werror`, 3 runs identiques, ASan/UBSan + TSan verts, `valgrind --leak-check=full --error-exitcode=1` vert, `make re && make test` verts, `make lint` 0 diagnostic, `make format` idempotent, `grep throw`/`new \|malloc` vides dans `Rng.hpp`) |
 
 ---
 
