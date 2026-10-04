@@ -257,8 +257,8 @@ rt/
 - **Dépend** : T001 · **Sert** : *Group organization* · **Doc** : [PLAN_TRAVAIL.md §4](PLAN_TRAVAIL.md)
 - **DoD** : `make format` est idempotent ; `make lint` tourne ; les règles sont écrites et lisibles.
 
-#### T005 ⬜ — ADR-001 : décisions structurantes + fichier `author`
-> **Fait le** : — · **Commit** : —
+#### T005 ✅ — ADR-001 : décisions structurantes + fichier `author`
+> **Fait le** : 2026-10-04 · **Commit** : 62eaef4
 - **Prompt** : « Rédige `docs/ADR/001-decisions.md` tranchant : (1) C++23 et Makefile, (2) gestion d'erreurs = codes dans le hot path + `try/catch` unique dans `main`, (3) format de scène `.rt` **structuré imbriqué** pour l'item *File ++*, (4) arbitrage norminette, (5) découpage en calques de la [section 2.1](#21-calques), (6) stratégie de branches (`dev` = travail, `main` = archive v1), (7) répartition des 3 développeurs sur les phases P1–P8. Crée le fichier `author` à la racine au format du sujet. »
 - **Dépend** : T001 · **Sert** : B2, *Group organization* · **Doc** : [SPECIFICATIONS.md §4.2](SPECIFICATIONS.md), [SPECIFICATIONS.md §8](SPECIFICATIONS.md)
 - **DoD** : l'ADR existe et répond aux 7 questions ; `author` est à la racine, complet (3 noms) ; l'arbitrage norminette est **écrit noir sur blanc**.
@@ -1104,14 +1104,14 @@ Chaque point doit être tranché **avant** la tâche listée, et le résultat é
 
 | # | Point ouvert | À trancher avant | Décision | Statut |
 |---|--------------|------------------|----------|--------|
-| 1 | Format du fichier `author` (B2) | T005 | — | ⬜ |
-| 2 | Applicabilité de la **norminette** (B3) | T005 | — | ⬜ |
+| 1 | Format du fichier `author` (B2) | T005 | Un login 42 par ligne, ordre alphabétique | ✅ |
+| 2 | Applicabilité de la **norminette** (B3) | T005 | Non applicable au C++ ; équivalent clang-format/clang-tidy + confirmation corrigé | ✅ |
 | 3 | Forme exacte du format `.rt` structuré | T020 | — | ⬜ |
 | 4 | Ambiguïté de *Direct light* (headlight vs spot) | T058 | — | ⬜ |
 | 5 | Périphérie graphique autorisée (SDL/GPU vs pure CPU) | T070 | — | ⬜ |
 | 6 | Seuil « vraiment rapide » : que considère-t-on comme rapide ? | T067 | — | ⬜ |
 | 7 | Type de rendu de référence : `float` ou `double` | T010 | — | ⬜ |
-| 8 | Découpage des tâches entre les 3 membres | T005 | — | ⬜ |
+| 8 | Découpage des tâches entre les 3 membres | T005 | Dev A maths/caméra, Dev B géométrie/scène, Dev C rendu/plateforme (ADR-001 §7) | ✅ |
 
 ---
 
@@ -1127,6 +1127,7 @@ Chaque point doit être tranché **avant** la tâche listée, et le résultat é
 | 2026-10-03 | session 3 | T002 | Cibles `asan`/`tsan`/`fast`/`compdb` (rebuild homogène via `$(MAKE) re`, LDFLAGS) + `scripts/check_env.sh` ✔/✖/⚠ avec code retour ; DoD vert (`make asan && ./rt` exit 0, `sh scripts/check_env.sh` exit 0) ; docs OUTILS/MEMORY/README à jour |
 | 2026-10-03 | session 4 | T003 | `.github/workflows/ci.yml` : jobs `quality` (build+test+valgrind) et `sanitizers` (ASan/UBSan) sur `ubuntu-24.04` avec `g++-14` explicite (GCC 13 refuse `-std=c++2c`) ; CI reproduite verte en conteneur puis **pushée** → run [37125671545](https://github.com/aArison560/rt/actions/runs/37125671545) **success** (2/2 jobs) ; README documenté |
 | 2026-10-04 | session 5 | T004 | `.clang-format` (base LLVM, indent 4, col 100) + `.clang-tidy` (`bugprone-* modernize-* performance-*` + analyzer/cert/misc) versionnés à la racine ; cibles `make format` (**idempotence prouvée** : md5 identique sur 2 passes) et `make lint` (`--warnings-as-errors=*` → 0 diagnostic), noms versionnés `-19`/`-18` détectés, message d'installation sinon ; `AGENTS.md` créé avec la section « Revue de code » (1 relecteur minimum par PR + checklist tests/0 warning/style/doc) ; fix `std::endl` → `'\n'` (`performance-avoid-endl`) ; docs README/OUTILS §2-§8/PLAN_TRAVAIL §4 à jour ; DoD vert (`make re && make test` exit 0) |
+| 2026-10-04 | session 6 | T005 | `docs/ADR/001-decisions.md` : 7 questions tranchées (C++23+Makefile, erreurs par codes + try/catch unique dans `main` = R2, format `.rt` structuré imbriqué pour File++, **arbitrage norminette écrit : non applicable au C++**, calques §2.1, branches `dev`/`main`, répartition Dev A/B/C sur P1–P8) ; `author` à la racine (3 logins, un par ligne) ; points ouverts §4 #1/#2/#8 cochés ; DoD vert |
 
 ---
 
