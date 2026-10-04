@@ -251,8 +251,8 @@ rt/
 - **Dépend** : T002 · **Sert** : qualité · **Doc** : [OUTILS.md §7](OUTILS.md)
 - **DoD** : YAML valide ; la CI passe sur la première push ; le workflow est documenté dans `README.md`.
 
-#### T004 ⬜ — Formatage, analyse statique et règles de revue
-> **Fait le** : — · **Commit** : —
+#### T004 ✅ — Formatage, analyse statique et règles de revue
+> **Fait le** : 2026-10-04 · **Commit** : 6d3f290
 - **Prompt** : « Installe `.clang-format` et `.clang-tidy` (bases `LLVM`, checks `bugprone-* modernize-* performance-*`), ajoute la cible `make format` et `make lint`. Écris la section « Revue de code » de `AGENTS.md` : 1 relecteur minimum par PR, checklist (tests, 0 warning, style, doc). »
 - **Dépend** : T001 · **Sert** : *Group organization* · **Doc** : [PLAN_TRAVAIL.md §4](PLAN_TRAVAIL.md)
 - **DoD** : `make format` est idempotent ; `make lint` tourne ; les règles sont écrites et lisibles.
@@ -1126,6 +1126,7 @@ Chaque point doit être tranché **avant** la tâche listée, et le résultat é
 | 2026-10-03 | session 2 | T001 | Arborescence 2.2 + Makefile 42 + `./rt` minimal ; DoD vert (`make re`, exit 0, `make fclean`) ; fix `.gitignore` |
 | 2026-10-03 | session 3 | T002 | Cibles `asan`/`tsan`/`fast`/`compdb` (rebuild homogène via `$(MAKE) re`, LDFLAGS) + `scripts/check_env.sh` ✔/✖/⚠ avec code retour ; DoD vert (`make asan && ./rt` exit 0, `sh scripts/check_env.sh` exit 0) ; docs OUTILS/MEMORY/README à jour |
 | 2026-10-03 | session 4 | T003 | `.github/workflows/ci.yml` : jobs `quality` (build+test+valgrind) et `sanitizers` (ASan/UBSan) sur `ubuntu-24.04` avec `g++-14` explicite (GCC 13 refuse `-std=c++2c`) ; CI reproduite verte en conteneur puis **pushée** → run [37125671545](https://github.com/aArison560/rt/actions/runs/37125671545) **success** (2/2 jobs) ; README documenté |
+| 2026-10-04 | session 5 | T004 | `.clang-format` (base LLVM, indent 4, col 100) + `.clang-tidy` (`bugprone-* modernize-* performance-*` + analyzer/cert/misc) versionnés à la racine ; cibles `make format` (**idempotence prouvée** : md5 identique sur 2 passes) et `make lint` (`--warnings-as-errors=*` → 0 diagnostic), noms versionnés `-19`/`-18` détectés, message d'installation sinon ; `AGENTS.md` créé avec la section « Revue de code » (1 relecteur minimum par PR + checklist tests/0 warning/style/doc) ; fix `std::endl` → `'\n'` (`performance-avoid-endl`) ; docs README/OUTILS §2-§8/PLAN_TRAVAIL §4 à jour ; DoD vert (`make re && make test` exit 0) |
 
 ---
 
