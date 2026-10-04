@@ -1,3 +1,5 @@
+#pragma once
+
 // rt::Arena (T014) — bump allocator O(1), zéro allocation après initialisation.
 //
 // Invariants (style « Padding Invariants » de Webserv) :
@@ -10,8 +12,6 @@
 //   I5 — Aucune construction/destruction implicite de T : alloc() renvoie
 //        de la mémoire brute, l'appelant place ses objets (placement new)
 //        ou utilise FixedVector qui value-initialise.
-
-#pragma once
 
 #include <array>
 #include <cstddef>
