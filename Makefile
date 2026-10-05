@@ -58,7 +58,17 @@ test-asan:
 	$(MAKE) test CXXFLAGS="$(CXXFLAGS) $(ASANFLAGS)" LDFLAGS="$(ASANFLAGS)" \
 		TEST_OBJDIR=obj-test-asan TESTBIN=rt_test_asan
 
+# Tests sous TSan : miroir exact de test-asan (objets et binaire dédiés).
+test-tsan:
+	$(MAKE) test CXXFLAGS="$(CXXFLAGS) $(TSANFLAGS)" LDFLAGS="$(TSANFLAGS)" \
+		TEST_OBJDIR=obj-test-tsan TESTBIN=rt_test_tsan
+
 # --- Cibles de qualité -------------------------------------------------------
+
+# Batterie complète (T018) : build, tests, ASan/UBSan, TSan, valgrind, résumé
+# ✔/✖ ; code retour 0 uniquement si les 5 étapes sont vertes.
+quality:
+	sh scripts/quality.sh
 
 asan:
 	$(MAKE) re CXXFLAGS="$(CXXFLAGS) $(ASANFLAGS)" LDFLAGS="$(ASANFLAGS)"
@@ -110,11 +120,11 @@ clean:
 	rm -rf $(OBJDIR)
 
 fclean-test:
-	rm -rf $(TEST_OBJDIR) obj-test-asan rt_test rt_test_asan
+	rm -rf $(TEST_OBJDIR) obj-test-asan obj-test-tsan rt_test rt_test_asan rt_test_tsan
 
 fclean: clean fclean-test
 	rm -f $(NAME) compile_commands.json
 
 re: fclean all
 
-.PHONY: all clean fclean fclean-test re test test-asan asan tsan fast compdb format lint
+.PHONY: all clean fclean fclean-test re test test-asan test-tsan asan tsan fast compdb format lint quality

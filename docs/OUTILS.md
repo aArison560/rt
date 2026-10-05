@@ -80,6 +80,37 @@ make lint     # échoue si un diagnostic tombe sur src/ include/ tests/
 > **Ordre conseillé** : `UBSan` d'abord (il trouve les vrais bugs maths), puis `ASan`
 > (mémoire), puis `TSan` (races), `valgrind` en validation finale.
 
+### 3.1 Batterie complète : `make quality` (T018)
+
+`sh scripts/quality.sh`, appelé par la cible **`make quality`**, exécute les 5 étapes
+**dans l'ordre** ci-dessous, imprime une ligne ✔/✖ par étape puis le résumé ;
+code retour `0` **uniquement** si les 5 sont vertes (utilisable tel quel en CI) :
+
+| # | Étape | Commande réelle | Ce qu'elle prouve |
+|---|-------|-----------------|-------------------|
+| 1 | build release | `make re` | 0 warning `-Wall -Wextra -Werror -O2` |
+| 2 | tests unitaires | `make test` | suite Catch2 verte (47 cas / 3853 assertions) |
+| 3 | ASan/UBSan | `make asan` puis `make test-asan` | fuites et UB sur `./rt` **et** sur les tests |
+| 4 | TSan | `make tsan` puis `make test-tsan` | data races (item *Technical effects*) |
+| 5 | valgrind | `make re` puis `valgrind --leak-check=full --error-exitcode=1 ./rt --version` | « no memory leaks » (sujet) |
+
+Deux précisions de mise en œuvre :
+
+- Les étapes 3 et 4 passent par `test-asan` / `test-tsan` (**objets et binaires de test
+  dédiés** : `obj-test-asan/`, `obj-test-tsan/`) plutôt que par `make asan test` nu :
+  le sous-make de `asan` vide `obj-test/` (`fclean`), et le `test` parent recompilerait
+  les tests **sans** flags sanitizer — ils ne seraient alors pas instrumentés.
+- L'étape 5 commence par un `make re` : valgrind et un binaire ASan/TSan sont
+  incompatibles (le `./rt` laissé par l'étape 4 est instrumenté en TSan).
+
+Le rapport (résumé ✔/✖ + chiffres) est recopié dans le **commit** et dans
+[docs/JOURNAL.md](JOURNAL.md) à chaque tâche qui l'exécute.
+
+```bash
+make quality                          # 5 étapes, ~2 min au 5 octobre 2026
+sh scripts/quality.sh                 # idem, sans passer par make
+```
+
 ---
 
 ## 4. Mesure et performance
@@ -144,6 +175,8 @@ Détails et script complet : [DISTRIBUTED_RENDERING.md](DISTRIBUTED_RENDERING.md
 |-------|-------|
 | `make test` → `./rt_test` | tests unitaires (Catch2, vendored dans `thirdparty/catch2/`) |
 | `make test-asan` → `./rt_test_asan` | mêmes tests sous ASan/UBSan |
+| `make test-tsan` → `./rt_test_tsan` | mêmes tests sous TSan (objets dédiés, T018) |
+| `make quality` → `scripts/quality.sh` | batterie complète : build + tests + ASan/UBSan + TSan + valgrind, résumé ✔/✖ (T018) |
 | **GitHub Actions / GitLab CI** | à chaque push : `make && make test && valgrind` → le dépôt est **toujours** vert |
 | `./scripts/check_env.sh` | vérifie l'environnement avant une session de travail |
 | **pre-commit** (optionnel) | bloque un push si `make` échoue |
@@ -178,10 +211,12 @@ jobs:
 | `make compdb` | `bear` → `compile_commands.json` | éditeur/clangd |
 | `make format` | `.clang-format` (base LLVM) → reformate en place | avant chaque commit |
 | `make lint` | `.clang-tidy` → analyse statique, 0 diagnostic exigé | avant chaque merge |
+| `make quality` | `scripts/quality.sh` → build + tests + ASan/UBSan + TSan + valgrind, résumé ✔/✖ | avant chaque merge, en CI |
 | `make bench` | exécute `hyperfine` sur les scènes de démo | avant la soutenance |
 
-> **État (T002/T004)** : `asan`, `tsan`, `fast`, `compdb`, `format`, `lint` sont **implémentées**
-> dans le `Makefile`. Chaque cible de build repart de zéro (`$(MAKE) re CXXFLAGS=… LDFLAGS=…`) :
+> **État (T002/T004, T017/T018)** : `asan`, `tsan`, `fast`, `compdb`, `format`, `lint` sont
+> **implémentées** dans le `Makefile` (T002/T004), `test`/`test-asan` en T017 et
+> `test-tsan`/`quality` en T018. Chaque cible de build repart de zéro (`$(MAKE) re CXXFLAGS=… LDFLAGS=…`) :
 > pas de mélange d'objets compilés avec des flags différents. `compdb` échoue avec un message
 > explicite si `bear` est absent (le `compile_commands.json` est nettoyé par `make fclean`).
 > `format`/`lint` détectent `clang-format`/`clang-tidy` **et** leurs noms versionnés

@@ -14,8 +14,12 @@ make fast    # build -O3 -march=native pour les mesures
 make compdb  # compile_commands.json via bear (clangd)
 make format  # reformate le code (.clang-format, idempotent)
 make lint    # analyse statique (.clang-tidy) : 0 diagnostic exigé
+make quality # batterie complète : build + tests + ASan/UBSan + TSan + valgrind
 make fclean  # nettoyage complet
 ```
+
+La batterie de qualité (`sh scripts/quality.sh`) résume ses 5 étapes en ✔/✖ et ne
+rend 0 que si tout est vert (détail : `docs/OUTILS.md` §3.1).
 
 Vérification de l'environnement : `sh scripts/check_env.sh` (✔ présent, ✖ obligatoire manquant,
 ⚠ optionnel absent ; code retour 1 si un obligatoire manque). Voir `docs/OUTILS.md` §8–9.

@@ -12,6 +12,7 @@
 | `make re` | build complet, `-Wall -Wextra -Werror -O2` (0 warning exigé) |
 | `make test` | tests (`Catch2` à partir de T017) |
 | `make asan` / `make tsan` / `make fast` | sanitizers / build `-O3 -march=native` |
+| `make quality` | batterie complète `scripts/quality.sh` : build + tests + ASan/UBSan + TSan + valgrind, résumé ✔/✖ |
 | `make format` | reformate tout le code selon `.clang-format` (**idempotent**) |
 | `make lint` | analyse statique `.clang-tidy` — **échoue sur le moindre diagnostic** |
 | `make compdb` | `compile_commands.json` pour clangd |

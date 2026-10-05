@@ -286,6 +286,7 @@ meilleur moyen d'introduire un crash (→ note 0).
 
 - [ ] `make` compile **sans erreur ni warning** (`-Wall -Wextra -Werror`)
 - [ ] `make test` → tous les tests verts
+- [ ] `make quality` → 5/5 ✔ (build + tests + ASan/UBSan + TSan + valgrind, `scripts/quality.sh`, T018)
 - [ ] `valgrind --leak-check=full ./rt scenes/default.rt 100 100` → **0 fuite**
 - [ ] Le code a été **relu par un autre membre**
 - [ ] Les méthodes publiques sont documentées (Doxygen)
