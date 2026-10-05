@@ -313,8 +313,8 @@ rt/
 - **Dépend** : T002, T010–T016 · **Sert** : qualité · **Doc** : [OUTILS.md §7](OUTILS.md)
 - **DoD** : `make test` vert et rapide (< 5 s) ; `make test-asan` vert ; la structure est documentée dans `AGENTS.md`.
 
-#### T018 ⬜ — Batterie de qualité : asan, tsan, valgrind
-> **Fait le** : — · **Commit** : —
+#### T018 ✅ — Batterie de qualité : asan, tsan, valgrind
+> **Fait le** : 2026-10-05 · **Commit** : 34e78f3
 - **Prompt** : « Écris `scripts/quality.sh` qui exécute dans l'ordre `make re`, `make test`, `make asan test`, `make tsan test`, `valgrind --leak-check=full --error-exitcode=1 ./rt --version` et résume ✔/✖. Ajoute la cible `make quality`. »
 - **Dépend** : T017 · **Sert** : qualité · **Doc** : [OUTILS.md §3](OUTILS.md)
 - **DoD** : `make quality` sort 0 sur le dépôt actuel ; le rapport est dans le commit ou le journal.
