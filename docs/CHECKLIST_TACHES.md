@@ -319,8 +319,8 @@ rt/
 - **Dépend** : T017 · **Sert** : qualité · **Doc** : [OUTILS.md §3](OUTILS.md)
 - **DoD** : `make quality` sort 0 sur le dépôt actuel ; le rapport est dans le commit ou le journal.
 
-#### T019 ⬜ — Harnais de benchmark
-> **Fait le** : — · **Commit** : —
+#### T019 ✅ — Harnais de benchmark
+> **Fait le** : 2026-10-06 · **Commit** : 2f3e136
 - **Prompt** : « Écris `scripts/bench.sh <scene> [--runs N]` : mesure le temps de rendu N fois, calcule **moyenne et écart-type**, écrit en JSON/Markdown dans `docs/BENCH.md` (fichier créé avec l'en-tête et la méthode, même si les chiffres viendront plus tard). Utilise `hyperfine` s'il est là, sinon `date +%s.%N`. »
 - **Dépend** : T017 · **Sert** : item *vraiment rapide* · **Doc** : [OUTILS.md §4](OUTILS.md)
 - **DoD** : la commande produit un fichier `docs/BENCH.md` avec la méthode décrite ; fonctionne sans `hyperfine`.
