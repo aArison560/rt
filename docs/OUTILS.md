@@ -130,6 +130,43 @@ hyperfine --runs 10 --export-json bench/spheres.json \
   './rt scenes/simple_spheres.rt 800 600 --out /tmp/x.png'
 ```
 
+### 4.1 Harnais automatisé : `scripts/bench.sh` → `docs/BENCH.md` (T019)
+
+La preuve chiffrée **ne se saisit jamais à la main** : le harnais mesure, calcule et
+écrit. Chaque exécution garantit d'abord l'existence de `docs/BENCH.md` (en-tête +
+méthode), puis y ajoute une section de résultats.
+
+```bash
+sh scripts/bench.sh tests/cases/valid/minimal.rt --runs 10   # rendre N fois
+sh scripts/bench.sh scenes/x.rt --label avant --note "BVH off"   # comparaison
+sh scripts/bench.sh --cmd './rt --version' --runs 5          # autre commande
+```
+
+| Option | Rôle |
+|--------|------|
+| `--runs N` | exécutions chronométrées (défaut 5, minimum 1) |
+| `--warmup N` | exécutions d'échauffement non comptabilisées (défaut 1) |
+| `--label L` | nom de la mesure ; **même label = section remplacée** (avant/après propre) |
+| `--note TXT` | contexte écrit dans la mesure (hypothèses, version du binaire) |
+| `--args "..."` | arguments supplémentaires passés à `./rt` après la scène |
+| `--cmd "..."` | mesure une commande arbitraire au lieu d'un rendu |
+| `-h`, `--help` | aide complète (aussi dans l'en-tête de `scripts/bench.sh`) |
+
+- **Sortie** : `docs/BENCH.md` — une section `### <label> — <horodatage>` par mesure,
+  avec la commande exacte, le protocole, un tableau Markdown **et** le détail brut en
+  JSON (aucun chiffre recopié). Deux labels différents coexistent, le même est remplacé.
+- **Statistiques** : moyenne arithmétique, **écart-type échantillon** (n−1, mise à jour
+  par la formule de Welford), min, max et `CV = écart-type / moyenne`.
+- **Sans hyperfine** : `hyperfine` est employé s'il est installé (son JSON est exporté
+  tel quel), sinon `date +%s.%N`, en dernier recours une horloge `python3`.
+  *DoD de T019 vérifié sur un poste **sans** `hyperfine`.*
+- **Codes retour** : `0` mesure écrite · `2` erreur d'usage (scène absente, `--runs`
+  invalide…) · sinon code de la commande mesurée, la sortie de celle-ci étant affichée.
+  L'en-tête du document est écrit **avant** toute mesure : il existe donc même si la
+  première mesure échoue.
+- **Répertoire de travail** : le script se replace toujours à la racine du dépôt ;
+  `RT_BENCH_DOC=<chemin>` détourne le fichier de sortie (tests du harnais ailleurs).
+
 ---
 
 ## 5. Images, textures et vidéo
@@ -177,6 +214,7 @@ Détails et script complet : [DISTRIBUTED_RENDERING.md](DISTRIBUTED_RENDERING.md
 | `make test-asan` → `./rt_test_asan` | mêmes tests sous ASan/UBSan |
 | `make test-tsan` → `./rt_test_tsan` | mêmes tests sous TSan (objets dédiés, T018) |
 | `make quality` → `scripts/quality.sh` | batterie complète : build + tests + ASan/UBSan + TSan + valgrind, résumé ✔/✖ (T018) |
+| `sh scripts/bench.sh <scene>` → `docs/BENCH.md` | harnais de benchmark : moyenne + écart-type sur N rendus, Markdown + JSON (T019, voir §4.1) |
 | **GitHub Actions / GitLab CI** | à chaque push : `make && make test && valgrind` → le dépôt est **toujours** vert |
 | `./scripts/check_env.sh` | vérifie l'environnement avant une session de travail |
 | **pre-commit** (optionnel) | bloque un push si `make` échoue |
