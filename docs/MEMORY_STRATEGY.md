@@ -84,7 +84,35 @@
 | 15 | **Boucle `epoll`** | Webserv est *I/O-bound*, RT est *CPU-bound* ; notre boucle SDL + drapeaux `dirty` est déjà le bon modèle |
 | 16 | **`-fno-exceptions` brut** | incompatible avec le code actuel **et** avec la règle « aucun arrêt inattendu → 0 » |
 
+### Validation T024 — limites déclarées et passe croisée (implémentée)
+
+> Capacité déclarée dans le fichier (`limits { max_objects 256 }`) + erreur propre
+> si dépassée : c'est l'adaptation de la ligne 8 ci-dessus, implémentée en T024
+> dans `include/rt/scene/Validator.hpp` / `src/scene/Validator.cpp` (règle R1 :
+> toute borne passe par `schema::check*()`, aucun `throw` R2).
+
+| Contrôle | Règle | Erreur |
+|----------|-------|--------|
+| `max_objects` | `totalObjectCount() <= limits.max_objects` | `LimitExceeded` : `scene too large: 300 objects, limit 256` |
+| `max_lights` | `lights.size() <= limits.max_lights` | `LimitExceeded` : `scene too large: 2 lights, limit 1` |
+| `max_texture_bytes` | somme `stat` des fichiers distincts (`0` si absent/illisible, sans charger) `<= limits.max_texture_bytes` | `LimitExceeded` : `scene too large: 2048 texture bytes, limit 1000` |
+| Bornes du schéma | chaque valeur revalidée par `checkInt`/`checkNumber`/`checkEnum`/`checkString` (couleurs 0-1, `fov` 1-179, etc.) | `OutOfRange` / `InvalidArgument` avec le chemin |
+| Croisée caméra | `target != position`, `up` non nul et non colinéaire à la visée | `InvalidArgument` : `invalid camera: …` |
+| Croisée lumières | `point/spot/area` exigent `position`, `directional` exige `direction` non nulle, `spot` exige `target` | `InvalidArgument` : `light #i 'nom': … requires …` |
+| Croisée objets | `plane` exige `point` + `normal` non nulle, `cylinder/cone` exigent `axis` non nul, `slice` exige `min <= max` | `InvalidArgument` : `object #i 'nom': …` |
+| Croisée matériau | `transparency > 0` exige `ior > 1` | `InvalidArgument` : `… transparent material requires ior > 1 …` |
+
+Invariants mémoire (pas d'allocation surprise) : les vecteurs ne grandissent que par
+`push_back` (jamais `reserve(max)` sur entrée non validée), bornés en cours de parse par
+les garde-fous durs `kHardMaxObjects = 100000` / `kHardMaxLights = 1024` (max du schéma),
+puis contrôlés contre `limits` final en fin de parse (l'ordre des sous-blocs est libre).
+Le budget textures est estimé par `stat` uniquement. Mesuré en T024 : scène 300 objets /
+limite 256 → exit 1 avec `fichier:ligne:colonne`, 0 crash (ni 139 ni 134), valgrind 0 fuite
+(2747 allocs / 2747 frees sur le cas 300 objets, 30 / 30 sur le cas nominal) ; `/usr/bin/time`
+absent du poste, remplacé par valgrind + taille fichier (15 Ko) + temps (< 10 ms).
+
 ---
+
 
 ## 3. 🚨 Bug repéré : exceptions dans la boucle de rendu
 

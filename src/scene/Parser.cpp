@@ -10,6 +10,7 @@
 #include <string>
 
 #include "rt/schema/Directives.hpp"
+#include "rt/scene/Validator.hpp"
 
 namespace rt::scene {
 
@@ -1437,6 +1438,10 @@ struct Cursor {
 			if (Status st = parseObjectBody(cur, obj); st.isError()) {
 				return st;
 			}
+			if (out.objects.size() >= static_cast<std::size_t>(kHardMaxObjects)) {
+				return failTok(cur, headTok, StatusCode::LimitExceeded,
+				               "scene too large: too many objects (hard limit 100000)");
+			}
 			out.objects.push_back(std::move(obj));
 			continue;
 		}
@@ -1460,6 +1465,10 @@ struct Cursor {
 			}
 			if (Status st = parseGroupBody(cur, *child, depth + 1); st.isError()) {
 				return st;
+			}
+			if (out.children.size() >= static_cast<std::size_t>(kHardMaxObjects)) {
+				return failTok(cur, cur.peek(), StatusCode::LimitExceeded,
+				               "scene too large: too many groups (hard limit 100000)");
 			}
 			out.children.push_back(std::move(child));
 			continue;
@@ -1518,10 +1527,9 @@ struct Cursor {
 			return st;
 		}
 		if (key->text == "object") {
-			if (scene.objects.size() + scene.totalObjectCount() >=
-			    static_cast<std::size_t>(scene.limits.maxObjects) + 1024U) {
-				// Garde-fou precoce (le controle strict `scene too large`
-				// est fait en fin de parse contre `limits` final).
+			if (scene.objects.size() >= static_cast<std::size_t>(kHardMaxObjects)) {
+				return failTok(cur, *key, StatusCode::LimitExceeded,
+				               "scene too large: too many objects (hard limit 100000)");
 			}
 			Object obj;
 			if (Status st = parseObjectHead(cur, obj); st.isError()) {
@@ -1536,6 +1544,10 @@ struct Cursor {
 			}
 			scene.objects.push_back(std::move(obj));
 		} else if (key->text == "group") {
+			if (scene.groups.size() >= static_cast<std::size_t>(kHardMaxObjects)) {
+				return failTok(cur, *key, StatusCode::LimitExceeded,
+				               "scene too large: too many groups (hard limit 100000)");
+			}
 			Group group;
 			if (cur.peek().kind == TokenKind::String) {
 				const Token& nameTok = cur.peek();
@@ -1593,6 +1605,10 @@ struct Cursor {
 		}
 		if (Status st = parseLightBody(cur, light); st.isError()) {
 			return st;
+		}
+		if (scene.lights.size() >= static_cast<std::size_t>(kHardMaxLights)) {
+			return failTok(cur, *key, StatusCode::LimitExceeded,
+			               "scene too large: too many lights (hard limit 1024)");
 		}
 		scene.lights.push_back(std::move(light));
 	}
@@ -1720,24 +1736,13 @@ struct Cursor {
 		return FailScene::fail(
 		    failTok(cur, cur.peek(), StatusCode::ParseError, "expected end of file"));
 	}
-	// Garde-fous `limits` (T024 anticipe) : erreur propre, pas d'allocation
-	// surprise. Le controle a lieu apres le parse (l'ordre des sous-blocs
-	// est libre) mais avant tout usage ; les vecteurs n'ont grandi que par
-	// `push_back` borne par la taille du fichier.
-	const std::size_t nObjects = scene.totalObjectCount();
-	if (nObjects > static_cast<std::size_t>(scene.limits.maxObjects)) {
-		std::string detail("scene too large: ");
-		detail.append(std::to_string(nObjects));
-		detail.append(" objects, limit ");
-		detail.append(std::to_string(scene.limits.maxObjects));
-		return FailScene::fail(failTok(cur, closeTok, StatusCode::LimitExceeded, detail));
-	}
-	if (scene.lights.size() > static_cast<std::size_t>(scene.limits.maxLights)) {
-		std::string detail("scene too large: ");
-		detail.append(std::to_string(scene.lights.size()));
-		detail.append(" lights, limit ");
-		detail.append(std::to_string(scene.limits.maxLights));
-		return FailScene::fail(failTok(cur, closeTok, StatusCode::LimitExceeded, detail));
+	// Passe de validation T024 : bornes du schema + `limits` + croisee.
+	// Le controle a lieu apres le parse (l'ordre des sous-blocs est libre)
+	// mais avant tout usage ; les vecteurs n'ont grandi que par `push_back`
+	// borne par la taille du fichier et les garde-fous durs (pas de
+	// `reserve(max)` sur entree non validee, cf. MEMORY_STRATEGY.md §2).
+	if (Status vst = validate(scene); vst.isError()) {
+		return FailScene::fail(failTok(cur, closeTok, vst.code, vst.message));
 	}
 	scene.touchObjects();
 	scene.markClean();
