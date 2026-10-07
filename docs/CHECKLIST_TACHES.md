@@ -381,8 +381,8 @@ rt/
 - **Dépend** : T014, T020 · **Sert** : M4, *Environment 3* · **Doc** : [INSPIRATION_BLENDER.md §5.1](INSPIRATION_BLENDER.md)
 - **DoD** : tests verts ; la mémoire de la scène est bornée par `limits` et documentée.
 
-#### T029 ⬜ — Documentation du format + scène par défaut
-> **Fait le** : — · **Commit** : —
+#### T029 ✅ — Documentation du format + scène par défaut
+> **Fait le** : 2026-10-07 · **Commit** : efe4068
 - **Prompt** : « Génère la table complète des directives (`scripts/gen_doc.sh` depuis le schéma), complète `docs/FORMAT_SCENE.md` avec « écrire une scène en 10 minutes », et crée `scenes/default.rt` (simple, jolie, sert de fallback). »
 - **Dépend** : T021, T023, T027 · **Sert** : *Scene files*, démonstration · **Doc** : `docs/FORMAT_SCENE.md`
 - **DoD** : `./rt scenes/default.rt` affiche/produit quelque chose ; la doc correspond au schéma réel (test de cohérence).
