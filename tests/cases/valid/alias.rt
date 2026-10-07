@@ -1,0 +1,26 @@
+# tests/cases/valid/alias.rt — alias et tetes (T027).
+# Couvre : lookAt (=target), position (=center), color (=albedo),
+# reflect (=reflectivity), `object sphere "nom"`, `light point "cle"`.
+scene "alias" {
+    camera {
+        position (0 1 4)
+        lookAt (0 0 0)
+        fov 60
+    }
+    lights {
+        light point "key" {
+            position (2 4 3)
+            intensity 1.0
+        }
+    }
+    objects {
+        object sphere "boule" {
+            position (1 1 1)
+            radius 1
+            material {
+                color (0.1 0.2 0.3)
+                reflect 0.5
+            }
+        }
+    }
+}

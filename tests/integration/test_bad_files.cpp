@@ -82,8 +82,12 @@ TEST_CASE("bad files : fixtures invalides rejetees avec localisation, sans crash
 }
 
 TEST_CASE("bad files : fixtures valides toujours acceptees", "[bad-files]") {
-	for (const char* path :
-	     {"tests/cases/valid/minimal.rt", "tests/cases/valid/group.rt"}) {
+	for (const char* path : {"tests/cases/valid/minimal.rt", "tests/cases/valid/group.rt",
+	                         "tests/cases/valid/material.rt",
+	                         "tests/cases/valid/transform.rt", "tests/cases/valid/lights.rt",
+	                         "tests/cases/valid/limits.rt",
+	                         "tests/cases/valid/primitives.rt",
+	                         "tests/cases/valid/alias.rt"}) {
 		INFO("fichier : " << path);
 		rt::Result<rt::scene::Scene> result = rt::scene::parseFile(path);
 		INFO("message : " << (result.isError() ? result.status().message : std::string("ok")));

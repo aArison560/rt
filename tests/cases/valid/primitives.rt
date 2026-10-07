@@ -1,0 +1,38 @@
+# tests/cases/valid/primitives.rt — les 4 primitives (T027).
+# Couvre : sphere + plan (point/normal) + cylindre + cone (axe Y).
+scene {
+    camera {
+        position (0 2 6)
+        target (0 0 0)
+        fov 50
+    }
+    lights {
+        light {
+            position (3 5 2)
+            color (1 1 1)
+            intensity 0.8
+        }
+    }
+    objects {
+        object {
+            type sphere
+            center (-2 0 0)
+            radius 1
+        }
+        object {
+            type plane
+            point (0 -1 0)
+            normal (0 1 0)
+        }
+        object {
+            type cylinder
+            center (2 0 0)
+            radius 0.8
+        }
+        object {
+            type cone
+            center (0 0 -2)
+            angle 20
+        }
+    }
+}

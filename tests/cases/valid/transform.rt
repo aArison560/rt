@@ -1,0 +1,31 @@
+# tests/cases/valid/transform.rt — transformations (T027).
+# Couvre : translate + scale + rotate (ordre d'ecriture conserve).
+scene {
+    camera {
+        position (0 2 6)
+        target (0 0 0)
+        fov 50
+    }
+    lights {
+        light {
+            position (3 5 2)
+            color (1 1 1)
+            intensity 0.8
+        }
+    }
+    objects {
+        object {
+            type sphere
+            center (0 0 0)
+            radius 1
+            transform {
+                translate (0 0.2 0)
+                scale 2
+                rotate axis y angle 30
+            }
+            material {
+                albedo (0.9 0.3 0.2)
+            }
+        }
+    }
+}

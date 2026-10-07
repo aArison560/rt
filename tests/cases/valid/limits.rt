@@ -1,0 +1,40 @@
+# tests/cases/valid/limits.rt — limites explicites (T027).
+# Couvre : width/height/samples/max_depth/seed/max_objects/max_lights.
+scene {
+    limits {
+        width 320
+        height 240
+        samples 2
+        max_depth 4
+        seed 42
+        max_objects 16
+        max_lights 4
+        max_texture_bytes 67108864
+    }
+    camera {
+        position (0 1 4)
+        target (0 0 0)
+        fov 60
+    }
+    background {
+        color (0.05 0.05 0.1)
+    }
+    ambient {
+        color (0.06 0.06 0.08)
+        intensity 1.0
+    }
+    lights {
+        light {
+            position (2 4 3)
+            color (1 1 1)
+            intensity 1.0
+        }
+    }
+    objects {
+        object {
+            type sphere
+            center (0 0 0)
+            radius 1
+        }
+    }
+}

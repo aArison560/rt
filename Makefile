@@ -51,8 +51,10 @@ $(TEST_OBJDIR)/%.o: %.cpp
 	$(CC) $(CXXFLAGS) -Iinclude -Ithirdparty -c $< -o $@
 
 # Build + exécution ; le code retour de Catch2 (≠ 0 si échec) est propagé.
-test: $(TESTBIN)
+# Rejoue ensuite le jeu golden `tests/cases/` en headless (T027, < 10 s).
+test: $(NAME) $(TESTBIN)
 	./$(TESTBIN)
+	sh scripts/run_cases.sh
 
 # Tests sous ASan/UBSan : objets et binaire séparés pour ne pas mélanger les
 # jeux de flags (même discipline que asan/tsan/fast).

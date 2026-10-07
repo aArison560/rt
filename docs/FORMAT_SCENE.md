@@ -679,3 +679,21 @@ les groupes s'écriraient `<group name="…">…</group>`.
 - Toute nouvelle directive future (option) s'ajoute comme **une entrée** dans
   la table §5, reprise en une ligne de `src/schema/` (T021) : parser,
   validation, UI et doc en dérivent (règle R1).
+
+## 11. Jeu de scènes golden (T027)
+
+`scripts/run_cases.sh` rejoue `tests/cases/` en headless (`make test`
+l'appelle après `./rt_test`, ~0.03 s) : `valid/` → 0, `invalid/` → ≠ 0
+sans crash (139/134 = échec).
+
+| Fichier | Fonctionnalité du parser couverte |
+|---------|-----------------------------------|
+| `valid/minimal.rt` | défauts, sphère, 1 lumière |
+| `valid/group.rt` | groupes imbriqués, 2 lumières |
+| `valid/material.rt` | matériau complet (+ `ior > 1` si transparence) |
+| `valid/transform.rt` | `translate` + `scale` + `rotate` |
+| `valid/lights.rt` | point (`position`) + directional (`direction`) + spot (`position`+`target`) |
+| `valid/limits.rt` | `limits` + `background` + `ambient` |
+| `valid/primitives.rt` | sphère + plan (`point`/`normal`) + cylindre + cône |
+| `valid/alias.rt` | alias (`lookAt`/`color`/`reflect`/`position`) + têtes `object sphere "…"` / `light point "…"` |
+| `invalid/*` (11 fichiers) | lexer (accolade, guillemet, binaire, `1.2.3`, garbage, profondeur 32), parser (`abc`, `witdh`, `include`, tronqué, vide) — voir `tests/cases/README.md` |
