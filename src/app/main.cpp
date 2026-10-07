@@ -1,9 +1,7 @@
 #include <exception>
 #include <iostream>
-#include <string>
-#include <string_view>
-#include <vector>
 
+#include "rt/app/Options.hpp"
 #include "rt/base/Log.hpp"
 #include "rt/scene/Parser.hpp"
 
@@ -16,48 +14,38 @@ int printVersion() {
 	return 0;
 }
 
-int printUsage() {
-	std::cout << "usage: rt [--version] [--help] [scene.rt ...]\n";
+int printHelp() {
+	std::cout << rt::app::usageText();
 	return 0;
 }
 
-// T023 : parse complet (lexer + parser). `./rt scene.rt` construit la
-// `Scene` : succes -> 0, erreur -> message `fichier:ligne:colonne` et 1.
-// `./rt` seul et `./rt --version` gardent le comportement historique (0).
+int printUsageError(const std::string& message) {
+	rt::log::error(message);
+	std::cerr << rt::app::usageText();
+	return 2;
+}
+
+// T026 : ligne de commande complete via `rt::app::parseOptions` (testable).
+// Succes -> parse la scene et sort 0 (le rendu viendra en T032).
+// `--help`/`--version` -> 0 sans scene. Erreur CLI -> usage + 2.
+// Erreur de scene -> message `fichier:ligne:colonne` + 1.
+// `./rt` sans argument -> usage + 2 (documente dans `README.md`).
 int run(int argc, char** argv) {
-	if (argc <= 1) {
-	return printVersion();
+	rt::Result<rt::app::Options> parsed = rt::app::parseOptions(argc, argv);
+	if (parsed.isError()) {
+		return printUsageError(parsed.status().message);
 	}
-	const std::string_view first(argv[1]);
-	if (argc == 2 && (first == "--version" || first == "-v")) {
-	return printVersion();
+	const rt::app::Options& opts = parsed.value();
+	if (opts.showHelp) {
+		return printHelp();
 	}
-	if (argc == 2 && (first == "--help" || first == "-h")) {
-	return printUsage();
+	if (opts.showVersion) {
+		return printVersion();
 	}
-	bool sawFile = false;
-	for (int i = 1; i < argc; ++i) {
-	const std::string_view arg(argv[i]);
-	if (!sawFile && arg == "--") {
-	    continue;
-	}
-	if (!sawFile && arg.size() > 0 && arg[0] == '-' && arg != "--") {
-	    // Option inconnue a ce stade (T026) : erreur propre, pas de crash.
-	    std::string message("unknown option '");
-	    message.append(arg);
-	    message.append("' (try --help)");
-	    rt::log::error(message);
-	    return 2;
-	}
-	sawFile = true;
-	rt::Result<rt::scene::Scene> result = rt::scene::parseFile(arg);
+	rt::Result<rt::scene::Scene> result = rt::scene::parseFile(opts.scenePath);
 	if (result.isError()) {
-	    rt::log::error(result.status().message);
-	    return 1;
-	}
-	}
-	if (!sawFile) {
-	return printVersion();
+		rt::log::error(result.status().message);
+		return 1;
 	}
 	return 0;
 }
@@ -68,12 +56,12 @@ int run(int argc, char** argv) {
 // Tout le hot path rapporte par `rt::Status`/`bool`, jamais par exception.
 int main(int argc, char** argv) {
 	try {
-	return run(argc, argv);
+		return run(argc, argv);
 	} catch (const std::exception& e) {
-	rt::log::error(e.what());
-	return 1;
+		rt::log::error(e.what());
+		return 1;
 	} catch (...) {
-	rt::log::error("unknown exception");
-	return 1;
+		rt::log::error("unknown exception");
+		return 1;
 	}
 }
