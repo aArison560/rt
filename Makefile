@@ -12,7 +12,7 @@ FASTFLAGS = -O3 -march=native
 SRCDIR	= src
 OBJDIR	= obj
 
-SRCS	= main.cpp Options.cpp Directives.cpp Lexer.cpp Scene.cpp Parser.cpp Validator.cpp
+SRCS	= main.cpp Options.cpp Directives.cpp Lexer.cpp Scene.cpp Parser.cpp Validator.cpp Framebuffer.cpp
 OBJS	= $(SRCS:%.cpp=$(OBJDIR)/%.o)
 
 VPATH	= src/app src/base src/schema src/scene src/geometry src/shading \
@@ -31,7 +31,7 @@ $(OBJDIR)/%.o: %.cpp
 #
 # `rt_test` : binaire de tests = amalgame Catch2 (fournit main) + tests/unit/*.cpp
 # + tests/integration/*.cpp.
-# Les calques `schema`/`scene` sont lies en objets (Directives, Lexer, Scene, Parser, Validator).
+# Les calques `schema`/`scene`/`render` sont lies en objets (Directives, Lexer, Scene, Parser, Validator, Framebuffer).
 # Les flags sont les mêmes que le projet (-Wall -Wextra -Werror exigés sur tests/).
 
 CATCHDIR    = thirdparty/catch2
@@ -40,7 +40,7 @@ INTDIR      = tests/integration
 TESTBIN     = rt_test
 TEST_OBJDIR = obj-test
 
-TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp) $(wildcard $(INTDIR)/*.cpp) src/app/Options.cpp src/schema/Directives.cpp src/scene/Lexer.cpp src/scene/Scene.cpp src/scene/Parser.cpp src/scene/Validator.cpp
+TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp) $(wildcard $(INTDIR)/*.cpp) src/app/Options.cpp src/schema/Directives.cpp src/scene/Lexer.cpp src/scene/Scene.cpp src/scene/Parser.cpp src/scene/Validator.cpp src/render/Framebuffer.cpp
 TEST_OBJS   = $(TEST_SRCS:%.cpp=$(TEST_OBJDIR)/%.o)
 
 $(TESTBIN): $(TEST_OBJS)
