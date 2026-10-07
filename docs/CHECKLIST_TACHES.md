@@ -345,8 +345,8 @@ rt/
 - **Dépend** : T020, T015 · **Sert** : anti-crash · **Doc** : [CHECKLIST_DEFENSE.md §5.1](CHECKLIST_DEFENSE.md)
 - **DoD** : `tests/cases/` (guillemet non fermé, octet binaire, `{` non fermé, nombre absurde) → message `fichier:ligne:colonne`, code retour ≠ 0, **0 crash**.
 
-#### T023 ⬜ — Parser → modèle de scène
-> **Fait le** : — · **Commit** : —
+#### T023 ✅ — Parser → modèle de scène
+> **Fait le** : 2026-10-07 · **Commit** : db91385
 - **Prompt** : « Écris `src/scene/Parser.cpp` : consomme les tokens, construit `Scene` à partir de la table `schema/` (T021), gère l'imbrication, les valeurs par défaut, les références (`material "verre"`), les tableaux. Chaque erreur referme proprement les blocs ouverts et renvoie `Status` avec ligne. Aucune allocation avant validation des bornes. »
 - **Dépend** : T021, T022, T028 · **Sert** : *Scene files* · **Doc** : `docs/FORMAT_SCENE.md`
 - **DoD** : les 3 scènes d'exemple parsent ; `./rt scenes/x.rt` sans SDL renvoie 0 ; erreurs localisées vérifiées par tests.
