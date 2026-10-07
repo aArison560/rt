@@ -339,8 +339,8 @@ rt/
 - **Dépend** : T020 · **Sert** : *File ++*, *Environment* · **Doc** : [INSPIRATION_BLENDER.md §5](INSPIRATION_BLENDER.md)
 - **DoD** : ajouter une directive = **une seule ligne** dans la table, et elle apparaît dans parser + validation + doc ; test qui le vérifie.
 
-#### T022 ⬜ — Lexer avec localisation d'erreur
-> **Fait le** : — · **Commit** : —
+#### T022 ✅ — Lexer avec localisation d'erreur
+> **Fait le** : 2026-10-07 · **Commit** : abec9c4
 - **Prompt** : « Écris `src/scene/Lexer.cpp` : découpe le fichier en tokens `{ } ( ) ident string number comment`, en gardant **ligne et colonne** pour chaque token, gestion des nombres (`1.5`, `-2e3`), des guillemets non fermés, des caractères invalides (UTF-8 compris), d'une profondeur d'imbriquation bornée. Retourne `Status` avec message localisé. Tests : chaque cas d'erreur. »
 - **Dépend** : T020, T015 · **Sert** : anti-crash · **Doc** : [CHECKLIST_DEFENSE.md §5.1](CHECKLIST_DEFENSE.md)
 - **DoD** : `tests/cases/` (guillemet non fermé, octet binaire, `{` non fermé, nombre absurde) → message `fichier:ligne:colonne`, code retour ≠ 0, **0 crash**.
