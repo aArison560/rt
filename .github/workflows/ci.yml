@@ -48,4 +48,4 @@ jobs:
         run: make test CC=g++-14
 
       - name: Exécution sous ASan/UBSan
-        run: ./rt
+        run: ./rt --version
