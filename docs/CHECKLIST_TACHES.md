@@ -357,8 +357,8 @@ rt/
 - **Dépend** : T021, T023 · **Sert** : anti-crash, qualité mémoire · **Doc** : [MEMORY_STRATEGY.md §2](MEMORY_STRATEGY.md)
 - **DoD** : test de limite franchie → message clair, 0 crash, 0 gros pic mémoire (vérifié avec `/usr/bin/time -v`).
 
-#### T025 ⬜ — Robustesse des fichiers (critère éliminatoire)
-> **Fait le** : — · **Commit** : —
+#### T025 ✅ — Robustesse des fichiers (critère éliminatoire)
+> **Fait le** : 2026-10-07 · **Commit** : 4270062
 - **Prompt** : « Écris `tests/integration/test_bad_files.cpp` + `tests/cases/` : fichier inexistant, répertoire, vide, illisible, corrompu (fuzz maison : suppression/duplication de tokens), imbriquation folle, `include` cyclique si le format en a, binaire. Chaque cas → message utile, exit code ≠ 0, **jamais de segfault**. »
 - **Dépend** : T022, T023, T024 · **Sert** : anti-crash (note 0 sinon) · **Doc** : [SPECIFICATIONS.md §4.5](SPECIFICATIONS.md)
 - **DoD** : `make test` rejoue tous les cas sous ASan ; `for f in tests/cases/*; do ./rt $f; echo $?; done` → aucun code 139/134.
