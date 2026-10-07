@@ -369,8 +369,8 @@ rt/
 - **Dépend** : T023 · **Sert** : *In bulk*, cluster · **Doc** : [DISTRIBUTED_RENDERING.md §2.1](DISTRIBUTED_RENDERING.md)
 - **DoD** : tests unitaires sur le parsing d'arguments ; `./rt` sans argument → usage + code ≠ 0 (comportement écrit dans `README.md`).
 
-#### T027 ⬜ — Jeu de scènes de test (golden)
-> **Fait le** : — · **Commit** : —
+#### T027 ✅ — Jeu de scènes de test (golden)
+> **Fait le** : 2026-10-07 · **Commit** : cb4fdc8
 - **Prompt** : « Crée `tests/cases/valid/*.rt` (une par fonctionnalité du parser) et `tests/cases/invalid/*.rt`, plus `scripts/run_cases.sh` qui exécute toutes les scènes en mode headless et échoue si un code retour inattendu apparaît. Branche la cible `make test` dessus. »
 - **Dépend** : T023, T026 · **Sert** : qualité · **Doc** : —
 - **DoD** : `make test` rejoue le jeu complet en < 10 s ; liste des cas dans `docs/FORMAT_SCENE.md`.
