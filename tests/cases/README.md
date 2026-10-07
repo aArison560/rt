@@ -3,17 +3,22 @@
 Fixtures du futur parser (T022+). Elles suivent le **format cible** spécifié en
 T020 : blocs imbriqués `{ }`, commentaires `#`, nombres, vecteurs `(x y z)`.
 
-| Fichier | Rôle |
-|---------|------|
-| `valid/minimal.rt` | scène minimale valide (1 sphère, 1 lumière) |
-| `valid/group.rt` | scène à groupes + 2 lumières |
-| `invalid/missing_brace.rt` | accolade fermante manquante |
-| `invalid/unknown_directive.rt` | directive inconnue |
-| `invalid/bad_number.rt` | nombre mal formé |
+| Fichier | Rôle | Rejeté par |
+|---------|------|-------------|
+| `valid/minimal.rt` | scène minimale valide (1 sphère, 1 lumière) | — (accepté) |
+| `valid/group.rt` | scène à groupes + 2 lumières | — (accepté) |
+| `invalid/missing_brace.rt` | accolade fermante manquante (`{` non fermé) | lexer T022 |
+| `invalid/unclosed_string.rt` | guillemet non fermé | lexer T022 |
+| `invalid/binary.rt` | octet binaire 0xFF (UTF-8 invalide) | lexer T022 |
+| `invalid/bad_float.rt` | nombre lexicalement absurde (`1.2.3`) | lexer T022 |
+| `invalid/bad_number.rt` | `abc` là où un nombre est attendu (ident valide) | parser T023 |
+| `invalid/unknown_directive.rt` | directive inconnue (`witdh`) | parser T023 |
 
-Les fichiers `invalid/` doivent être **rejetés** par le parser avec une erreur
-localisée `fichier:ligne:colonne` et un code retour ≠ 0, **sans crash**
-(vérifié sous ASan). Les fichiers `valid/` doivent être acceptés.
+Les fichiers `invalid/` lexicaux (T022) et sémantiques (T023+) doivent être
+**rejetés** avec une erreur localisée `fichier:ligne:colonne` et un code
+retour ≠ 0, **sans crash** (vérifié sous ASan). Les fichiers `valid/`
+doivent être acceptés. `./rt <fichier>` ne fait que lexer en T022 :
+les 4 cas lexicaux sortent ≠ 0, les 2 cas parser sortiront ≠ 0 en T023.
 
 > Ces fixtures pourront être ajustées quand le format sera gelé (T020/T021) ;
 > elles servent dès maintenant de référence exécutable pour le parser.

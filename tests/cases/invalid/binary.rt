@@ -1,0 +1,8 @@
+# tests/cases/invalid/binary.rt â€” INVALIDE : octet binaire 0xFF.
+# Le lexer (T022) doit rejeter ce fichier avec une erreur localisee, sans crash.
+scene {
+    limits {
+        width 640
+        height 480ÿ
+    }
+}

@@ -12,7 +12,7 @@ FASTFLAGS = -O3 -march=native
 SRCDIR	= src
 OBJDIR	= obj
 
-SRCS	= main.cpp Directives.cpp
+SRCS	= main.cpp Directives.cpp Lexer.cpp
 OBJS	= $(SRCS:%.cpp=$(OBJDIR)/%.o)
 
 VPATH	= src/app src/base src/schema src/scene src/geometry src/shading \
@@ -30,7 +30,7 @@ $(OBJDIR)/%.o: %.cpp
 # --- Tests (Catch2 vendored, T017) -----------------------------------------------
 #
 # `rt_test` : binaire de tests = amalgame Catch2 (fournit main) + tests/unit/*.cpp.
-# Le calque `base` est header-only : aucun objet de `src/` à linker pour l'instant.
+# Les calques `schema`/`scene` sont lies en objets (Directives, Lexer).
 # Les flags sont les mêmes que le projet (-Wall -Wextra -Werror exigés sur tests/).
 
 CATCHDIR    = thirdparty/catch2
@@ -38,7 +38,7 @@ TESTDIR     = tests/unit
 TESTBIN     = rt_test
 TEST_OBJDIR = obj-test
 
-TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp) src/schema/Directives.cpp
+TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp) src/schema/Directives.cpp src/scene/Lexer.cpp
 TEST_OBJS   = $(TEST_SRCS:%.cpp=$(TEST_OBJDIR)/%.o)
 
 $(TESTBIN): $(TEST_OBJS)

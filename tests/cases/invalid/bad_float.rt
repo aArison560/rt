@@ -1,0 +1,23 @@
+# tests/cases/invalid/bad_float.rt — INVALIDE : nombre mal forme au sens lexical
+# (« 1.2.3 » : deux points decimaux). Le lexer (T022) doit rejeter ce fichier
+# avec une erreur localisee (fichier:ligne:colonne), sans crash.
+# (Le cas « width abc » reste dans bad_number.rt pour le parser T023 : « abc »
+# est un identifiant valide au niveau lexical.)
+scene {
+    limits {
+        width 1.2.3
+        height 480
+    }
+    camera {
+        position (0 1 4)
+        target (0 0 0)
+        fov 60
+    }
+    objects {
+        object {
+            type sphere
+            center (0 0 0)
+            radius 1
+        }
+    }
+}

@@ -1,0 +1,22 @@
+# tests/cases/invalid/unclosed_string.rt — INVALIDE : guillemet non ferme.
+# Le lexer (T022) doit rejeter ce fichier avec une erreur localisee
+# (fichier:ligne:colonne), sans crash.
+scene {
+    limits {
+        width 640
+        height 480
+    }
+    camera {
+        position (0 1 4)
+        target (0 0 0)
+        fov 60
+    }
+    objects {
+        object {
+            type sphere
+            name "boule
+            center (0 0 0)
+            radius 1
+        }
+    }
+}
