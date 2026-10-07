@@ -47,7 +47,7 @@
 ### 0.2 Paramètre de session
 
 ```
-TACHES_PAR_SESSION = 1
+TACHES_PAR_SESSION = 3
 ```
 
 Nombre de tâches à réaliser avant de s'arrêter. L'utilisateur peut le modifier :
@@ -363,8 +363,8 @@ rt/
 - **Dépend** : T022, T023, T024 · **Sert** : anti-crash (note 0 sinon) · **Doc** : [SPECIFICATIONS.md §4.5](SPECIFICATIONS.md)
 - **DoD** : `make test` rejoue tous les cas sous ASan ; `for f in tests/cases/*; do ./rt $f; echo $?; done` → aucun code 139/134.
 
-#### T026 ⬜ — Ligne de commande complète
-> **Fait le** : — · **Commit** : —
+#### T026 ✅ — Ligne de commande complète
+> **Fait le** : 2026-10-07 · **Commit** : b080198
 - **Prompt** : « Implémente `src/app/Options.cpp` : `./rt <scene.rt> [width height] [--out f.png] [--spp n] [--seed n] [--threads n] [--tile k/n] [--headless] [--quiet] [--version] [--help]`, valeurs invalides → erreur + usage, `--help` complet. Sépare la lecture des arguments du reste (testable unitairement). »
 - **Dépend** : T023 · **Sert** : *In bulk*, cluster · **Doc** : [DISTRIBUTED_RENDERING.md §2.1](DISTRIBUTED_RENDERING.md)
 - **DoD** : tests unitaires sur le parsing d'arguments ; `./rt` sans argument → usage + code ≠ 0 (comportement écrit dans `README.md`).
