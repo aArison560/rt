@@ -327,8 +327,8 @@ rt/
 
 ### Phase P2 — Schéma & scène (format, parser, validation)
 
-#### T020 ⬜ — Spécification du format `.rt` structuré (item *File ++*)
-> **Fait le** : — · **Commit** : —
+#### T020 ✅ — Spécification du format `.rt` structuré (item *File ++*)
+> **Fait le** : 2026-10-07 · **Commit** : 6731508
 - **Prompt** : « Rédige `docs/FORMAT_SCENE.md` : format **texte structuré à blocs imbriqués** `{ }` (obligation *File++* : ce n'est pas « une information par ligne »), avec `scene { limits{} camera{} background{} lights{ light{} } objects{ object{} group{} } }`, commentaires `#`, chaînes entre guillemets, nombres, vecteurs `(x y z)`. Donne la grammaire, 2 exemples complets (dont une scène à groupes), et la table des directives. Ajoute le même exemple **en XML** en annexe pour montrer l'équivalence. »
 - **Dépend** : T005 · **Sert** : *Scene files*, **File ++** (2 pts) · **Doc** : [ARCHITECTURE.md §5](ARCHITECTURE.md), [SPECIFICATIONS.md §5.2 A](SPECIFICATIONS.md)
 - **DoD** : la grammaire est précise (EBNF) ; un fichier valide est donné ; la structure est hiérarchique, pas linéaire.
