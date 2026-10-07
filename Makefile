@@ -12,7 +12,7 @@ FASTFLAGS = -O3 -march=native
 SRCDIR	= src
 OBJDIR	= obj
 
-SRCS	= main.cpp
+SRCS	= main.cpp Directives.cpp
 OBJS	= $(SRCS:%.cpp=$(OBJDIR)/%.o)
 
 VPATH	= src/app src/base src/schema src/scene src/geometry src/shading \
@@ -38,7 +38,7 @@ TESTDIR     = tests/unit
 TESTBIN     = rt_test
 TEST_OBJDIR = obj-test
 
-TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp)
+TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp) src/schema/Directives.cpp
 TEST_OBJS   = $(TEST_SRCS:%.cpp=$(TEST_OBJDIR)/%.o)
 
 $(TESTBIN): $(TEST_OBJS)

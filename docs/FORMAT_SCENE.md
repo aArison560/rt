@@ -351,6 +351,101 @@ règle du sujet, cf. T050).
 | `…transform.rotate` | `axis x\|y\|z angle d` | — | 0–360 deg | Rotation. Répétable. |
 | `…object.slice` | bloc, 0/1 | — | — | **Réservé** *Limited objects* : `axis x\|y\|z`, `min`, `max`, `frame object\|world`, `shape slab\|circle\|triangle`. Accepté syntaxiquement, effet complet en option. |
 
+### 5.8 Référence générée (source unique : `src/schema/Directives.cpp`)
+
+> Cette section est **générée** par `scripts/gen_doc.sh` depuis la table unique
+> `src/schema/` (règle R1, T021). Ne pas l'éditer à la main : toute modification
+> passe par la table (une seule ligne par directive), puis `sh scripts/gen_doc.sh`.
+> Les tables §5.1–§5.7 ci-dessus sont la spécification relue par T020 ; le tableau
+> ci-dessous en est la projection exacte et fait foi pour le parser (T023),
+> la validation (T024) et l'UI (T075).
+
+<!-- SCHEMA-GENERATED-START -->
+
+| Chemin | Type | Defaut | Bornes | Unite | Cardinalite | Reserve | Alias / Enum | Description |
+|---|---|---|---|---|---|---|---|---|
+| `scene` | bloc | -- | -- | -- | 1 | -- | -- | Racine du fichier. camera + objects requis. |
+| `scene.name` | string | -- | -- | -- | 0/1 | -- | -- | Nom de scene en tete, optionnel. |
+| `scene.limits` | bloc | -- | -- | -- | 0/1 | -- | -- | Resolution, echantillonnage, garde-fous memoire. |
+| `scene.limits.width` | int | `640` | 1 - 8192 | px | 0/1 | -- | -- | Largeur image. |
+| `scene.limits.height` | int | `480` | 1 - 8192 | px | 0/1 | -- | -- | Hauteur image. |
+| `scene.limits.samples` | int | `4` | 1 - 1024 | spp | 0/1 | -- | -- | Echantillons par pixel. |
+| `scene.limits.max_depth` | int | `4` | 0 - 16 | -- | 0/1 | -- | -- | Profondeur max de recursion. |
+| `scene.limits.seed` | int | `0` | 0 - 4.29497e+09 | -- | 0/1 | -- | -- | Graine combinee aux coords absolues (RNG). |
+| `scene.limits.max_objects` | int | `256` | 1 - 100000 | -- | 0/1 | -- | -- | Au-dela = erreur scene too large. |
+| `scene.limits.max_lights` | int | `16` | 1 - 1024 | -- | 0/1 | -- | -- | Idem pour les lumieres. |
+| `scene.limits.max_texture_bytes` | int | `67108864` | 0 - 2.14748e+09 | o | 0/1 | -- | -- | Budget textures cumule. |
+| `scene.camera` | bloc | -- | -- | -- | 1 | -- | -- | Oeil + visee. Seule difference autorisee pour Did-you-know. |
+| `scene.camera.position` | vec3 | `(0 1 4)` | -- | -- | 0/1 | -- | -- | Position de l oeil. |
+| `scene.camera.target` | vec3 | `(0 0 0)` | -- | -- | 0/1 | -- | alias `lookAt` | Point vise. Doit differer de position. |
+| `scene.camera.up` | vec3 | `(0 1 0)` | -- | -- | 0/1 | -- | -- | Verticale monde. |
+| `scene.camera.fov` | float | `60` | 1 - 179 | deg | 0/1 | -- | -- | Champ vertical. |
+| `scene.background` | bloc | -- | -- | -- | 0/1 | -- | -- | Couleur des rayons manques. |
+| `scene.background.color` | vec3 | `(0 0 0)` | 0 - 1 | -- | 0/1 | -- | -- | Fond de scene. |
+| `scene.ambient` | bloc | -- | -- | -- | 0/1 | -- | -- | Ambiance globale pilotee par fichier. |
+| `scene.ambient.color` | vec3 | `(0.06 0.06 0.08)` | 0 - 1 | -- | 0/1 | -- | -- | Teinte ambiante. |
+| `scene.ambient.intensity` | float | `1.0` | 0 - 10 | -- | 0/1 | -- | -- | Intensite globale. |
+| `scene.lights` | bloc | -- | -- | -- | 0/1 | -- | -- | Conteneur. 0 lumiere = ambiant seul. |
+| `scene.lights.light` | bloc | -- | -- | -- | 0..N | -- | -- | Une source. Tete [type] [nom] equivaut a type et name. |
+| `scene.lights.light.type` | enum | `point` | -- | -- | 0/1 | -- | `point\|spot\|directional\|dir\|area` | Type de source. dir est un alias de directional. area reserve. |
+| `scene.lights.light.name` | string | -- | -- | -- | 0/1 | -- | -- | Nom pour logs et UI. |
+| `scene.lights.light.position` | vec3 | -- | -- | -- | 0/1 | -- | -- | Position si point, spot ou area. |
+| `scene.lights.light.color` | vec3 | `(1 1 1)` | 0 - 1 | -- | 0/1 | -- | -- | Couleur source. |
+| `scene.lights.light.intensity` | float | `1.0` | 0 - 1000 | -- | 0/1 | -- | -- | Doubler double la contribution. |
+| `scene.lights.light.direction` | vec3 | -- | -- | -- | 0/1 | -- | -- | Direction si directional. |
+| `scene.lights.light.target` | vec3 | -- | -- | -- | 0/1 | -- | -- | Point vise si spot. |
+| `scene.lights.light.angle` | float | `30` | 1 - 90 | deg | 0/1 | -- | -- | Demi-ouverture si spot. |
+| `scene.lights.light.size` | float2 | `1 1` | 1e-06 - 1e+09 | -- | 0/1 | oui | -- | Taille source etendue. Reserve spot non ponctuel. |
+| `scene.lights.light.attenuation` | float3 | `1 0 0` | 0 - 1e+09 | -- | 0/1 | -- | -- | Attenuation 1 sur (c + l d + q d2). |
+| `scene.lights.light.range` | float | `0` | 0 - 1e+09 | -- | 0/1 | -- | -- | Portee max, 0 = infinie. |
+| `scene.objects` | bloc | -- | -- | -- | 1 | -- | -- | Conteneur. Append simple, doublons coexistent. |
+| `scene.objects.object` | bloc | -- | -- | -- | 0..N | -- | -- | Un objet. Intersection propre a chaque type. |
+| `scene.objects.object.type` | enum | -- | -- | -- | 0/1 | -- | `sphere\|plane\|cylinder\|cone` | Type. Tete ou propriete, requis. |
+| `scene.objects.object.name` | string | -- | -- | -- | 0/1 | -- | -- | Nom pour logs et UI. |
+| `scene.objects.object.center` | vec3 | `(0 0 0)` | -- | -- | 0/1 | -- | alias `position` | Centre en espace objet. |
+| `scene.objects.object.radius` | float | `1.0` | 1e-06 - 1e+09 | -- | 0/1 | -- | -- | Rayon sphere et cylindre. |
+| `scene.objects.object.point` | vec3 | -- | -- | -- | 0/1 | -- | -- | Plan : un point en espace objet. |
+| `scene.objects.object.normal` | vec3 | -- | -- | -- | 0/1 | -- | -- | Plan : normale en espace objet. |
+| `scene.objects.object.axis` | vec3 | `(0 1 0)` | -- | -- | 0/1 | -- | -- | Axe local du cylindre et cone infinis. |
+| `scene.objects.object.angle` | float | `20` | 1 - 89 | deg | 0/1 | -- | -- | Cone : demi-angle au sommet. |
+| `scene.objects.object.height` | float | -- | 1e-06 - 1e+09 | -- | 0/1 | oui | -- | Reserve : troncature Limited objects. Absent = infini. |
+| `scene.objects.group` | bloc | -- | -- | -- | 0..N | -- | -- | Element compose reutilisable, recursif. |
+| `scene.objects.group.name` | string | -- | -- | -- | 0/1 | -- | -- | Nom du groupe, tete ou propriete. |
+| `scene.objects.object.material` | bloc | -- | -- | -- | 0/1 | -- | -- | Attache a l objet. Absent = gris mat. |
+| `scene.objects.object.material.albedo` | vec3 | `(0.8 0.8 0.8)` | 0 - 1 | -- | 0/1 | -- | alias `color` | Couleur de base. |
+| `scene.objects.object.material.ambient` | float | `0.1` | 0 - 1 | -- | 0/1 | -- | -- | Poids de l ambiance globale. |
+| `scene.objects.object.material.diffuse` | float | `0.7` | 0 - 1 | -- | 0/1 | -- | -- | Poids Lambert. |
+| `scene.objects.object.material.specular` | float | `0.5` | 0 - 1 | -- | 0/1 | -- | -- | Poids Blinn-Phong, petit point blanc. |
+| `scene.objects.object.material.shininess` | float | `32` | 1 - 1024 | -- | 0/1 | -- | -- | Exposant speculaire. |
+| `scene.objects.object.material.reflectivity` | float | `0.0` | 0 - 1 | -- | 0/1 | -- | alias `reflect` | Miroir continu, 0 = mat et 1 = miroir pur. |
+| `scene.objects.object.material.transparency` | float | `0.0` | 0 - 1 | -- | 0/1 | -- | -- | Transparence. |
+| `scene.objects.object.material.ior` | float | `1.5` | 1 - 3 | -- | 0/1 | -- | -- | Indice de Descartes. 1 = pas de deviation. |
+| `scene.objects.object.material.bump` | float | `0.0` | 0 - 10 | -- | 0/1 | oui | -- | Force de bump. Reserve textures. |
+| `scene.objects.object.material.texture` | bloc | -- | -- | -- | 0/1 | oui | -- | Texture image. Reserve item Textures. |
+| `scene.objects.object.material.texture.file` | string | -- | -- | -- | 0/1 | oui | -- | Chemin image en tete. Requis si texture presente. |
+| `scene.objects.object.material.texture.scale` | float2 | `1 1` | 1e-06 - 1e+09 | -- | 0/1 | oui | -- | Etirement de texture. |
+| `scene.objects.object.material.texture.offset` | float2 | `0 0` | -- | -- | 0/1 | oui | -- | Decalage de texture. |
+| `scene.objects.object.material.pattern` | bloc | -- | -- | -- | 0/1 | oui | -- | Procedural. Reserve item Disruptions. |
+| `scene.objects.object.material.pattern.type` | enum | `checker` | -- | -- | 0/1 | oui | `sine\|checker\|perlin` | Type de motif. |
+| `scene.objects.object.material.pattern.scale` | float | `1` | 1e-06 - 1e+09 | -- | 0/1 | oui | -- | Echelle du motif. |
+| `scene.objects.object.material.pattern.frequency` | float | `1` | 1e-06 - 1e+09 | -- | 0/1 | oui | -- | Frequence du motif. |
+| `scene.objects.object.transform` | bloc | -- | -- | -- | 0/1 | -- | -- | Translations et rotations. Rayon en espace objet via M-1. |
+| `scene.objects.object.transform.translate` | vec3 | `(0 0 0)` | -- | -- | 0/1 | -- | -- | Translation. Repetables dans l ordre d ecriture. |
+| `scene.objects.object.transform.scale` | scale | `(1 1 1)` | 1e-06 - 1e+09 | -- | 0/1 | -- | -- | Echelle, 1 nombre = uniforme. |
+| `scene.objects.object.transform.rotate` | rotate | -- | 0 - 360 | deg | 0/1 | -- | -- | Rotation axis x ou y ou z angle d. |
+| `scene.objects.group.transform` | bloc | -- | -- | -- | 0/1 | -- | -- | Transform parent appliquee aux enfants. |
+| `scene.objects.group.transform.translate` | vec3 | `(0 0 0)` | -- | -- | 0/1 | -- | -- | Translation du groupe. |
+| `scene.objects.group.transform.scale` | scale | `(1 1 1)` | 1e-06 - 1e+09 | -- | 0/1 | -- | -- | Echelle du groupe. |
+| `scene.objects.group.transform.rotate` | rotate | -- | 0 - 360 | deg | 0/1 | -- | -- | Rotation du groupe. |
+| `scene.objects.object.slice` | bloc | -- | -- | -- | 0/1 | oui | -- | Reserve Limited objects. Accepte syntaxiquement. |
+| `scene.objects.object.slice.axis` | enum | `y` | -- | -- | 0/1 | oui | `x\|y\|z` | Axe de decoupe. |
+| `scene.objects.object.slice.min` | float | -- | -- | -- | 0/1 | oui | -- | Borne min de decoupe. |
+| `scene.objects.object.slice.max` | float | -- | -- | -- | 0/1 | oui | -- | Borne max de decoupe. |
+| `scene.objects.object.slice.frame` | enum | `object` | -- | -- | 0/1 | oui | `object\|world` | Referentiel de decoupe. |
+| `scene.objects.object.slice.shape` | enum | `slab` | -- | -- | 0/1 | oui | `slab\|circle\|triangle` | Forme de decoupe. |
+
+<!-- SCHEMA-GENERATED-END -->
+
 ---
 
 ## 6. Exemple 1 — scène minimale (valide)
