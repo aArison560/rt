@@ -17,8 +17,8 @@ T020 : blocs imbriqués `{ }`, commentaires `#`, nombres, vecteurs `(x y z)`.
 Les fichiers `invalid/` lexicaux (T022) et sémantiques (T023+) doivent être
 **rejetés** avec une erreur localisée `fichier:ligne:colonne` et un code
 retour ≠ 0, **sans crash** (vérifié sous ASan). Les fichiers `valid/`
-doivent être acceptés. `./rt <fichier>` ne fait que lexer en T022 :
-les 4 cas lexicaux sortent ≠ 0, les 2 cas parser sortiront ≠ 0 en T023.
+doivent être acceptés. Depuis T023, `./rt <fichier>` parse completement
+(lexer + parser) : les 2 valides sortent 0, les 6 invalides sortent ≠ 0.
 
 > Ces fixtures pourront être ajustées quand le format sera gelé (T020/T021) ;
 > elles servent dès maintenant de référence exécutable pour le parser.

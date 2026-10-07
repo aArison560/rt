@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "rt/base/Log.hpp"
-#include "rt/scene/Lexer.hpp"
+#include "rt/scene/Parser.hpp"
 
 namespace {
 
@@ -21,9 +21,8 @@ int printUsage() {
 	return 0;
 }
 
-// T022 : cablage minimal du lexer (le parser complet arrive en T023,
-// la CLI complete en T026). `./rt scene.rt` ne fait que lexer : succes -> 0,
-// erreur lexicale -> message `fichier:ligne:colonne` sur stderr et 1.
+// T023 : parse complet (lexer + parser). `./rt scene.rt` construit la
+// `Scene` : succes -> 0, erreur -> message `fichier:ligne:colonne` et 1.
 // `./rt` seul et `./rt --version` gardent le comportement historique (0).
 int run(int argc, char** argv) {
 	if (argc <= 1) {
@@ -51,7 +50,7 @@ int run(int argc, char** argv) {
 	    return 2;
 	}
 	sawFile = true;
-	rt::Result<std::vector<rt::scene::Token>> result = rt::scene::lexFile(arg);
+	rt::Result<rt::scene::Scene> result = rt::scene::parseFile(arg);
 	if (result.isError()) {
 	    rt::log::error(result.status().message);
 	    return 1;
