@@ -1,0 +1,90 @@
+# tests/cases/invalid/deep_nesting.rt — INVALIDE : imbrication folle.
+# 40 groupes imbriques (profondeur > 32, docs/FORMAT_SCENE.md §2).
+# Le lexer doit rejeter avec `nesting too deep (limit 32)` et
+# `fichier:ligne:colonne`, sans crash ni recursion profonde.
+scene {
+    camera { position (0 1 4) target (0 0 0) }
+    objects {
+        group "d00" {
+        group "d01" {
+        group "d02" {
+        group "d03" {
+        group "d04" {
+        group "d05" {
+        group "d06" {
+        group "d07" {
+        group "d08" {
+        group "d09" {
+        group "d10" {
+        group "d11" {
+        group "d12" {
+        group "d13" {
+        group "d14" {
+        group "d15" {
+        group "d16" {
+        group "d17" {
+        group "d18" {
+        group "d19" {
+        group "d20" {
+        group "d21" {
+        group "d22" {
+        group "d23" {
+        group "d24" {
+        group "d25" {
+        group "d26" {
+        group "d27" {
+        group "d28" {
+        group "d29" {
+        group "d30" {
+        group "d31" {
+        group "d32" {
+        group "d33" {
+        group "d34" {
+        group "d35" {
+        group "d36" {
+        group "d37" {
+        group "d38" {
+        group "d39" {
+            object { type sphere center (0 0 0) radius 1 }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+    }
+}

@@ -29,16 +29,18 @@ $(OBJDIR)/%.o: %.cpp
 
 # --- Tests (Catch2 vendored, T017) -----------------------------------------------
 #
-# `rt_test` : binaire de tests = amalgame Catch2 (fournit main) + tests/unit/*.cpp.
+# `rt_test` : binaire de tests = amalgame Catch2 (fournit main) + tests/unit/*.cpp
+# + tests/integration/*.cpp.
 # Les calques `schema`/`scene` sont lies en objets (Directives, Lexer, Scene, Parser, Validator).
 # Les flags sont les mêmes que le projet (-Wall -Wextra -Werror exigés sur tests/).
 
 CATCHDIR    = thirdparty/catch2
 TESTDIR     = tests/unit
+INTDIR      = tests/integration
 TESTBIN     = rt_test
 TEST_OBJDIR = obj-test
 
-TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp) src/schema/Directives.cpp src/scene/Lexer.cpp src/scene/Scene.cpp src/scene/Parser.cpp src/scene/Validator.cpp
+TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp) $(wildcard $(INTDIR)/*.cpp) src/schema/Directives.cpp src/scene/Lexer.cpp src/scene/Scene.cpp src/scene/Parser.cpp src/scene/Validator.cpp
 TEST_OBJS   = $(TEST_SRCS:%.cpp=$(TEST_OBJDIR)/%.o)
 
 $(TESTBIN): $(TEST_OBJS)

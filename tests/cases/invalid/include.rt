@@ -1,0 +1,20 @@
+# tests/cases/invalid/include.rt — INVALIDE : directive `include` inconnue.
+# Le format n'a PAS de directive `include` (docs/FORMAT_SCENE.md §2) :
+# toute tentative d'inclusion est une erreur fatale `unknown directive`,
+# donc aucun cycle d'inclusion n'est possible (pas de `include` cyclique).
+# Le parser (T023+) doit rejeter ce fichier avec `fichier:ligne:colonne`,
+# sans crash.
+scene {
+    camera {
+        position (0 1 4)
+        target (0 0 0)
+    }
+    include "other.rt"
+    objects {
+        object {
+            type sphere
+            center (0 0 0)
+            radius 1
+        }
+    }
+}

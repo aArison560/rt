@@ -1,0 +1,5 @@
+# tests/cases/invalid/truncated.rt — INVALIDE : fichier tronque en plein vecteur.
+# Simule une corruption (telechargement coupe, `fuzz` : suppression de tokens
+# en fin de fichier). Le parser doit refermer proprement les blocs ouverts
+# et renvoyer `Status` localise, sans crash.
+scene { camera { position (0 1

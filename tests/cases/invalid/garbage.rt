@@ -1,0 +1,5 @@
+# tests/cases/invalid/garbage.rt — INVALIDE : caracteres hors vocabulaire.
+# Simule un fichier corrompu ou un binaire pris pour une scene (`@`, `;`,
+# `$` ne font pas partie du vocabulaire). Le lexer (T022) doit rejeter
+# avec `fichier:ligne:colonne`, sans crash.
+@@@ ;;; $$$
