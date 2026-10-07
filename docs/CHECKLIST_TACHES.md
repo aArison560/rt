@@ -389,8 +389,8 @@ rt/
 
 ### Phase P3 — Rendu minimal (M2)
 
-#### T030 ⬜ — Framebuffer préalloué et persistant
-> **Fait le** : — · **Commit** : —
+#### T030 ✅ — Framebuffer préalloué et persistant
+> **Fait le** : 2026-10-07 · **Commit** : cb18e32
 - **Prompt** : « Implémente `rt::Framebuffer` : pixels RGBA8 (affichage) + tampon `float` d'accumulation, **alloués une seule fois** à la résolution (`W*H*4` octets documentés), `clear()`, `addSample()`, `present()` (tonemapping + gamma 2.2). Aucune allocation par frame (rèle R3). »
 - **Dépend** : T014, T017 · **Sert** : M2, M6 · **Doc** : [MEMORY_STRATEGY.md §4.1](MEMORY_STRATEGY.md)
 - **DoD** : test de taille/résolution ; ASan propre ; `sizeof` consigné.
