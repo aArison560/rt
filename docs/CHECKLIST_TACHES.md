@@ -333,8 +333,8 @@ rt/
 - **Dépend** : T005 · **Sert** : *Scene files*, **File ++** (2 pts) · **Doc** : [ARCHITECTURE.md §5](ARCHITECTURE.md), [SPECIFICATIONS.md §5.2 A](SPECIFICATIONS.md)
 - **DoD** : la grammaire est précise (EBNF) ; un fichier valide est donné ; la structure est hiérarchique, pas linéaire.
 
-#### T021 ⬜ — Schéma unique des directives (rèle R1)
-> **Fait le** : — · **Commit** : —
+#### T021 ✅ — Schéma unique des directives (rèle R1)
+> **Fait le** : 2026-10-07 · **Commit** : 08ee505
 - **Prompt** : « Crée `src/schema/Directives.cpp` : **une seule table déclarative** décrivant chaque directive (nom, chemin hiérarchique, type, valeur par défaut, min/max, unité, description, flag). Génère-en : le parsing (T023), la validation (T024), l'UI (T075) et la doc (`scripts/gen_doc.sh` → table Markdown dans `docs/FORMAT_SCENE.md`). Pas de définition dupliquée ailleurs. »
 - **Dépend** : T020 · **Sert** : *File ++*, *Environment* · **Doc** : [INSPIRATION_BLENDER.md §5](INSPIRATION_BLENDER.md)
 - **DoD** : ajouter une directive = **une seule ligne** dans la table, et elle apparaît dans parser + validation + doc ; test qui le vérifie.
