@@ -697,3 +697,86 @@ sans crash (139/134 = échec).
 | `valid/primitives.rt` | sphère + plan (`point`/`normal`) + cylindre + cône |
 | `valid/alias.rt` | alias (`lookAt`/`color`/`reflect`/`position`) + têtes `object sphere "…"` / `light point "…"` |
 | `invalid/*` (11 fichiers) | lexer (accolade, guillemet, binaire, `1.2.3`, garbage, profondeur 32), parser (`abc`, `witdh`, `include`, tronqué, vide) — voir `tests/cases/README.md` |
+
+---
+
+## 12. Écrire une scène en 10 minutes (T029)
+
+> Point d'entrée débutant : copier `scenes/default.rt`, modifier, relancer
+> `./rt`. Toute directive est décrite dans la table §5 (générée depuis
+> `src/schema/`, règle R1) : en cas de doute, `sh scripts/gen_doc.sh`
+> régénère la référence, et `./rt` répond `fichier:ligne:colonne` + code ≠ 0.
+
+**Minute 0–2 — squelette.** Un fichier = un bloc `scene` avec `camera`
+(requise) + `objects` (requis). Le plus court qui passe :
+
+```rt
+scene "essai" {
+    camera {
+        position (0 2 6)
+        target (0 0 0)
+        fov 50
+    }
+    objects {
+        object sphere "boule" {
+            center (0 0 0)
+            radius 1
+        }
+    }
+}
+```
+
+Vérifier : `./rt scenes/default.rt` → `ok: …` + code 0. Sinon lire
+l'erreur (`fichier:ligne:colonne`) : accolade manquante, directive
+inconnue (`witdh`), vecteur à 2 composantes.
+
+**Minute 2–4 — sol + fond.** Ajouter un plan sous la sphère et un fond
+sombre (sinon les rayons manqués sont noirs) :
+
+```rt
+    background { color (0.02 0.02 0.05) }
+    # dans objects { … } :
+        object plane "sol" {
+            point (0 -1 0)
+            normal (0 1 0)
+        }
+```
+
+**Minute 4–6 — lumières.** Sans lumière, seule l'ambiance éclaire.
+Ajouter une ponctuelle + garder l'ambiance par défaut :
+
+```rt
+    lights {
+        light point "key" {
+            position (3 5 2)
+            color (1 1 1)
+            intensity 0.8
+        }
+    }
+```
+
+**Minute 6–8 — matériau.** Chaque `object` accepte un bloc `material`
+(couleur 0–1 par canal, poids 0–1). Exemple sur la sphère :
+
+```rt
+            material {
+                albedo (0.9 0.3 0.2)
+                diffuse 0.7
+                specular 0.5
+                shininess 32
+            }
+```
+
+Règle du sujet (T050) : tout se pilote **depuis le fichier**, jamais par
+recompilation. `transparency > 0` exige `ior > 1` (vérifié en T024).
+
+**Minute 8–10 — régler et relancer.** Changer `camera.position` pour un
+autre point de vue (c'est le test *Did you know?* : seule `camera`
+diffère entre `fig_vi1.rt` et `fig_vi2.rt`), ajuster `limits { width
+320 height 240 samples 4 }`, relancer `./rt ma_scene.rt`. En cas de
+`scene too large` : augmenter `limits { max_objects … }` (garde-fou T024).
+
+Modèle complet et valide : `scenes/default.rt` (fallback, 2 objets,
+2 lumières, 320×240). Conversion des têtes : `object sphere "boule"`
+≡ `object { type sphere name "boule" … }` (le contenu gagne en cas de
+conflit, voir §4).

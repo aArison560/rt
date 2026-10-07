@@ -6,10 +6,12 @@
 
 #include <catch2/catch_amalgamated.hpp>
 
+#include <fstream>
 #include <sstream>
 #include <string>
 
 #include "rt/schema/Directives.hpp"
+#include "rt/scene/Parser.hpp"
 
 namespace {
 
@@ -195,4 +197,57 @@ TEST_CASE("schema : une seule ligne pilote parser, validation et doc", "[schema]
     REQUIRE(height != nullptr);
     REQUIRE(height->reserved);
     REQUIRE(markdownContains(markdown, "scene.objects.object.height"));
+}
+
+TEST_CASE("schema : docs/FORMAT_SCENE.md §5.8 == table reelle (T029)", "[schema]") {
+    using namespace rt::schema;
+
+    // Coherence fichier <-> table : la section generee doit etre exactement
+    // `writeMarkdown()` (a un `\n` final pres). Sinon `sh scripts/gen_doc.sh`
+    // n'a pas ete relance apres modification de la table (regle R1).
+    std::ostringstream expectedStream;
+    writeMarkdown(expectedStream);
+    const std::string expected = expectedStream.str();
+
+    std::ifstream doc("docs/FORMAT_SCENE.md", std::ios::binary);
+    REQUIRE(doc.good());
+    const std::string content((std::istreambuf_iterator<char>(doc)),
+                              std::istreambuf_iterator<char>());
+    const std::string start("<!-- SCHEMA-GENERATED-START -->");
+    const std::string end("<!-- SCHEMA-GENERATED-END -->");
+    const std::size_t startPos = content.find(start);
+    const std::size_t endPos = content.find(end);
+    REQUIRE(startPos != std::string::npos);
+    REQUIRE(endPos != std::string::npos);
+    REQUIRE(endPos > startPos);
+    const std::string inner =
+        content.substr(startPos + start.size(), endPos - startPos - start.size());
+    // `gen_doc.sh` ecrit "\n\n" + generated.rstrip("\n") + "\n\n" : on
+    // normalise les bords avant comparaison stricte.
+    const auto trim = [](const std::string& text) {
+        std::size_t first = text.find_first_not_of(" \t\r\n");
+        if (first == std::string::npos) {
+            return std::string();
+        }
+        const std::size_t last = text.find_last_not_of(" \t\r\n");
+        return text.substr(first, last - first + 1U);
+    };
+    REQUIRE(trim(inner) == trim(expected));
+    // Chaque directive apparait dans le fichier (garde contre troncation).
+    for (const Directive& entry : all()) {
+        INFO("directive : " << entry.path);
+        REQUIRE(content.find(entry.path) != std::string::npos);
+    }
+}
+
+TEST_CASE("schema : scenes/default.rt parse comme fallback (T029)", "[schema]") {
+    rt::Result<rt::scene::Scene> result =
+        rt::scene::parseFile("scenes/default.rt");
+    INFO("message : " << (result.isError() ? result.status().message : std::string("ok")));
+    REQUIRE(result.isOk());
+    const rt::scene::Scene& scene = result.value();
+    REQUIRE(scene.totalObjectCount() == 2U);
+    REQUIRE(scene.lights.size() == 2U);
+    REQUIRE(scene.limits.width == 320);
+    REQUIRE(scene.limits.height == 240);
 }

@@ -43,7 +43,7 @@ int main() {
 }
 EOF
 
-if ! c++ -Wall -Wextra -Werror -O2 -std=c++2c -Iinclude src/schema/Directives.cpp "$DUMP_CPP" -o "$DUMP_BIN"; then
+if ! c++ -Wall -Wextra -Werror -O2 -std=c++23 -Iinclude src/schema/Directives.cpp "$DUMP_CPP" -o "$DUMP_BIN"; then
 	echo "gen_doc: compilation du dumper impossible" >&2
 	rm -rf "$TMPDIR"
 	exit 1

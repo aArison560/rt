@@ -27,9 +27,12 @@ int printUsageError(const std::string& message) {
 
 // T026 : ligne de commande complete via `rt::app::parseOptions` (testable).
 // Succes -> parse la scene et sort 0 (le rendu viendra en T032).
-// `--help`/`--version` -> 0 sans scene. Erreur CLI -> usage + 2.
-// Erreur de scene -> message `fichier:ligne:colonne` + 1.
-// `./rt` sans argument -> usage + 2 (documente dans `README.md`).
+// T029 : affiche un resume `ok: <scene>: N objects, M lights, WxH, spp S`
+// (supprime par `--quiet`), pour que `./rt scenes/default.rt` "produise
+// quelque chose" avant le rendu (DoD T029). `--help`/`--version` -> 0
+// sans scene. Erreur CLI -> usage + 2. Erreur de scene -> message
+// `fichier:ligne:colonne` + 1. `./rt` sans argument -> usage + 2
+// (documente dans `README.md`).
 int run(int argc, char** argv) {
 	rt::Result<rt::app::Options> parsed = rt::app::parseOptions(argc, argv);
 	if (parsed.isError()) {
@@ -46,6 +49,15 @@ int run(int argc, char** argv) {
 	if (result.isError()) {
 		rt::log::error(result.status().message);
 		return 1;
+	}
+	const rt::scene::Scene& scene = result.value();
+	if (!opts.quiet) {
+		const int width = opts.hasWidth ? opts.width : scene.limits.width;
+		const int height = opts.hasHeight ? opts.height : scene.limits.height;
+		const int spp = opts.hasSpp ? opts.spp : scene.limits.samples;
+		std::cout << "ok: " << opts.scenePath << ": " << scene.totalObjectCount()
+		          << " objects, " << scene.lights.size() << " lights, " << width << "x"
+		          << height << ", spp " << spp << '\n';
 	}
 	return 0;
 }

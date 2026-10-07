@@ -1,0 +1,60 @@
+# scenes/default.rt — scene par defaut (T029, fallback).
+# Simple et jolie : 1 sphere rouge sur un sol gris, 2 lumieres,
+# fond bleu nuit + ambiance. Sert de fallback quand aucune scene
+# n'est precisee dans la doc et de base pour T030-T032 (rendu).
+# Toute directive utilisee existe dans docs/FORMAT_SCENE.md §5
+# (table generee depuis src/schema/, regle R1).
+scene "default" {
+    limits {
+        width 320
+        height 240
+        samples 4
+        max_depth 4
+        seed 0
+    }
+    camera {
+        position (0 2 6)
+        target (0 0 0)
+        up (0 1 0)
+        fov 50
+    }
+    background {
+        color (0.02 0.02 0.05)
+    }
+    ambient {
+        color (0.06 0.06 0.08)
+        intensity 1.0
+    }
+    lights {
+        light point "key" {
+            position (3 5 2)
+            color (1 1 1)
+            intensity 0.8
+        }
+        light point "fill" {
+            position (-3 3 2)
+            color (0.4 0.5 1)
+            intensity 0.5
+        }
+    }
+    objects {
+        object plane "sol" {
+            point (0 -1 0)
+            normal (0 1 0)
+            material {
+                albedo (0.5 0.5 0.5)
+                diffuse 0.7
+            }
+        }
+        object sphere "boule" {
+            center (0 0 0)
+            radius 1
+            material {
+                albedo (0.9 0.3 0.2)
+                diffuse 0.7
+                specular 0.5
+                shininess 32
+            }
+        }
+    }
+}
