@@ -395,8 +395,8 @@ rt/
 - **Dépend** : T014, T017 · **Sert** : M2, M6 · **Doc** : [MEMORY_STRATEGY.md §4.1](MEMORY_STRATEGY.md)
 - **DoD** : test de taille/résolution ; ASan propre ; `sizeof` consigné.
 
-#### T031 ⬜ — Caméra
-> **Fait le** : — · **Commit** : —
+#### T031 ✅ — Caméra
+> **Fait le** : 2026-10-07 · **Commit** : 875a3cf
 - **Prompt** : « Implémente `rt::Camera` : position **et direction** (cible), up vector, FOV, ratio ; `rayForPixel(x, y, jitter)` construit l'orthonormé (attention aux cas dégénérés : caméra verticale → code d'erreur, pas de throw). Hérite des données `camera {}` du schéma. Tests : centre de l'image, coins, changement de cible. »
 - **Dépend** : T013, T030 · **Sert** : M5 · **Doc** : `docs/FORMAT_SCENE.md`
 - **DoD** : tests verts ; déplacement de la caméra change l'image (constaté par un test de pixels).
