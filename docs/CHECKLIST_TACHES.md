@@ -375,8 +375,8 @@ rt/
 - **Dépend** : T023, T026 · **Sert** : qualité · **Doc** : —
 - **DoD** : `make test` rejoue le jeu complet en < 10 s ; liste des cas dans `docs/FORMAT_SCENE.md`.
 
-#### T028 ⬜ — Modèle de données `Scene` (init/reset/clear, dirty flags)
-> **Fait le** : — · **Commit** : —
+#### T028 ✅ — Modèle de données `Scene` (init/reset/clear, dirty flags)
+> **Fait le** : 2026-10-07 · **Commit** : a5592ea
 - **Prompt** : « Implémente `rt::Scene` : objets, lumières, matériaux, textures, caméra, fond — `std::vector` avec `reserve()` dès la scène lue, `init/reset/clear()` (réutilisation sans realloc), **dirty flags** `sceneDirty`, `displayDirty` et compteur `objectVersion` (invalidera la BVH). Expose en lecture seule aux calques supérieurs. Tests : reset réutilise la capacité, `objectVersion` incrémente à chaque mutation. »
 - **Dépend** : T014, T020 · **Sert** : M4, *Environment 3* · **Doc** : [INSPIRATION_BLENDER.md §5.1](INSPIRATION_BLENDER.md)
 - **DoD** : tests verts ; la mémoire de la scène est bornée par `limits` et documentée.
