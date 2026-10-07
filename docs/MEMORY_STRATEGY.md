@@ -219,6 +219,30 @@ Implémentés dans `include/rt/base/Arena.hpp` (header-only) :
 `FixedVector<T,N>` : capacité fixe, `push` → `false` si plein (code d'erreur,
 jamais de crash), `clear()` → réutilisation sans realloc.
 
+### 4.6 Modèle `Scene` : cycle de vie et borne `limits` (T028)
+
+`include/rt/scene/Scene.hpp` / `src/scene/Scene.cpp` : `init()` restaure les
+défauts (`FORMAT_SCENE.md` §5, mêmes valeurs que `src/schema/`) et pré-réserve
+à la capacité annoncée par défaut (16 lumières, 256 objets, 16 groupes) ;
+`reset()` / `clear()` conservent la capacité (`clear` sans `shrink`, sans
+realloc) ; `touchObjects()` incrémente `objectVersion` et lève `sceneDirty` /
+`displayDirty` (R5, invalidera la BVH en T062) ; `markClean()` les referme.
+Les calques supérieurs prennent `const Scene&` (lecture seule).
+
+Mémoire bornée par `limits` (validé en T024, `push_back` seul, jamais
+`reserve(max)` sur entrée non validée) :
+
+```
+mem_scene <= max_objects * sizeof(Object) + max_lights * sizeof(Light)
+             + groupes (comptés dans max_objects via totalObjectCount)
+             + textures (stat seul, <= max_texture_bytes)
+```
+
+Mesuré : `sizeof(Object) = 448`, `sizeof(Light) = 144` (donc défauts
+256/16 → ~115 Ko + groupes). Testé dans `tests/unit/test_scene.cpp` :
+`reset` réutilise la capacité, `objectVersion` incrémente à chaque mutation,
+`totalObjectCount <= max_objects`.
+
 ## 5. Cibles Makefile à copier
 
 > **Implémentées en T002** — recette réelle ci-dessous ; les cibles passent par `$(MAKE) re`

@@ -3,6 +3,10 @@
 // (memes valeurs que la table `src/schema/`) en conservant la capacite
 // des vecteurs (`clear` + affectation, pas de `shrink`) ; `touchObjects`
 // incremente `objectVersion` et leve les drapeaux R5 (future BVH T062).
+// `init` pre-reserve a la capacite annoncee par defaut (16 lumieres,
+// 256 objets, 16 groupes : ~39 Ko) : aucune realloc pour les scenes
+// courantes, memoire bornee par `limits` (cf. `docs/MEMORY_STRATEGY.md` §2).
+// Les calques superieurs prennent `const Scene&` (lecture seule).
 
 #include "rt/scene/Scene.hpp"
 
@@ -56,6 +60,12 @@ void Scene::init() {
 	groups.clear();
 	assignDefaults(*this);
 	objectVersion = 0;
+	// Capacite annoncee par defaut : `Limits{256, 16}` (cf. `Scene.hpp`).
+	// Apres validation, `size <= limits` donc la memoire reste bornee ;
+	// `reset`/`clear` conservent cette capacite (sans realloc).
+	lights.reserve(16);
+	objects.reserve(256);
+	groups.reserve(16);
 }
 
 void Scene::reset() {
