@@ -351,8 +351,8 @@ rt/
 - **Dépend** : T021, T022, T028 · **Sert** : *Scene files* · **Doc** : `docs/FORMAT_SCENE.md`
 - **DoD** : les 3 scènes d'exemple parsent ; `./rt scenes/x.rt` sans SDL renvoie 0 ; erreurs localisées vérifiées par tests.
 
-#### T024 ⬜ — Validation, bornes et limites déclarées
-> **Fait le** : — · **Commit** : —
+#### T024 ✅ — Validation, bornes et limites déclarées
+> **Fait le** : 2026-10-07 · **Commit** : 1a05837
 - **Prompt** : « Implémente la passe de validation : bornes du schéma (min/max, enums, couleurs 0-1), directive `limits { max_objects max_lights max_texture_bytes }` → si dépassé, **erreur propre** (`scene too large: 300 objects, limit 256`) et code retour ≠ 0, pas d'allocation surprise. Validation croisée (ex. : `ior > 1` si transparence). »
 - **Dépend** : T021, T023 · **Sert** : anti-crash, qualité mémoire · **Doc** : [MEMORY_STRATEGY.md §2](MEMORY_STRATEGY.md)
 - **DoD** : test de limite franchie → message clair, 0 crash, 0 gros pic mémoire (vérifié avec `/usr/bin/time -v`).
