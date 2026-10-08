@@ -445,8 +445,8 @@ rt/
 - **Dépend** : T013, T028 · **Sert** : M3, M4 · **Doc** : [SPECIFICATIONS.md §3.2 b](SPECIFICATIONS.md)
 - **DoD** : `grep -R "INTERSECT(" src/geometry` sans macro ; test de dispatch ; `static_assert` sur `HitRecord`.
 
-#### T041 ⬜ — Sphère
-> **Fait le** : — · **Commit** : —
+#### T041 ✅ — Sphère
+> **Fait le** : 2026-10-08 · **Commit** : c730773
 - **Prompt** : « `src/geometry/Sphere.cpp` : intersection analytique (racine la plus proche dans `[tMin,tMax]`), normale orientée `frontFace`, uv pour la texture, `localBounds()` exact. Gère rayon tangent, rayon partant de l'intérieur, rayon parallèle. Tests : 6 cas (tangent, intérieur, manquant, hors bornes, centre exact, très loin). »
 - **Dépend** : T040 · **Sert** : M3 · **Doc** : —
 - **DoD** : tests verts, y compris cas dégénérés ; aucun throw ; ASan propre.
