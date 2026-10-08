@@ -70,6 +70,13 @@ Sans ces points, aucune stratégie de distribution ne fonctionne correctement.
 | `--spp`, `--seed` | qualité et reproductibilité **identiques** partout |
 | pas de `SDL_Init` | les workers peuvent être sans `DISPLAY` (headless, conteneur) |
 
+> **État T035** : `src/app/main.cpp` (`runHeadless`) = parse → load → render →
+> write → exit, sans aucun appel SDL (R6). `env -u DISPLAY ./rt
+> scenes/default.rt 64 64 --out /tmp/a.png` → 0, porte headless dans
+> `scripts/run_cases.sh` + `tests/integration/test_headless.cpp` rejouées par
+> `make test`. `--headless` explicite le mode (défaut avec `--out`, seul mode
+> jusqu'à T070 qui branchera le mode fenêtre).
+
 ### 2.2 Exigences de cohérence (les vraies difficultés)
 
 | Exigence | Pourquoi | Implémentation |

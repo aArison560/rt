@@ -29,23 +29,16 @@ int printUsageError(const std::string& message) {
 }
 
 // T026 : ligne de commande complete via `rt::app::parseOptions` (testable).
-// Succes -> parse la scene, rend en memoire (T032), ecrit `--out` (T034)
-// et sort 0. T029 : affiche un resume `ok: ...` + `wrote <fichier>` sauf
-// `--quiet`. `--help`/`--version` -> 0 sans scene. Erreur CLI -> usage + 2.
-// Erreur de scene/rendu/ecriture -> message + 1 (`fichier:ligne:colonne`
-// pour la scene). `./rt` sans argument -> usage + 2 (README.md).
-int run(int argc, char** argv) {
-	rt::Result<rt::app::Options> parsed = rt::app::parseOptions(argc, argv);
-	if (parsed.isError()) {
-		return printUsageError(parsed.status().message);
-	}
-	const rt::app::Options& opts = parsed.value();
-	if (opts.showHelp) {
-		return printHelp();
-	}
-	if (opts.showVersion) {
-		return printVersion();
-	}
+// T035 : composition root headless — parse -> load -> render -> write -> exit.
+// Aucune initialisation SDL dans ce chemin (R6) : `--out` ecrit et sort,
+// `--headless` explicite le mode sans fenetre (defaut avec `--out`, et seul
+// mode jusqu'a T070). L'absence de `DISPLAY` n'est donc jamais un echec :
+// ce binaire ne lit meme pas cette variable. Succes -> 0, scene/rendu/
+// ecriture -> 1 avec message `fichier:ligne:colonne` pour la scene.
+// CLI -> usage + 2. `./rt` sans argument -> usage + 2 (README.md).
+// T029 : affiche un resume `ok: ...` + `wrote <fichier>` sauf `--quiet`.
+// `--help`/`--version` -> 0 sans scene.
+int runHeadless(const rt::app::Options& opts) {
 	rt::Result<rt::scene::Scene> result = rt::scene::parseFile(opts.scenePath);
 	if (result.isError()) {
 		rt::log::error(result.status().message);
@@ -84,6 +77,26 @@ int run(int argc, char** argv) {
 		std::cout << '\n';
 	}
 	return 0;
+}
+
+// Parse CLI (T026) puis composition root headless (T035). Jusqu'a T070,
+// tout appel avec scene passe par `runHeadless` : `--headless` ou non,
+// avec ou sans `--out`, avec ou sans `DISPLAY` — aucun chemin n'ouvre
+// de fenetre. T070 branchera ici le mode fenetre quand `--out` est absent
+// et `--headless` n'est pas demande.
+int run(int argc, char** argv) {
+	rt::Result<rt::app::Options> parsed = rt::app::parseOptions(argc, argv);
+	if (parsed.isError()) {
+		return printUsageError(parsed.status().message);
+	}
+	const rt::app::Options& opts = parsed.value();
+	if (opts.showHelp) {
+		return printHelp();
+	}
+	if (opts.showVersion) {
+		return printVersion();
+	}
+	return runHeadless(opts);
 }
 
 } // namespace

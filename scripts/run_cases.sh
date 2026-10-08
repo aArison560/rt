@@ -50,6 +50,24 @@ for f in tests/cases/invalid/*.rt; do
     check_invalid "$f"
 done
 
+# Porte headless (T035, DoD) : `./rt <scene> --out` sans DISPLAY -> 0.
+# Aucune initialisation SDL dans ce chemin (R6) ; echec = ECHEC global.
+total=$((total + 1))
+HEADLESS_OUT=/tmp/rt_run_cases_headless.png
+rm -f "$HEADLESS_OUT"
+if env -u DISPLAY "$RT" scenes/default.rt 64 64 --out "$HEADLESS_OUT" >/dev/null 2>&1; then
+    if [ -s "$HEADLESS_OUT" ]; then
+        printf '  ok headless sans DISPLAY (env -u DISPLAY ./rt scenes/default.rt 64 64 --out %s)\n' "$HEADLESS_OUT"
+    else
+        printf '  FAIL headless : image vide %s\n' "$HEADLESS_OUT"
+        fail=1
+    fi
+else
+    printf '  FAIL headless sans DISPLAY (code %s)\n' "$?"
+    fail=1
+fi
+rm -f "$HEADLESS_OUT"
+
 if [ "$fail" -eq 0 ]; then
     printf 'run_cases: %s fichiers OK\n' "$total"
     exit 0
