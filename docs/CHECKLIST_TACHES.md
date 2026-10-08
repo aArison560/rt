@@ -469,8 +469,8 @@ rt/
 - **Dépend** : T040 · **Sert** : M3 · **Doc** : —
 - **DoD** : tests verts, y compris apex ; ASan/UBSan verts (c'est le cas limite qui a cassé la v1).
 
-#### T045 ⬜ — Transformations par objet (M4)
-> **Fait le** : — · **Commit** : —
+#### T045 ✅ — Transformations par objet (M4)
+> **Fait le** : 2026-10-08 · **Commit** : 912fea2
 - **Prompt** : « Branche `Transform` (T012) : le rayon est transformé en **espace objet** (inverse de la transformation), l'intersection se fait là, la normale revient en monde via l'**inverse-transposée**. Un objet à `(0,0,0)` devient déplaçable en `(42,42,42)` et orientable. Test explicite : mêmes deux objets, l'un transformé, l'autre non → images cohérentes. »
 - **Dépend** : T012, T041–T044 · **Sert** : M4 · **Doc** : [SPECIFICATIONS.md §3.2 b](SPECIFICATIONS.md)
 - **DoD** : test de transformation (translation + rotation) sur les 4 types ; normales normalisées après transformation non uniforme.
