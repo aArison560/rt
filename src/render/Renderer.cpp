@@ -14,7 +14,9 @@
 
 #include "rt/render/Renderer.hpp"
 
+#include <cmath>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -23,6 +25,7 @@
 #include "rt/geometry/Cylinder.hpp"
 #include "rt/geometry/Plane.hpp"
 #include "rt/geometry/Sphere.hpp"
+#include "rt/lighting/PointLight.hpp"
 #include "rt/render/Camera.hpp"
 #include "rt/render/Framebuffer.hpp"
 #include "rt/scene/Scene.hpp"
@@ -116,6 +119,9 @@ constexpr Real kPrimaryTMin = 0.001F;
 
 // T046 : 1ere lumiere avec position (les directionnelles sans position sont
 // ignorees jusqu'en T055). Aucune -> intensite 0 = ambiant seul (defini).
+// T051 : recopie aussi `attenuation`/`range` (FORMAT_SCENE.md §5.4) ; le
+// facteur est evalue dans la boucle chaude via
+// `lighting::attenuationFactor()` (aucune allocation, R3).
 [[nodiscard]] shading::PointLightParams toPointLight(const scene::Scene& scene) noexcept {
 	shading::PointLightParams out;
 	out.intensity = 0.0F;
@@ -126,6 +132,8 @@ constexpr Real kPrimaryTMin = 0.001F;
 		out.position = light.position;
 		out.color = light.color;
 		out.intensity = light.intensity;
+		out.attenuation = light.attenuation;
+		out.range = light.range;
 		return out;
 	}
 	return out;
@@ -301,7 +309,21 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 					if (rec.materialIndex < worldMats.size()) {
 						mat = worldMats[rec.materialIndex];
 					}
-					color = shading::shadeLambert(mat, rec.normal, rec.point, pointLight,
+					// T051 : attenuation ponctuelle (FORMAT_SCENE.md §5.4).
+					// `att` ne depend que de la distance monde (registres, R3) ;
+					// `(1,0,0)` + `range 0` -> 1 (scenes existantes inchangees).
+					// Degeneres (NaN/Inf) -> 0 = ambiant seul, jamais de NaN.
+					shading::PointLightParams effLight = pointLight;
+					const Vec3 toLight = pointLight.position - rec.point;
+					const float dist =
+					    std::isfinite(toLight.x) && std::isfinite(toLight.y) &&
+					            std::isfinite(toLight.z)
+					        ? length(toLight)
+					        : std::numeric_limits<float>::quiet_NaN();
+					const float att = lighting::attenuationFactor(
+					    pointLight.attenuation, dist, pointLight.range);
+					effLight.intensity = pointLight.intensity * att;
+					color = shading::shadeLambert(mat, rec.normal, rec.point, effLight,
 					                              ambient);
 				} else {
 					color = shadeMiss(scene);

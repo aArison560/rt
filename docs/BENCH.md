@@ -30,6 +30,40 @@
   mesure n'est un temps de rendu que si la commande rend.
 
 ## Résultats
+### t051-2lights — 2026-10-08 19:12:26 EAT
+
+- **Commande** : `./rt scenes/default.rt 320 240 --out /tmp/bench_t051_2.png --quiet`
+- **Note** : T051: 2 ponctuelles, attenuation (1 0 0), 320x240 spp4 (cout par lumiere)
+- **Protocole** : 5 exécution(s) mesurée(s), 1 échauffement(s), outil `date +%s.%N`, horloge `date +%s.%N`
+- **Machine** : Linux 7.0.0-34-generic x86_64 · nherimam-ubuntu
+- **Commit au moment de la mesure** : `4751033`
+
+| runs | moyenne (s) | écart-type (s) | min (s) | max (s) | CV (%) |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 0.195914 | 0.002369 | 0.193894 | 0.199956 | 1.21 |
+
+Détail brut :
+
+```json
+{"command":"./rt scenes/default.rt 320 240 --out /tmp/bench_t051_2.png --quiet","label":"t051-2lights","n":5,"warmup":1,"tool":"date +%s.%N","clock":"date +%s.%N","unit":"s","mean":0.195914,"stddev":0.002369,"min":0.193894,"max":0.199956,"times":[0.199956,0.194677,0.195832,0.195209,0.193894],"timestamp":"2026-10-08T19:12:26+03:00"}
+```
+### t051-1light — 2026-10-08 19:12:25 EAT
+
+- **Commande** : `./rt tests/cases/valid/minimal.rt 320 240 --out /tmp/bench_t051_1.png --quiet`
+- **Note** : T051: 1 ponctuelle, attenuation (1 0 0), 320x240 spp2 (cout par lumiere)
+- **Protocole** : 5 exécution(s) mesurée(s), 1 échauffement(s), outil `date +%s.%N`, horloge `date +%s.%N`
+- **Machine** : Linux 7.0.0-34-generic x86_64 · nherimam-ubuntu
+- **Commit au moment de la mesure** : `4751033`
+
+| runs | moyenne (s) | écart-type (s) | min (s) | max (s) | CV (%) |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 0.097920 | 0.001740 | 0.096203 | 0.100777 | 1.78 |
+
+Détail brut :
+
+```json
+{"command":"./rt tests/cases/valid/minimal.rt 320 240 --out /tmp/bench_t051_1.png --quiet","label":"t051-1light","n":5,"warmup":1,"tool":"date +%s.%N","clock":"date +%s.%N","unit":"s","mean":0.097920,"stddev":0.001740,"min":0.096203,"max":0.100777,"times":[0.100777,0.097615,0.098031,0.096203,0.096972],"timestamp":"2026-10-08T19:12:26+03:00"}
+```
 ### minimal — 2026-10-06 16:45:10 EAT
 
 - **Commande** : `./rt tests/cases/valid/minimal.rt`

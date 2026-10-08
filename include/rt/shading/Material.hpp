@@ -64,6 +64,13 @@ struct PointLightParams {
 	Vec3 position = Vec3(0.0F, 0.0F, 0.0F);
 	Vec3 color = Vec3(1.0F, 1.0F, 1.0F);
 	float intensity = 1.0F;
+	// Attenuation (T051, FORMAT_SCENE.md §5.4) : `(c l q)`, `1/(c+l*d+q*d^2)`,
+	// defaut `(1 0 0)` = pas d'attenuation. `range` : portee max, 0 = infinie.
+	// Evalues par `lighting::attenuationFactor()` dans `render/` (le shading
+	// recoit une intensite deja ponderee, pas de dependance `shading` ->
+	// `lighting`, regle d'or §2.1). Valides par le schema (bornes R1, T024).
+	Vec3 attenuation = Vec3(1.0F, 0.0F, 0.0F);
+	float range = 0.0F;
 };
 
 // Sature chaque canal dans [0,1] (NaN/Inf -> 0). `noexcept`, sans allocation.
