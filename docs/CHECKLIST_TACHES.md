@@ -495,20 +495,20 @@ rt/
 
 ### Phase P5 — Lumières & matériaux (M7, réflexion, transparence)
 
-#### T050 ⬜ — Modèle de matériau complet
-> **Fait le** : — · **Commit** : —
+#### T050 ✅ — Modèle de matériau complet
+> **Fait le** : 2026-10-08 · **Commit** : 4751033
 - **Prompt** : « Étends `rt::Material` : `albedo`, `ambient`, `diffuse`, `specular`, `shininess`, `reflectivity` (0-1), `transparency` (0-1), `ior`, `texture` (référence par nom), `pattern`. Tout pilotable **depuis le fichier de scène** (règle du sujet : rien ne se change uniquement en recompilant). Validation des bornes dans le schéma. »
 - **Dépend** : T033, T021 · **Sert** : M7, *Ambiance ++* · **Doc** : `docs/FORMAT_SCENE.md`
 - **DoD** : chaque champ est modifiable par fichier et observable dans l'image (test par champ).
 
-#### T051 ⬜ — Lumière ponctuelle et atténuation
-> **Fait le** : — · **Commit** : —
+#### T051 ✅ — Lumière ponctuelle et atténuation
+> **Fait le** : 2026-10-08 · **Commit** : 20d9369
 - **Prompt** : « `src/lighting/PointLight.cpp` : position, couleur, intensité, atténuation (constante/linéaire/quadrique bornée), distance max de portée. Écrit dans `docs/BENCH.md` le coût par lumière pour justifier les choix. »
 - **Dépend** : T050 · **Sert** : M7 · **Doc** : —
 - **DoD** : test : doubler l'intensité double la contribution (à epsilon) ; aucun NaN.
 
-#### T052 ⬜ — Rayons d'ombre et multi-spot
-> **Fait le** : — · **Commit** : —
+#### T052 ✅ — Rayons d'ombre et multi-spot
+> **Fait le** : 2026-10-08 · **Commit** : 48fe3f6
 - **Prompt** : « Ajoute le shadow ray (`tMin` epsilon pour éviter l'acné, test d'occlusion sur tous les objets, profondeur bornée) et l'accumulation de **plusieurs spots** : luminosités mélangées, ombres assombries selon le nombre de sources bloquantes. »
 - **Dépend** : T051, T046 · **Sert** : M7 (« Lights ») · **Doc** : [SPECIFICATIONS.md §3.2 d](SPECIFICATIONS.md)
 - **DoD** : scène à 2 lumières → 2 zones d'ombre distinctes ; test d'acné (pas de bandes) ; le cas de la figure VI.3 est anticipé.
