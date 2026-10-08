@@ -407,8 +407,8 @@ rt/
 - **Dépend** : T031, T028 · **Sert** : M2 · **Doc** : [ARCHITECTURE.md §4](ARCHITECTURE.md)
 - **DoD** : `./rt scenes/default.rt 64 64 --out /tmp/x.png` → code 0 ; ASan/TSan verts ; test de déterminisme.
 
-#### T033 ⬜ — Shading diffus + ambiante minimale
-> **Fait le** : — · **Commit** : —
+#### T033 ✅ — Shading diffus + ambiante minimale
+> **Fait le** : 2026-10-08 · **Commit** : fae89eb
 - **Prompt** : « Ajoute `src/shading/Material.cpp` (albedo, ambient, diffuse) et le calcul de Lambert avec **une** lumière ponctuelle + une composante ambiante globale, bornée [0,1] avec gamma en sortie. Objectif : une image lisible avec des volumes. »
 - **Dépend** : T032 · **Sert** : M7, *Ambiance light* · **Doc** : [OPTIONS_GUIDE.md](OPTIONS_GUIDE.md)
 - **DoD** : image non noire partout (test : luminosité minimale > 0 sur toute l'image) ; couleurs bornées (pas de NaN : test `std::isnan` sur le buffer).
