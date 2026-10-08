@@ -225,6 +225,15 @@ Règles communes :
 > `v` = hauteur), intermédiaires en `double`, dégénérés → `false`.
 > `localBounds()` = `x/z` serrée (`cx±r`), `y` = ±1e6 (T133 bornera).
 > Tests : face, tangent, intérieur, axial/parallèle + dégénérés.
+>
+> Implémenté (T044) : `rt::geometry::Cone` (sommet + demi-angle en radians,
+> infini deux nappes autour de Y) — `a·t²+b·t+c` avec `k = tan(angle)`,
+> `|a| <= ε` → linéaire `b·t+c = 0` (parallèle à la génératrice, jamais de
+> division par zéro), nappe par le signe de `y-ay`, normale = gradient
+> `(2·px, -2·k²·py, 2·pz)`, sommet (`|P-apex| <= ε`, casse de la v1) →
+> candidat ignoré défini sans `throw`, `uv` coniques, `double` stables.
+> `localBounds()` = `y` = ±1e6, `x/z` évasées (`±(k·1e6+1)`, T133 bornera).
+> Tests : nappes haute/basse, sommet, génératrice + près-apex + dégénérés.
 
 ### 4.3 Transformations (exigence M4)
 

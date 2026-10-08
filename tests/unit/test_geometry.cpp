@@ -1,4 +1,4 @@
-// Tests de l'interface des objets (T040) + sphere (T041) + plan (T042) + cylindre (T043), Catch2.
+// Tests de l'interface des objets (T040) + sphere (T041) + plan (T042) + cylindre (T043) + cone (T044), Catch2.
 // DoD T040 : test de dispatch (appel via `AObject*` -> surcharge derivee) +
 // `static_assert` sur `HitRecord` (verifie a la compilation dans
 // `include/rt/geometry/Object.hpp`) + grep d'intersection sans macro
@@ -18,6 +18,7 @@
 
 #include "rt/base/Ray.hpp"
 #include "rt/base/Vec.hpp"
+#include "rt/geometry/Cone.hpp"
 #include "rt/geometry/Cylinder.hpp"
 #include "rt/geometry/Object.hpp"
 #include "rt/geometry/Plane.hpp"
@@ -438,4 +439,119 @@ TEST_CASE("geometry cylinder : degenere et localBounds (T043)", "[geometry][cyli
 	REQUIRE(box.max.z == Catch::Approx(1.0).margin(1e-4));
 	REQUIRE(box.min.y == Catch::Approx(-1e6).margin(1.0));
 	REQUIRE(box.max.y == Catch::Approx(1e6).margin(1.0));
+}
+
+TEST_CASE("geometry cone : nappe haute (T044)", "[geometry][cone]") {
+	// Demi-angle 45 degres (tan = 1) : `x²+z² = y²`, sommet a l'origine.
+	const rt::geometry::Cone cone(rt::Vec3(0, 0, 0), rt::degreesToRadians(rt::Real(45)), 40, 8);
+	// Depuis (0,1,-5) vers +z : t=4, point (0,1,-1), nappe haute (y=1 > 0).
+	rt::HitRecord rec;
+	REQUIRE(cone.intersect(rt::Ray(rt::Vec3(0, 1, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                           rt::kInfinity, rec));
+	REQUIRE(rec.t == Catch::Approx(4.0).margin(1e-3));
+	REQUIRE(nearReal(rec.point.y, rt::Real(1), 1e-3F));
+	REQUIRE(rec.point.y > rt::Real(0)); // nappe haute
+	REQUIRE(rec.frontFace);
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1)));
+	REQUIRE(rec.materialIndex == 8);
+	REQUIRE(std::isfinite(rec.uv.x));
+	REQUIRE(std::isfinite(rec.uv.y));
+	REQUIRE(rec.uv.x >= rt::Real(0));
+	REQUIRE(rec.uv.x <= rt::Real(1));
+	// Dispatch via la base : meme resultat par `AObject*`.
+	const rt::geometry::AObject& base = cone;
+	rt::HitRecord viaBase;
+	REQUIRE(base.intersect(rt::Ray(rt::Vec3(0, 1, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                       rt::kInfinity, viaBase));
+	REQUIRE(viaBase.t == Catch::Approx(4.0).margin(1e-3));
+}
+
+TEST_CASE("geometry cone : nappe basse (T044)", "[geometry][cone]") {
+	const rt::geometry::Cone cone(rt::Vec3(0, 0, 0), rt::degreesToRadians(rt::Real(45)));
+	// Depuis (0,-1,-5) vers +z : t=4, point (0,-1,-1), nappe basse.
+	rt::HitRecord rec;
+	REQUIRE(cone.intersect(rt::Ray(rt::Vec3(0, -1, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                           rt::kInfinity, rec));
+	REQUIRE(rec.t == Catch::Approx(4.0).margin(1e-3));
+	REQUIRE(nearReal(rec.point.y, rt::Real(-1), 1e-3F));
+	REQUIRE(rec.point.y < rt::Real(0)); // nappe basse
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1)));
+	// Fenetre trop courte : hit a t=4 hors [0,3].
+	REQUIRE_FALSE(cone.intersect(rt::Ray(rt::Vec3(0, -1, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                             rt::Real(3), rec));
+}
+
+TEST_CASE("geometry cone : sommet defini sans crash (T044)", "[geometry][cone]") {
+	const rt::geometry::Cone cone(rt::Vec3(0, 0, 0), rt::degreesToRadians(rt::Real(45)));
+	rt::HitRecord rec;
+	// Rayon visant exactement l'apex (discriminant nul, t=5) : normale
+	// indefinissable -> miss defini, sans `throw`, sans division par zero.
+	REQUIRE_FALSE(cone.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                             rt::kInfinity, rec));
+	// Origine a l'apex, direction +z : t=0 ignore (hors [tMin,...] si
+	// tMin > 0), l'autre nappe n'existe pas sur cet axe -> miss defini.
+	REQUIRE_FALSE(cone.intersect(rt::Ray(rt::Vec3(0, 0, 0), rt::Vec3(0, 0, 1)),
+	                             rt::Real(0.001F), rt::kInfinity, rec));
+	// Direction nulle -> miss defini.
+	REQUIRE_FALSE(cone.intersect(rt::Ray(rt::Vec3(0, 1, -5), rt::Vec3(0, 0, 0)), rt::Real(0),
+	                             rt::kInfinity, rec));
+	// Fenetre inversee -> miss defini.
+	REQUIRE_FALSE(cone.intersect(rt::Ray(rt::Vec3(0, 1, -5), rt::Vec3(0, 0, 1)), rt::Real(5),
+	                             rt::Real(3), rec));
+}
+
+TEST_CASE("geometry cone : parallele a la generatrice, sans division (T044)", "[geometry][cone]") {
+	// 45 degres : la direction (0,1,1)/sqrt(2) est parallele a une
+	// generatrice (`a = dx²+dz²-k²·dy² = 0`) -> branche lineaire.
+	const rt::geometry::Cone cone(rt::Vec3(0, 0, 0), rt::degreesToRadians(rt::Real(45)));
+	const rt::Vec3 alongGen = rt::normalize(rt::Vec3(0, 1, 1));
+	rt::HitRecord rec;
+	// Origine (0,0,-5) : `a = 0` mais `b != 0` -> un seul `t` lineaire
+	// (t = 5/sqrt(2) ~= 3.54, point (0,2.5,-2.5) sur le cone) : hit defini.
+	REQUIRE(cone.intersect(rt::Ray(rt::Vec3(0, 0, -5), alongGen), rt::Real(0), rt::kInfinity, rec));
+	REQUIRE(rec.t == Catch::Approx(2.5F * 1.41421356F).margin(1e-2));
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1)));
+	// Cas `b = 0` aussi : origine (5,0,0), meme direction -> aucun `t`
+	// isole -> miss defini, sans division.
+	REQUIRE_FALSE(
+	    cone.intersect(rt::Ray(rt::Vec3(5, 0, 0), alongGen), rt::Real(0), rt::kInfinity, rec));
+	// Cas lineaire avec hit : origine (0,2,-5), meme direction -> t unique.
+	rt::HitRecord hit;
+	REQUIRE(cone.intersect(rt::Ray(rt::Vec3(0, 2, -5), alongGen), rt::Real(0), rt::kInfinity, hit));
+	REQUIRE(hit.t > rt::Real(0));
+	REQUIRE(std::isfinite(hit.t));
+	REQUIRE(nearReal(rt::length(hit.normal), rt::Real(1)));
+	REQUIRE(std::isfinite(hit.uv.x));
+	REQUIRE(std::isfinite(hit.uv.y));
+}
+
+TEST_CASE("geometry cone : pres de l'apex et degenere (T044)", "[geometry][cone]") {
+	const rt::geometry::Cone cone(rt::Vec3(0, 0, 0), rt::degreesToRadians(rt::Real(45)));
+	// Rayon passant pres de l'apex (x=0.5, y=1) : hit defini, pas l'apex
+	// (y=0 resterait dans le plan du sommet, discriminant < 0 -> miss).
+	rt::HitRecord near;
+	REQUIRE(cone.intersect(rt::Ray(rt::Vec3(0.5F, 1, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                           rt::kInfinity, near));
+	REQUIRE(std::isfinite(near.t));
+	REQUIRE(nearReal(rt::length(near.normal), rt::Real(1)));
+	// Demi-angle nul ou droit -> miss defini (tan degenere).
+	const rt::geometry::Cone flat(rt::Vec3(0, 0, 0), rt::Real(0));
+	REQUIRE_FALSE(flat.intersect(rt::Ray(rt::Vec3(0, 1, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                             rt::kInfinity, near));
+	const rt::geometry::Cone wide(rt::Vec3(0, 0, 0), rt::Real(1.6F));
+	REQUIRE_FALSE(wide.intersect(rt::Ray(rt::Vec3(0, 1, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                             rt::kInfinity, near));
+	// Sommet deporte : meme hit decale de (3,0,0).
+	const rt::geometry::Cone moved(rt::Vec3(3, 0, 0), rt::degreesToRadians(rt::Real(45)));
+	rt::HitRecord off;
+	REQUIRE(moved.intersect(rt::Ray(rt::Vec3(3, 1, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                        rt::kInfinity, off));
+	REQUIRE(off.t == Catch::Approx(4.0).margin(1e-3));
+	REQUIRE(nearReal(off.point.x, rt::Real(3), 1e-3F));
+	// `localBounds` : y = ±1e6, x/z evasees (k=1 -> ±(1e6+1)).
+	const rt::AABB box = cone.localBounds();
+	REQUIRE(box.min.y == Catch::Approx(-1e6).margin(1.0));
+	REQUIRE(box.max.y == Catch::Approx(1e6).margin(1.0));
+	REQUIRE(box.min.x == Catch::Approx(-1e6 - 1.0).margin(10.0));
+	REQUIRE(box.max.x == Catch::Approx(1e6 + 1.0).margin(10.0));
 }
