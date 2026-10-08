@@ -211,6 +211,12 @@ Règles communes :
 > `uv` sphériques, intermédiaires en `double` pour les sphères très loin,
 > dégénérés (`r <= ε`, direction nulle, `tMin > tMax`, `NaN`) → `false`.
 > `localBounds()` exacte (`C ± r`). Tests : 6 cas + dégénérés.
+>
+> Implémenté (T042) : `rt::geometry::Plane` (point + normale normalisée) —
+> `t = dot(P0-O,n)/dot(D,n)`, garde `|denom| <= ε` avant division (jamais de
+> division par zéro, UBSan propre), `setFaceNormal` cohérente des deux côtés,
+> `uv` des axes tangents, `localBounds()` = ±1e6 documentée (plan infini).
+> Tests : parallèle, dans le plan, avant/après + dégénérés.
 
 ### 4.3 Transformations (exigence M4)
 

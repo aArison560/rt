@@ -1,10 +1,12 @@
-// Tests de l'interface des objets (T040) + sphere (T041), Catch2.
+// Tests de l'interface des objets (T040) + sphere (T041) + plan (T042), Catch2.
 // DoD T040 : test de dispatch (appel via `AObject*` -> surcharge derivee) +
 // `static_assert` sur `HitRecord` (verifie a la compilation dans
 // `include/rt/geometry/Object.hpp`) + grep d'intersection sans macro
 // (aucune macro generique, exige par la fiche M3).
 // DoD T041 : 6 cas sphere (tangent, interieur, manquant, hors bornes,
 // centre exact, tres loin) + degeneres, sans exception, ASan propre.
+// DoD T042 : plan (parallele, dans le plan, avant/apres) + degeneres,
+// sans division par zero (UBSan vert).
 
 #include <catch2/catch_amalgamated.hpp>
 
@@ -17,6 +19,7 @@
 #include "rt/base/Ray.hpp"
 #include "rt/base/Vec.hpp"
 #include "rt/geometry/Object.hpp"
+#include "rt/geometry/Plane.hpp"
 #include "rt/geometry/Sphere.hpp"
 
 namespace {
@@ -228,4 +231,108 @@ TEST_CASE("geometry sphere : degeneres sans crash (T041)", "[geometry][sphere]")
 	REQUIRE(nearReal(box.max.x, rt::Real(3)));
 	REQUIRE(nearReal(box.max.y, rt::Real(4)));
 	REQUIRE(nearReal(box.max.z, rt::Real(5)));
+}
+
+TEST_CASE("geometry plane : avant (dessus) et arriere (T042)", "[geometry][plane]") {
+	const rt::geometry::Plane plane(rt::Vec3(0, 0, 0), rt::Vec3(0, 1, 0), 20, 5);
+	// Dessus : origine a y=5, direction -y -> t=5, face avant.
+	rt::HitRecord rec;
+	REQUIRE(plane.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(0, -1, 0)), rt::Real(0),
+	                        rt::kInfinity, rec));
+	REQUIRE(rec.t == Catch::Approx(5.0).margin(1e-4));
+	REQUIRE(nearReal(rec.point.y, rt::Real(0)));
+	REQUIRE(rec.frontFace);
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1)));
+	REQUIRE(nearReal(rec.normal.y, rt::Real(1)));
+	REQUIRE(rec.materialIndex == 5);
+	REQUIRE(std::isfinite(rec.uv.x));
+	REQUIRE(std::isfinite(rec.uv.y));
+	// Derriere : meme origine, direction +y (s'eloigne) -> miss.
+	REQUIRE_FALSE(plane.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(0, 1, 0)), rt::Real(0),
+	                              rt::kInfinity, rec));
+	// Dessous : origine a y=-5, direction +y -> t=5, face arriere.
+	rt::HitRecord below;
+	REQUIRE(plane.intersect(rt::Ray(rt::Vec3(0, -5, 0), rt::Vec3(0, 1, 0)), rt::Real(0),
+	                        rt::kInfinity, below));
+	REQUIRE(below.t == Catch::Approx(5.0).margin(1e-4));
+	REQUIRE_FALSE(below.frontFace);
+	// Normale retournee contre le rayon : (0,-1,0).
+	REQUIRE(nearReal(below.normal.y, rt::Real(-1)));
+	// Dispatch via la base.
+	const rt::geometry::AObject& base = plane;
+	rt::HitRecord viaBase;
+	REQUIRE(base.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(0, -1, 0)), rt::Real(0),
+	                       rt::kInfinity, viaBase));
+	REQUIRE(viaBase.t == Catch::Approx(5.0).margin(1e-4));
+}
+
+TEST_CASE("geometry plane : parallele et quasi parallele, sans division par zero (T042)",
+          "[geometry][plane]") {
+	const rt::geometry::Plane plane(rt::Vec3(0, 0, 0), rt::Vec3(0, 1, 0));
+	rt::HitRecord rec;
+	// Strictement parallele : direction dans le plan.
+	REQUIRE_FALSE(plane.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(1, 0, 0)), rt::Real(0),
+	                              rt::kInfinity, rec));
+	REQUIRE_FALSE(plane.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                              rt::kInfinity, rec));
+	// Quasi parallele : |denom| = 1e-7 < kEpsilon (1e-6) -> miss defini.
+	const rt::Vec3 almost = rt::normalize(rt::Vec3(1, rt::kEpsilon * 0.1F, 0));
+	REQUIRE_FALSE(
+	    plane.intersect(rt::Ray(rt::Vec3(0, 5, 0), almost), rt::Real(0), rt::kInfinity, rec));
+	// Direction nulle (v1 : division) -> miss defini.
+	REQUIRE_FALSE(plane.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(0, 0, 0)), rt::Real(0),
+	                              rt::kInfinity, rec));
+	// Fenetre trop courte : hit a t=5 hors [0,3].
+	REQUIRE_FALSE(plane.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(0, -1, 0)), rt::Real(0),
+	                              rt::Real(3), rec));
+	// Fenetre inversee -> miss defini.
+	REQUIRE_FALSE(plane.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(0, -1, 0)), rt::Real(6),
+	                              rt::Real(3), rec));
+}
+
+TEST_CASE("geometry plane : dans le plan et uv coherents (T042)", "[geometry][plane]") {
+	const rt::geometry::Plane plane(rt::Vec3(0, 0, 0), rt::Vec3(0, 1, 0));
+	rt::HitRecord rec;
+	// Origine dans le plan, direction dans le plan -> miss (pas de `t` isole).
+	REQUIRE_FALSE(plane.intersect(rt::Ray(rt::Vec3(1, 0, 2), rt::Vec3(1, 0, 0)), rt::Real(0),
+	                              rt::kInfinity, rec));
+	// Deux impacts a des positions differentes -> `uv` differents
+	// (au moins une coordonnee change selon l'axe tangent).
+	rt::HitRecord first;
+	rt::HitRecord second;
+	REQUIRE(plane.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(0, -1, 0)), rt::Real(0),
+	                        rt::kInfinity, first));
+	REQUIRE(plane.intersect(rt::Ray(rt::Vec3(3, 5, 0), rt::Vec3(0, -1, 0)), rt::Real(0),
+	                        rt::kInfinity, second));
+	REQUIRE((first.uv.x != second.uv.x || first.uv.y != second.uv.y));
+	REQUIRE(std::isfinite(first.uv.x));
+	REQUIRE(std::isfinite(first.uv.y));
+	// `localBounds` documentee : ±1e6.
+	const rt::AABB box = plane.localBounds();
+	REQUIRE(box.min.x == Catch::Approx(-1e6).margin(1.0));
+	REQUIRE(box.max.x == Catch::Approx(1e6).margin(1.0));
+	REQUIRE(box.min.y == Catch::Approx(-1e6).margin(1.0));
+	REQUIRE(box.max.y == Catch::Approx(1e6).margin(1.0));
+}
+
+TEST_CASE("geometry plane : normale degeneree et plan vertical (T042)", "[geometry][plane]") {
+	rt::HitRecord rec;
+	// Constructeur a normale nulle -> repli (0,1,0), plan defini.
+	const rt::geometry::Plane fallback(rt::Vec3(0, 0, 0), rt::Vec3(0, 0, 0));
+	REQUIRE(fallback.normal().y == Catch::Approx(1.0).margin(1e-5));
+	REQUIRE(fallback.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(0, -1, 0)), rt::Real(0),
+	                           rt::kInfinity, rec));
+	// `setNormal` nulle : garde l'ancienne, toujours defini.
+	rt::geometry::Plane mutablePlane(rt::Vec3(0, 0, 0), rt::Vec3(0, 1, 0));
+	mutablePlane.setNormal(rt::Vec3(0, 0, 0));
+	REQUIRE(mutablePlane.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(0, -1, 0)), rt::Real(0),
+	                               rt::kInfinity, rec));
+	// Plan vertical (normale +x) : helper bascule sur (1,0,0) -> `uv` finis.
+	const rt::geometry::Plane vertical(rt::Vec3(0, 0, 0), rt::Vec3(1, 0, 0));
+	rt::HitRecord side;
+	REQUIRE(vertical.intersect(rt::Ray(rt::Vec3(-5, 1, 2), rt::Vec3(1, 0, 0)), rt::Real(0),
+	                           rt::kInfinity, side));
+	REQUIRE(side.t == Catch::Approx(5.0).margin(1e-4));
+	REQUIRE(std::isfinite(side.uv.x));
+	REQUIRE(std::isfinite(side.uv.y));
 }
