@@ -457,8 +457,8 @@ rt/
 - **Dépend** : T040 · **Sert** : M3 · **Doc** : —
 - **DoD** : tests verts ; aucun `throw` ni division par zéro détectée (UBSan vert).
 
-#### T043 ⬜ — Cylindre
-> **Fait le** : — · **Commit** : —
+#### T043 ✅ — Cylindre
+> **Fait le** : 2026-10-08 · **Commit** : b15b5e8
 - **Prompt** : « `src/geometry/Cylinder.cpp` : cylindre **infini** autour de l'axe local Y (la limitation sera faite en T133), intersection quadratique + gestion des racines négatives, normale radiale, uv (θ, y), dégénéré = rayon nul → code d'erreur. Tests : tangent, intérieur, axial, parallèle à l'axe. »
 - **Dépend** : T040 · **Sert** : M3 · **Doc** : —
 - **DoD** : tests verts ; ASan/UBSan verts.
