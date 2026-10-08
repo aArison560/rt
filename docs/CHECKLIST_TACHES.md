@@ -413,8 +413,8 @@ rt/
 - **Dépend** : T032 · **Sert** : M7, *Ambiance light* · **Doc** : [OPTIONS_GUIDE.md](OPTIONS_GUIDE.md)
 - **DoD** : image non noire partout (test : luminosité minimale > 0 sur toute l'image) ; couleurs bornées (pas de NaN : test `std::isnan` sur le buffer).
 
-#### T034 ⬜ — Écriture d'image (PNG)
-> **Fait le** : — · **Commit** : —
+#### T034 ✅ — Écriture d'image (PNG)
+> **Fait le** : 2026-10-08 · **Commit** : a80223a
 - **Prompt** : « Implémente `src/io/ImageWriter.cpp` : PNG via `stb_image_write` (vendored dans `thirdparty/`) ou libpng, fallback PPM si lib absente, nom de fichier validé, échec → `Status`. Branche `--out`. »
 - **Dépend** : T030 · **Sert** : *Technical effects* (screenshot), preuves · **Doc** : [OUTILS.md §5](OUTILS.md)
 - **DoD** : le PNG produit est valide (`identify`/`file` le confirme) ; échec d'écriture (répertoire inexistant) → message et code ≠ 0.
