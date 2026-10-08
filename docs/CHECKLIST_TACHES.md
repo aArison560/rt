@@ -513,20 +513,20 @@ rt/
 - **Dépend** : T051, T046 · **Sert** : M7 (« Lights ») · **Doc** : [SPECIFICATIONS.md §3.2 d](SPECIFICATIONS.md)
 - **DoD** : scène à 2 lumières → 2 zones d'ombre distinctes ; test d'acné (pas de bandes) ; le cas de la figure VI.3 est anticipé.
 
-#### T053 ⬜ — Spéculaire (brillance, « petit point blanc »)
-> **Fait le** : — · **Commit** : —
+#### T053 ✅ — Spéculaire (brillance, « petit point blanc »)
+> **Fait le** : 2026-10-08 · **Commit** : 218c021
 - **Prompt** : « Implémente Phong ou Blinn-Phong (`specular`, `shininess`) avec saturation volontaire : le reflet du spot s'ajoute à la couleur de l'objet pour former un **point blanc** côté lumière. Test : présence de pixels proches de (1,1,1) sur une sphère lisse. »
 - **Dépend** : T052 · **Sert** : M7 · **Doc** : [SPECIFICATIONS.md §3.2 d](SPECIFICATIONS.md)
 - **DoD** : le test de saturation passe ; dégradé visible (luminosité décroît de la lumière vers l'ombre).
 
-#### T054 ⬜ — Lumière ambiante globale pilotée par le fichier (*Ambiance light / ++*)
-> **Fait le** : — · **Commit** : —
+#### T054 ✅ — Lumière ambiante globale pilotée par le fichier (*Ambiance light / ++*)
+> **Fait le** : 2026-10-08 · **Commit** : 4589beb
 - **Prompt** : « Ajoute une composante ambiante globale `ambient { color intensity }` au schéma : **aucun objet n'est jamais totalement noir**. Test automatique : luminosité minimale > 0 sur tous les pixels d'une scène éclairée et d'une scène sans lumière. »
 - **Dépend** : T050, T021 · **Sert** : *Ambiance light*, *Ambiance ++* (2 pts) · **Doc** : [SPECIFICATIONS.md §5.2 B](SPECIFICATIONS.md)
 - **DoD** : test de luminosité minimale vert ; valeur modifiable par fichier, visible dans l'image.
 
-#### T055 ⬜ — Lumière directionnelle (*Parallel light*)
-> **Fait le** : — · **Commit** : —
+#### T055 ✅ — Lumière directionnelle (*Parallel light*)
+> **Fait le** : 2026-10-08 · **Commit** : 661cb72
 - **Prompt** : « `src/lighting/DirectionalLight.cpp` : lumière **parallèle** définie par une direction (soleil), indépendante de la position, mêmes ombres. Compare explicitement dans un test avec une lumière ponctuelle (les ombres divergent pour la ponctuelle, restent parallèles pour la directionnelle). »
 - **Dépend** : T052 · **Sert** : *Parallel light* · **Doc** : [SPECIFICATIONS.md §5.2 E](SPECIFICATIONS.md)
 - **DoD** : le test comparatif passe ; scène `scenes/opt_parallel.rt` versionnée.
