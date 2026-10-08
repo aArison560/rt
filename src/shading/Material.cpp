@@ -173,4 +173,55 @@ Vec3 shadeLambert(const MaterialParams& material, Vec3 normal, Vec3 hitPoint,
 	return saturate(result);
 }
 
+Vec3 shadeLambertDirectional(const MaterialParams& material, Vec3 normal,
+                              const DirectionalLightParams& light,
+                              const AmbientParams& ambient) noexcept {
+	// Meme ambiant que `shadeLambert()` (plancher > 0, T054).
+	const Vec3 ambientLight =
+	    Vec3(sanitizeChannel(ambient.color.x * ambient.intensity),
+	         sanitizeChannel(ambient.color.y * ambient.intensity),
+	         sanitizeChannel(ambient.color.z * ambient.intensity));
+	const float ambientCoeff = sanitizeChannel(material.ambient);
+	Vec3 result = Vec3(sanitizeChannel(material.albedo.x) * ambientLight.x * ambientCoeff,
+	                   sanitizeChannel(material.albedo.y) * ambientLight.y * ambientCoeff,
+	                   sanitizeChannel(material.albedo.z) * ambientLight.z * ambientCoeff);
+	// `L` constante (T055) : `-normalize(direction)`, nulle/NaN -> ambiant seul.
+	if (!std::isfinite(light.direction.x) || !std::isfinite(light.direction.y) ||
+	    !std::isfinite(light.direction.z)) {
+		return saturate(result);
+	}
+	const Vec3 negDir = light.direction * -1.0F;
+	const Vec3 lightDir = normalize(negDir);
+	if (nearZero(lightDir)) {
+		return saturate(result);
+	}
+	const Vec3 unitNormal = normalize(normal);
+	if (nearZero(unitNormal)) {
+		return saturate(result);
+	}
+	float nDotL = dot(unitNormal, lightDir);
+	if (!std::isfinite(nDotL) || nDotL <= 0.0F) {
+		return saturate(result);
+	}
+	if (nDotL > 1.0F) {
+		nDotL = 1.0F;
+	}
+	const float diffuseCoeff = sanitizeChannel(material.diffuse);
+	const float lightIntensity =
+	    std::isfinite(light.intensity) && light.intensity > 0.0F ? light.intensity : 0.0F;
+	if (!(lightIntensity > 0.0F)) {
+		return saturate(result);
+	}
+	const Vec3 lightColor = Vec3(sanitizeChannel(light.color.x), sanitizeChannel(light.color.y),
+	                             sanitizeChannel(light.color.z));
+	const Vec3 diffuse = Vec3(sanitizeChannel(material.albedo.x) * diffuseCoeff * nDotL *
+	                              lightColor.x * lightIntensity,
+	                          sanitizeChannel(material.albedo.y) * diffuseCoeff * nDotL *
+	                              lightColor.y * lightIntensity,
+	                          sanitizeChannel(material.albedo.z) * diffuseCoeff * nDotL *
+	                              lightColor.z * lightIntensity);
+	result += diffuse;
+	return saturate(result);
+}
+
 } // namespace rt::shading

@@ -174,6 +174,16 @@ Ordre recommandé (ROI décroissant). Les détails sont dans les sections suivan
 - **Preuve** : scène `opt_lumiere_directionnelle.rt` — ombres **parallèles** (toutes de même
   longueur/direction) vs une `PointLight` (ombres divergentes). Montrer les deux côte à côte.
 
+> Implémenté (T055) : `lighting::toLightDir()` (`L = -norm(dir)`, nulle/NaN
+> → ignorée, `noexcept`, R2/R3) + `shading::shadeLambertDirectional()` (même
+> ambiant que ponctuelle, `NdotL` constant, dos → ambiant seul) branchés dans
+> `render/` (`collectDirectionalLights`, ordre fichier, `tMax` infini pour
+> ombres parallèles, diffus `matNoAmb` + speculaire `specularTerm` T053).
+> Preuve : `scenes/opt_parallel.rt` (soleil + sol + 2 sphères, ombres
+> parallèles) ; test comparatif `tests/unit/test_directional.cpp` (2 sphères
+> symétriques : ponctuelle latérale droite +8.7 vs directionnelle −1.0,
+> ombres avec/sans occultrice 3.3 vs 164, `opt_parallel.rt` non-fond >5%).
+
 ### 3.2 Direct light — ☐ Oui/Non
 
 **Critère** : « We're blinded by light spot facing us. »

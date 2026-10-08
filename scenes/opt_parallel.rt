@@ -1,0 +1,65 @@
+# scenes/opt_parallel.rt — lumiere parallele (T055, *Parallel light*).
+# Soleil directionnel (direction constante, independante de la position,
+# pas d'attenuation) + sol + 2 spheres : les ombres portees restent
+# paralleles (meme direction/longueur), contrairement a une ponctuelle
+# proche qui les fait diverger (cf. `tests/unit/test_directional.cpp`).
+# Toute directive existe dans `docs/FORMAT_SCENE.md` §5 (table `src/schema/`, R1).
+scene "opt_parallel" {
+    limits {
+        width 320
+        height 240
+        samples 4
+        max_depth 4
+        seed 0
+    }
+    camera {
+        position (0 2 6)
+        target (0 0 0)
+        up (0 1 0)
+        fov 50
+    }
+    background {
+        color (0.02 0.02 0.05)
+    }
+    ambient {
+        color (0.06 0.06 0.08)
+        intensity 1.0
+    }
+    lights {
+        light directional "sun" {
+            direction (0.3 -1 -0.2)
+            color (1 1 0.9)
+            intensity 1.2
+        }
+    }
+    objects {
+        object plane "sol" {
+            point (0 -1 0)
+            normal (0 1 0)
+            material {
+                albedo (0.5 0.5 0.5)
+                diffuse 0.7
+            }
+        }
+        object sphere "gauche" {
+            center (-1.2 0 0)
+            radius 1
+            material {
+                albedo (0.9 0.1 0.1)
+                diffuse 0.7
+                specular 0.5
+                shininess 32
+            }
+        }
+        object sphere "droite" {
+            center (1.2 0 0)
+            radius 1
+            material {
+                albedo (0.1 0.1 0.9)
+                diffuse 0.7
+                specular 0.5
+                shininess 32
+            }
+        }
+    }
+}

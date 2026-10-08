@@ -73,6 +73,18 @@ struct PointLightParams {
 	float range = 0.0F;
 };
 
+struct DirectionalLightParams {
+	// Direction de propagation soleil -> scene (FORMAT §5.4, `direction`) :
+	// `L = -normalize(direction)` (constante, `lighting::toLightDir`, T055).
+	// Pas d'attenuation par distance (OPTIONS_GUIDE §3.1, facteur 1).
+	Vec3 direction = Vec3(0.0F, -1.0F, 0.0F);
+	Vec3 color = Vec3(1.0F, 1.0F, 1.0F);
+	float intensity = 1.0F;
+};
+
+static_assert(std::is_trivially_copyable_v<DirectionalLightParams>,
+              "DirectionalLightParams doit rester POD (R3)");
+
 // Sature chaque canal dans [0,1] (NaN/Inf -> 0). `noexcept`, sans allocation.
 [[nodiscard]] Vec3 saturate(Vec3 color) noexcept;
 
@@ -104,5 +116,13 @@ struct PointLightParams {
 // T051 (registres, R3). `noexcept`, sans allocation.
 [[nodiscard]] Vec3 shadeSpecular(const MaterialParams& material, Vec3 normal, Vec3 viewDir,
                                  Vec3 hitPoint, const PointLightParams& light) noexcept;
+
+// Lambert directionnelle (T055, *Parallel light*) : `L = -norm(direction)`
+// constante (independante de la position, pas d'attenuation), memes ombres
+// (traitees par `render/` avec `tMax` infini). `direction` nulle/NaN ->
+// ambiant seul (defini). `noexcept`, sans allocation (R2/R3).
+[[nodiscard]] Vec3 shadeLambertDirectional(const MaterialParams& material, Vec3 normal,
+                                           const DirectionalLightParams& light,
+                                           const AmbientParams& ambient) noexcept;
 
 } // namespace rt::shading

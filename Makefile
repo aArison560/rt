@@ -19,7 +19,7 @@ OBJDIR	= obj
 PNG_CFLAGS := $(shell pkg-config --cflags libpng 2>/dev/null)
 PNG_LIBS   := $(shell pkg-config --libs libpng 2>/dev/null)
 
-SRCS	= main.cpp Options.cpp Directives.cpp Lexer.cpp Scene.cpp Parser.cpp Validator.cpp Framebuffer.cpp Camera.cpp Renderer.cpp Material.cpp PointLight.cpp ImageWriter.cpp Object.cpp Sphere.cpp Plane.cpp Cylinder.cpp Cone.cpp
+SRCS	= main.cpp Options.cpp Directives.cpp Lexer.cpp Scene.cpp Parser.cpp Validator.cpp Framebuffer.cpp Camera.cpp Renderer.cpp Material.cpp PointLight.cpp DirectionalLight.cpp ImageWriter.cpp Object.cpp Sphere.cpp Plane.cpp Cylinder.cpp Cone.cpp
 OBJS	= $(SRCS:%.cpp=$(OBJDIR)/%.o)
 
 VPATH	= src/app src/base src/schema src/scene src/geometry src/shading \
@@ -47,7 +47,7 @@ INTDIR      = tests/integration
 TESTBIN     = rt_test
 TEST_OBJDIR = obj-test
 
-TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp) $(wildcard $(INTDIR)/*.cpp) src/app/Options.cpp src/schema/Directives.cpp src/scene/Lexer.cpp src/scene/Scene.cpp src/scene/Parser.cpp src/scene/Validator.cpp src/render/Framebuffer.cpp src/render/Camera.cpp src/render/Renderer.cpp src/shading/Material.cpp src/lighting/PointLight.cpp src/io/ImageWriter.cpp src/geometry/Object.cpp src/geometry/Sphere.cpp src/geometry/Plane.cpp src/geometry/Cylinder.cpp src/geometry/Cone.cpp
+TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp) $(wildcard $(INTDIR)/*.cpp) src/app/Options.cpp src/schema/Directives.cpp src/scene/Lexer.cpp src/scene/Scene.cpp src/scene/Parser.cpp src/scene/Validator.cpp src/render/Framebuffer.cpp src/render/Camera.cpp src/render/Renderer.cpp src/shading/Material.cpp src/lighting/PointLight.cpp src/lighting/DirectionalLight.cpp src/io/ImageWriter.cpp src/geometry/Object.cpp src/geometry/Sphere.cpp src/geometry/Plane.cpp src/geometry/Cylinder.cpp src/geometry/Cone.cpp
 TEST_OBJS   = $(TEST_SRCS:%.cpp=$(TEST_OBJDIR)/%.o)
 
 $(TESTBIN): $(TEST_OBJS)

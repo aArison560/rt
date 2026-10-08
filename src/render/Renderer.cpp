@@ -28,6 +28,7 @@
 #include "rt/geometry/Cylinder.hpp"
 #include "rt/geometry/Plane.hpp"
 #include "rt/geometry/Sphere.hpp"
+#include "rt/lighting/DirectionalLight.hpp"
 #include "rt/lighting/PointLight.hpp"
 #include "rt/render/Camera.hpp"
 #include "rt/render/Framebuffer.hpp"
@@ -123,9 +124,10 @@ constexpr Real kPrimaryTMin = 0.001F;
 }
 
 // T052 : toutes les lumieres avec position (point/spot traites comme
-// ponctuelles, cone en T058 ; directionnelles sans position ignorees
-// jusqu'en T055). Ordre du fichier conserve (melange deterministe).
-// Chemin froid : `reserve(lights.size())`, aucune realloc courante.
+// ponctuelles, cone en T058). Ordre du fichier conserve (melange
+// deterministe). Chemin froid : `reserve(lights.size())`, aucune realloc
+// courante. Les directionnelles (sans position) sont collectees en T055
+// (`collectDirectionalLights`, paralleles, pas d'attenuation).
 void collectPointLights(const scene::Scene& scene,
                         std::vector<shading::PointLightParams>& out) {
 	out.clear();
@@ -140,6 +142,26 @@ void collectPointLights(const scene::Scene& scene,
 		params.intensity = light.intensity;
 		params.attenuation = light.attenuation;
 		params.range = light.range;
+		out.push_back(params);
+	}
+}
+
+// T055 : toutes les directionnelles (`type directional`, `hasDirection`,
+// validees en T024 : direction non nulle). `L` constante par lumiere
+// (`lighting::toLightDir`, independante de la position, pas d'attenuation,
+// `tMax` infini pour les ombres). Ordre du fichier conserve.
+void collectDirectionalLights(const scene::Scene& scene,
+                              std::vector<shading::DirectionalLightParams>& out) {
+	out.clear();
+	out.reserve(scene.lights.size());
+	for (const scene::Light& light : scene.lights) {
+		if (light.type != scene::LightType::Directional || !light.hasDirection) {
+			continue;
+		}
+		shading::DirectionalLightParams params;
+		params.direction = light.direction;
+		params.color = light.color;
+		params.intensity = light.intensity;
 		out.push_back(params);
 	}
 }
@@ -320,9 +342,12 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	std::vector<shading::MaterialParams> worldMats;
 	collectSceneObjects(scene, worldObjs, worldMats);
 	// T052 : toutes les ponctuelles (multi-spot, ordre du fichier).
-	// `reserve()` dans `collectPointLights()` : aucune realloc courante.
+	// T055 : toutes les directionnelles (paralleles, ordre du fichier).
+	// `reserve()` dans les `collect*()` : aucune realloc courante.
 	std::vector<shading::PointLightParams> pointLights;
 	collectPointLights(scene, pointLights);
+	std::vector<shading::DirectionalLightParams> dirLights;
+	collectDirectionalLights(scene, dirLights);
 	const shading::AmbientParams ambient = toAmbientParams(scene);
 	// Boucle chaude : registres + pile uniquement (R3), batches externes (T036).
 	// Chaque echantillon `s` utilise `rngFor(x, y, s, seed)` (coordonnees
@@ -406,6 +431,34 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 						// T053 : reflet Blinn-Phong (sature en blanc, SPEC §3.2 d).
 						total += shading::specularTerm(rec.normal, viewDir, lightDir, mat,
 						                               effLight.color, effLight.intensity);
+					}
+					// T055 : directionnelles paralleles (soleil, SPEC §5.2 E).
+					// `L` constante par lumiere (independante de la position,
+					// pas d'attenuation), memes ombres (paralleles) avec
+					// `tMax` infini (source a l'infini). Ordre du fichier.
+					// Diffus via `shadeLambertDirectional()` (matNoAmb pour ne
+					// pas recompter l'ambiant) + speculaire Blinn-Phong T053.
+					for (const shading::DirectionalLightParams& dirLight : dirLights) {
+						const Vec3 lightDir = lighting::toLightDir(dirLight.direction);
+						if (nearZero(lightDir)) {
+							continue;
+						}
+						if (!std::isfinite(dirLight.intensity) ||
+						    !(dirLight.intensity > 0.0F)) {
+							continue;
+						}
+						if (isOccluded(worldObjs, shadowOrigin, lightDir, kInfinity)) {
+							continue;
+						}
+						// Diffus seul (ambiant deja compte) : `matNoAmb`
+						// (ambient=0) + ambiant nul -> que du diffus.
+						shading::AmbientParams nullAmbient;
+						nullAmbient.color = Vec3{};
+						nullAmbient.intensity = 0.0F;
+						total += shading::shadeLambertDirectional(matNoAmb, rec.normal,
+						                                          dirLight, nullAmbient);
+						total += shading::specularTerm(rec.normal, viewDir, lightDir, mat,
+						                               dirLight.color, dirLight.intensity);
 					}
 					color = shading::saturate(total);
 				} else {
