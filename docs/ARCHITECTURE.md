@@ -199,6 +199,13 @@ Règles communes :
 - Gérer le cas `frontFace` : `if (dot(dir, outwardNormal) > 0) normal = -outwardNormal`.
 - **Bias** : origine des rayons dérivés = `point ± normal * EPSILON` (anti *shadow acne*).
 
+> Implémenté (T040) : `include/rt/geometry/Object.hpp` — `rt::geometry::AObject`
+> (virtuelles pures `intersect(ray, tMin, tMax, rec)` + `localBounds()`, champs
+> `kind`/`id`/`materialIndex`/`objectToWorld` identité par défaut, `setTransform`
+> pour T045), `ObjectKind` + `toString`, dispatch **vtable** tranché dans
+> `docs/ADR/002-dispatch.md` (aucune macro `INTERSECT(`, aucun `switch`
+> générique). Tests : `tests/unit/test_geometry.cpp` (dispatch via base).
+
 ### 4.3 Transformations (exigence M4)
 
 Deux approches, **à choisir explicitement et à documenter** :
