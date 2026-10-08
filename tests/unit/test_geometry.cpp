@@ -1,4 +1,4 @@
-// Tests de l'interface des objets (T040) + sphere (T041) + plan (T042), Catch2.
+// Tests de l'interface des objets (T040) + sphere (T041) + plan (T042) + cylindre (T043), Catch2.
 // DoD T040 : test de dispatch (appel via `AObject*` -> surcharge derivee) +
 // `static_assert` sur `HitRecord` (verifie a la compilation dans
 // `include/rt/geometry/Object.hpp`) + grep d'intersection sans macro
@@ -18,6 +18,7 @@
 
 #include "rt/base/Ray.hpp"
 #include "rt/base/Vec.hpp"
+#include "rt/geometry/Cylinder.hpp"
 #include "rt/geometry/Object.hpp"
 #include "rt/geometry/Plane.hpp"
 #include "rt/geometry/Sphere.hpp"
@@ -335,4 +336,106 @@ TEST_CASE("geometry plane : normale degeneree et plan vertical (T042)", "[geomet
 	REQUIRE(side.t == Catch::Approx(5.0).margin(1e-4));
 	REQUIRE(std::isfinite(side.uv.x));
 	REQUIRE(std::isfinite(side.uv.y));
+}
+
+TEST_CASE("geometry cylinder : face avant, normale radiale (T043)", "[geometry][cylinder]") {
+	const rt::geometry::Cylinder cylinder(rt::Vec3(0, 0, 0), rt::Real(1), 30, 6);
+	// Depuis +x vers l'axe : t=1, point (1,0,0), face avant.
+	rt::HitRecord rec;
+	REQUIRE(cylinder.intersect(rt::Ray(rt::Vec3(2, 0, 0), rt::Vec3(-1, 0, 0)), rt::Real(0),
+	                           rt::kInfinity, rec));
+	REQUIRE(rec.t == Catch::Approx(1.0).margin(1e-4));
+	REQUIRE(nearReal(rec.point.x, rt::Real(1)));
+	REQUIRE(nearReal(rec.point.y, rt::Real(0)));
+	REQUIRE(rec.frontFace);
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1)));
+	REQUIRE(nearReal(rec.normal.x, rt::Real(1)));
+	REQUIRE(nearReal(rec.normal.y, rt::Real(0)));
+	REQUIRE(rec.materialIndex == 6);
+	// `uv` cylindriques : `u` dans [0,1], `v` = hauteur, finis.
+	REQUIRE(std::isfinite(rec.uv.x));
+	REQUIRE(std::isfinite(rec.uv.y));
+	REQUIRE(rec.uv.x >= rt::Real(0));
+	REQUIRE(rec.uv.x <= rt::Real(1));
+	// Dispatch via la base : meme resultat par `AObject*`.
+	const rt::geometry::AObject& base = cylinder;
+	rt::HitRecord viaBase;
+	REQUIRE(base.intersect(rt::Ray(rt::Vec3(2, 0, 0), rt::Vec3(-1, 0, 0)), rt::Real(0),
+	                       rt::kInfinity, viaBase));
+	REQUIRE(viaBase.t == Catch::Approx(1.0).margin(1e-4));
+}
+
+TEST_CASE("geometry cylinder : tangent (discriminant nul, T043)", "[geometry][cylinder]") {
+	const rt::geometry::Cylinder cylinder(rt::Vec3(0, 0, 0), rt::Real(1));
+	// Droite x=1, z=-5 -> +z : tangente au fut en (1,0,0), t=5.
+	rt::HitRecord rec;
+	REQUIRE(cylinder.intersect(rt::Ray(rt::Vec3(1, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                           rt::kInfinity, rec));
+	REQUIRE(rec.t == Catch::Approx(5.0).margin(1e-3));
+	REQUIRE(nearReal(rec.point.x, rt::Real(1), 1e-3F));
+	REQUIRE(nearReal(rec.point.z, rt::Real(0), 1e-3F));
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1)));
+}
+
+TEST_CASE("geometry cylinder : rayon partant de l'interieur (T043)", "[geometry][cylinder]") {
+	const rt::geometry::Cylinder cylinder(rt::Vec3(0, 0, 0), rt::Real(2));
+	// Depuis l'axe vers +x : sortie a t=2, `frontFace` false.
+	rt::HitRecord rec;
+	REQUIRE(cylinder.intersect(rt::Ray(rt::Vec3(0, 0, 0), rt::Vec3(1, 0, 0)), rt::Real(0),
+	                           rt::kInfinity, rec));
+	REQUIRE(nearReal(rec.t, rt::Real(2)));
+	REQUIRE_FALSE(rec.frontFace);
+	// Normale retournee contre le rayon : (-1,0,0).
+	REQUIRE(nearReal(rec.normal.x, rt::Real(-1)));
+	REQUIRE(nearReal(rec.point.x, rt::Real(2)));
+	// Fenetre trop courte : hit a t=2 hors [0,1].
+	REQUIRE_FALSE(cylinder.intersect(rt::Ray(rt::Vec3(0, 0, 0), rt::Vec3(1, 0, 0)), rt::Real(0),
+	                                 rt::Real(1), rec));
+}
+
+TEST_CASE("geometry cylinder : axial et parallele a l'axe, sans division (T043)",
+          "[geometry][cylinder]") {
+	const rt::geometry::Cylinder cylinder(rt::Vec3(0, 0, 0), rt::Real(1));
+	rt::HitRecord rec;
+	// Sur l'axe, le long de Y : longe le fut sans le couper -> miss defini.
+	REQUIRE_FALSE(cylinder.intersect(rt::Ray(rt::Vec3(0, -5, 0), rt::Vec3(0, 1, 0)), rt::Real(0),
+	                                 rt::kInfinity, rec));
+	// Parallele a l'axe depuis l'exterieur : miss defini.
+	REQUIRE_FALSE(cylinder.intersect(rt::Ray(rt::Vec3(2, -5, 0), rt::Vec3(0, 1, 0)), rt::Real(0),
+	                                 rt::kInfinity, rec));
+	// Direction nulle (v1 : division) -> miss defini.
+	REQUIRE_FALSE(cylinder.intersect(rt::Ray(rt::Vec3(2, 0, 0), rt::Vec3(0, 0, 0)), rt::Real(0),
+	                                 rt::kInfinity, rec));
+	// A cote : ligne z=-5, direction +x (distance 5 a l'axe) -> miss.
+	REQUIRE_FALSE(cylinder.intersect(rt::Ray(rt::Vec3(0, 3, -5), rt::Vec3(1, 0, 0)), rt::Real(0),
+	                                 rt::kInfinity, rec));
+	// Fenetre inversee -> miss defini.
+	REQUIRE_FALSE(cylinder.intersect(rt::Ray(rt::Vec3(2, 0, 0), rt::Vec3(-1, 0, 0)),
+	                                 rt::Real(5), rt::Real(3), rec));
+}
+
+TEST_CASE("geometry cylinder : degenere et localBounds (T043)", "[geometry][cylinder]") {
+	rt::HitRecord rec;
+	// Rayon nul ou negatif -> miss defini.
+	const rt::geometry::Cylinder flat(rt::Vec3(0, 0, 0), rt::Real(0));
+	REQUIRE_FALSE(flat.intersect(rt::Ray(rt::Vec3(2, 0, 0), rt::Vec3(-1, 0, 0)), rt::Real(0),
+	                             rt::kInfinity, rec));
+	const rt::geometry::Cylinder negative(rt::Vec3(0, 0, 0), rt::Real(-1));
+	REQUIRE_FALSE(negative.intersect(rt::Ray(rt::Vec3(2, 0, 0), rt::Vec3(-1, 0, 0)),
+	                                   rt::Real(0), rt::kInfinity, rec));
+	// Centre deporte : l'axe passe par (3,*,0), meme intersection decalee.
+	const rt::geometry::Cylinder moved(rt::Vec3(3, 0, 0), rt::Real(1));
+	rt::HitRecord off;
+	REQUIRE(moved.intersect(rt::Ray(rt::Vec3(5, 0, 0), rt::Vec3(-1, 0, 0)), rt::Real(0),
+	                        rt::kInfinity, off));
+	REQUIRE(off.t == Catch::Approx(1.0).margin(1e-4));
+	REQUIRE(nearReal(off.point.x, rt::Real(4)));
+	// `localBounds` : x/z serres (cx±r), y = ±1e6 (infini documente).
+	const rt::AABB box = moved.localBounds();
+	REQUIRE(box.min.x == Catch::Approx(2.0).margin(1e-4));
+	REQUIRE(box.max.x == Catch::Approx(4.0).margin(1e-4));
+	REQUIRE(box.min.z == Catch::Approx(-1.0).margin(1e-4));
+	REQUIRE(box.max.z == Catch::Approx(1.0).margin(1e-4));
+	REQUIRE(box.min.y == Catch::Approx(-1e6).margin(1.0));
+	REQUIRE(box.max.y == Catch::Approx(1e6).margin(1.0));
 }

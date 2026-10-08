@@ -217,6 +217,14 @@ Règles communes :
 > division par zéro, UBSan propre), `setFaceNormal` cohérente des deux côtés,
 > `uv` des axes tangents, `localBounds()` = ±1e6 documentée (plan infini).
 > Tests : parallèle, dans le plan, avant/après + dégénérés.
+>
+> Implémenté (T043) : `rt::geometry::Cylinder` (point sur l'axe + rayon,
+> infini autour de Y) — quadratique `a·t²+b·t+c` sur `(x,z)`, plus proche
+> dans `[tMin,tMax]`, `a <= ε²` (parallèle/axial) → `false` défini sans
+> division, `setFaceNormal` radiale, `uv` cylindriques (`u` = azimut,
+> `v` = hauteur), intermédiaires en `double`, dégénérés → `false`.
+> `localBounds()` = `x/z` serrée (`cx±r`), `y` = ±1e6 (T133 bornera).
+> Tests : face, tangent, intérieur, axial/parallèle + dégénérés.
 
 ### 4.3 Transformations (exigence M4)
 
