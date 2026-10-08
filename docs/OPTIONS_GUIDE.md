@@ -153,6 +153,13 @@ Ordre recommandé (ROI décroissant). Les détails sont dans les sections suivan
 - **Effort** : 1–2 h (une fois le format structuré fait).
 - **Preuve** : le correcteur change `intensity 0.05 → 0.5` et relance → la scène s'éclaircit.
 
+> Implémenté (T054) : `scene.ambient { color 0-1, intensity 0-10 }` (schéma
+> R1, parser T023, validation T024) → `shading::AmbientParams` via `render/`
+> (`toAmbientParams`) + `shadeLambert()` (plancher `albedo*ambiant > 0`,
+> dos à la lumière inclus). 0 lumière = ambiant seul (valide). Tests :
+> `tests/unit/test_ambient.cpp` (DoD : min display > 0 éclairée et sans
+> lumière, `0.5 → 2.0` visible au centre, borne 99 rejetée).
+
 ---
 
 ## 3. Lumières
