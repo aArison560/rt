@@ -30,6 +30,7 @@
 #include "rt/geometry/Sphere.hpp"
 #include "rt/lighting/DirectionalLight.hpp"
 #include "rt/lighting/PointLight.hpp"
+#include "rt/lighting/SpotLight.hpp"
 #include "rt/render/Camera.hpp"
 #include "rt/render/Framebuffer.hpp"
 #include "rt/scene/Scene.hpp"
@@ -136,6 +137,10 @@ void collectPointLights(const scene::Scene& scene,
 		if (!light.hasPosition) {
 			continue;
 		}
+		// T058 : les spots ont leur cone (`collectSpotLights`), pas ici.
+		if (light.type == scene::LightType::Spot) {
+			continue;
+		}
 		shading::PointLightParams params;
 		params.position = light.position;
 		params.color = light.color;
@@ -143,6 +148,26 @@ void collectPointLights(const scene::Scene& scene,
 		params.attenuation = light.attenuation;
 		params.range = light.range;
 		out.push_back(params);
+	}
+}
+
+// T058 : tous les spots (`type spot`, `position` + `target` requis, T024).
+// Axe + seuil precalcules (`makeSpotParams`, chemin froid), ordre du fichier.
+// `hasTarget` faux (ne doit pas arriver, scene validee) -> ignore (defini).
+void collectSpotLights(const scene::Scene& scene,
+                       std::vector<lighting::SpotLightParams>& out) {
+	out.clear();
+	out.reserve(scene.lights.size());
+	for (const scene::Light& light : scene.lights) {
+		if (light.type != scene::LightType::Spot) {
+			continue;
+		}
+		if (!light.hasPosition || !light.hasTarget) {
+			continue;
+		}
+		out.push_back(lighting::makeSpotParams(light.position, light.color,
+		                                            light.intensity, light.attenuation,
+		                                            light.range, light.target, light.angle));
 	}
 }
 
@@ -288,23 +313,67 @@ void collectSceneObjects(const scene::Scene& scene,
 // `origin` deja decale (`P + N*eps`), `dir` normalisee vers la lumiere,
 // `tMax = dist - eps` (la source elle-meme n'occlut pas). `tMin = eps`
 // (anti-acne) + profondeur bornee par `tMax` : aucun `throw` (R2), aucune
-// allocation (R3, `HitRecord` sur pile). `true` = lumiere coupee.
-[[nodiscard]] bool isOccluded(const std::vector<std::unique_ptr<geometry::AObject>>& objs,
-                              Vec3 origin, Vec3 dir, Real tMax) noexcept {
+// allocation (R3, `HitRecord` sur pile).
+// T058 : visibilite continue (*Shadows and transparency*, SPEC 5.2 F) :
+//   visibility = produit sur chaque occulteur de (transparency)
+// (OPTIONS_GUIDE 4.2 : opaque `Tr=0` -> 0 = ombre noire, translucide `Tr=0.8`
+// -> 0.2 = ombre claire ; `ior` pilote la refraction T057, exige `> 1` si
+// `Tr > 0` en T024). Tous les occulteurs sur `[tMin, tMax]` sont parcourus
+// (pas seulement le plus proche) : 2 verres `0.5` -> `0.25` (cumul).
+// Retour `0..1` (1 = eclaire, 0 = coupe). Degeneres -> 1 (defini, eclaire).
+[[nodiscard]] float shadowVisibility(const std::vector<std::unique_ptr<geometry::AObject>>& objs,
+                                     const std::vector<shading::MaterialParams>& mats,
+                                     Vec3 origin, Vec3 dir, Real tMax) noexcept {
 	if (!(tMax > kPrimaryTMin)) {
-		return false;
+		return 1.0F;
 	}
 	if (!std::isfinite(origin.x) || !std::isfinite(origin.y) || !std::isfinite(origin.z) ||
 	    !std::isfinite(dir.x) || !std::isfinite(dir.y) || !std::isfinite(dir.z) ||
 	    !std::isfinite(tMax)) {
-		return false;
+		return 1.0F;
 	}
 	const Real dirLenSq = dot(dir, dir);
 	if (!std::isfinite(dirLenSq) || dirLenSq <= kEpsilon * kEpsilon) {
-		return false;
+		return 1.0F;
 	}
+	const Ray shadowRay(origin, dir);
+	float visibility = 1.0F;
 	HitRecord tmp;
-	return findClosestHit(objs, Ray(origin, dir), kPrimaryTMin, tMax, tmp);
+	for (const std::unique_ptr<geometry::AObject>& obj : objs) {
+		if (!obj) {
+			continue;
+		}
+		if (!obj->intersect(shadowRay, kPrimaryTMin, tMax, tmp)) {
+			continue;
+		}
+		// `transparency` 0 = opaque (bloque tout), 1 = invisible (ne bloque rien).
+		// Opaque -> 0 immediat (ombre noire) ; translucide -> `*= Tr` (ombre claire,
+		// cumulee : 2 verres `0.5` -> `0.25`). Non fini -> 0 (opaque, conservateur).
+		float transp = 0.0F;
+		if (tmp.materialIndex < mats.size()) {
+			const float raw = mats[tmp.materialIndex].transparency;
+			if (std::isfinite(raw) && raw > 0.0F) {
+				transp = raw > 1.0F ? 1.0F : raw;
+			}
+		}
+		if (!(transp > 0.0F)) {
+			return 0.0F;
+		}
+		visibility *= transp;
+		if (!(visibility > 0.0F)) {
+			return 0.0F;
+		}
+	}
+	if (!std::isfinite(visibility)) {
+		return 1.0F;
+	}
+	if (visibility < 0.0F) {
+		return 0.0F;
+	}
+	if (visibility > 1.0F) {
+		return 1.0F;
+	}
+	return visibility;
 }
 
 
@@ -317,6 +386,7 @@ struct TraceContext {
 	const std::vector<shading::MaterialParams>* mats = nullptr;
 	const std::vector<shading::PointLightParams>* points = nullptr;
 	const std::vector<shading::DirectionalLightParams>* dirs = nullptr;
+	const std::vector<lighting::SpotLightParams>* spots = nullptr;
 	shading::AmbientParams ambient;
 	Vec3 background;
 	int maxDepth = 0;
@@ -324,8 +394,11 @@ struct TraceContext {
 
 // T056 : eclairage direct d'un impact (Lambert multi-spot T052 + attenuation
 // T051 + speculaire Blinn-Phong T053 + directionnelles T055, ombres paralleles).
-// Extrait tel quel de la boucle T032-T055 : `reflectivity == 0` rend exactement
-// ce chemin (identique au rendu sans miroir, DoD). `noexcept`, sans allocation.
+// T058 : ombres translucides (`shadowVisibility` 0..1, `Tr` de chaque occulteur)
+// + spots coniques (*Direct light*, `isInSpotCone`, aveuglement face camera).
+// `reflectivity == 0` + `transparency == 0` + 0 spot rend exactement le chemin
+// T032-T055 (identique au rendu sans miroir/verre/spot, non-regression).
+// `noexcept`, sans allocation.
 [[nodiscard]] Vec3 shadeDirectForHit(const HitRecord& rec, const Ray& ray,
                                      const TraceContext& ctx) noexcept {
 	shading::MaterialParams mat;
@@ -361,11 +434,13 @@ struct TraceContext {
 		}
 		const Vec3 lightDir = toLight / dist;
 		const Real tMax = static_cast<Real>(dist) - kPrimaryTMin;
-		if (isOccluded(*ctx.objs, shadowOrigin, lightDir, tMax)) {
+		const float vis =
+		    shadowVisibility(*ctx.objs, *ctx.mats, shadowOrigin, lightDir, tMax);
+		if (!(vis > 0.0F)) {
 			continue;
 		}
 		shading::PointLightParams effLight = light;
-		effLight.intensity = light.intensity * att;
+		effLight.intensity = light.intensity * att * vis;
 		total +=
 		    shading::shadeLambert(matNoAmb, rec.normal, rec.point, effLight, ctx.ambient);
 		total += shading::specularTerm(rec.normal, viewDir, lightDir, mat, effLight.color,
@@ -379,16 +454,63 @@ struct TraceContext {
 		if (!std::isfinite(dirLight.intensity) || !(dirLight.intensity > 0.0F)) {
 			continue;
 		}
-		if (isOccluded(*ctx.objs, shadowOrigin, lightDir, kInfinity)) {
+		const float visDir =
+		    shadowVisibility(*ctx.objs, *ctx.mats, shadowOrigin, lightDir, kInfinity);
+		if (!(visDir > 0.0F)) {
 			continue;
 		}
 		shading::AmbientParams nullAmbient;
 		nullAmbient.color = Vec3{};
 		nullAmbient.intensity = 0.0F;
 		total +=
-		    shading::shadeLambertDirectional(matNoAmb, rec.normal, dirLight, nullAmbient);
+		    shading::shadeLambertDirectional(matNoAmb, rec.normal, dirLight, nullAmbient) *
+		    visDir;
 		total += shading::specularTerm(rec.normal, viewDir, lightDir, mat, dirLight.color,
-		                               dirLight.intensity);
+		                               dirLight.intensity * visDir);
+	}
+	// T058 : spots coniques (*Direct light*, SPEC 5.2 E : aveugle face camera).
+	// `isInSpotCone` (hors cone -> 0), meme attenuation T051 et visibilite T058
+	// que les ponctuelles. `target == camera` + forte intensite -> saturation
+	// centrale blanche (aveuglement, DoD). Ordre du fichier (deterministe).
+	for (const lighting::SpotLightParams& spot : *ctx.spots) {
+		if (!lighting::isInSpotCone(spot, rec.point)) {
+			continue;
+		}
+		const Vec3 toLight = spot.position - rec.point;
+		if (!std::isfinite(toLight.x) || !std::isfinite(toLight.y) ||
+		    !std::isfinite(toLight.z)) {
+			continue;
+		}
+		const Real distSq = dot(toLight, toLight);
+		if (!std::isfinite(distSq) || distSq <= kEpsilon * kEpsilon) {
+			continue;
+		}
+		const float dist = static_cast<float>(length(toLight));
+		if (!std::isfinite(dist) || dist <= kPrimaryTMin) {
+			continue;
+		}
+		const float att =
+		    lighting::attenuationFactor(spot.attenuation, dist, spot.range);
+		if (!(att > 0.0F) || !std::isfinite(att)) {
+			continue;
+		}
+		const Vec3 lightDir = toLight / dist;
+		const Real tMax = static_cast<Real>(dist) - kPrimaryTMin;
+		const float vis =
+		    shadowVisibility(*ctx.objs, *ctx.mats, shadowOrigin, lightDir, tMax);
+		if (!(vis > 0.0F)) {
+			continue;
+		}
+		shading::PointLightParams effLight;
+		effLight.position = spot.position;
+		effLight.color = spot.color;
+		effLight.intensity = spot.intensity * att * vis;
+		effLight.attenuation = Vec3(1.0F, 0.0F, 0.0F);
+		effLight.range = 0.0F;
+		total +=
+		    shading::shadeLambert(matNoAmb, rec.normal, rec.point, effLight, ctx.ambient);
+		total += shading::specularTerm(rec.normal, viewDir, lightDir, mat, effLight.color,
+		                               effLight.intensity);
 	}
 	return shading::saturate(total);
 }
@@ -520,13 +642,16 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	std::vector<std::unique_ptr<geometry::AObject>> worldObjs;
 	std::vector<shading::MaterialParams> worldMats;
 	collectSceneObjects(scene, worldObjs, worldMats);
-	// T052 : toutes les ponctuelles (multi-spot, ordre du fichier).
+	// T052 : toutes les ponctuelles (multi-spot, ordre du fichier, spots exclus en T058).
 	// T055 : toutes les directionnelles (paralleles, ordre du fichier).
+	// T058 : tous les spots coniques (ordre du fichier, *Direct light*).
 	// `reserve()` dans les `collect*()` : aucune realloc courante.
 	std::vector<shading::PointLightParams> pointLights;
 	collectPointLights(scene, pointLights);
 	std::vector<shading::DirectionalLightParams> dirLights;
 	collectDirectionalLights(scene, dirLights);
+	std::vector<lighting::SpotLightParams> spotLights;
+	collectSpotLights(scene, spotLights);
 	const shading::AmbientParams ambient = toAmbientParams(scene);
 	// T056 : contexte de trace (reflexion bornee par `maxDepth`, SPEC 5.2 F).
 	// Construit une fois (chemin froid) : la boucle chaude ne fait que lire.
@@ -535,6 +660,7 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	traceCtx.mats = &worldMats;
 	traceCtx.points = &pointLights;
 	traceCtx.dirs = &dirLights;
+	traceCtx.spots = &spotLights;
 	traceCtx.ambient = ambient;
 	traceCtx.background = shadeMiss(scene);
 	traceCtx.maxDepth = params.maxDepth;

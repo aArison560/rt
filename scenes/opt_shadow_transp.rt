@@ -1,0 +1,22 @@
+# Ombre translucide (T058a, *Shadows and transparency*) : la meme sphere en
+# verre (`transparency 0.8`) porte une ombre nettement plus claire qu'en opaque
+# (visibilite `1-Tr` par occulteur, cumulee). Comparez avec une variante opaque
+# (`transparency 0.0`) : l'ombre s'assombrit (test de densite en `test_t058`).
+scene {
+    limits { width 320 height 240 samples 4 max_depth 4 }
+    camera { position (0 4 7) target (0 0 0) fov 50 }
+    background { color (0.02 0.02 0.05) }
+    ambient { color (0.06 0.06 0.08) intensity 1.0 }
+    lights {
+        light { position (4 5 3) color (1 1 1) intensity 1.0 }
+    }
+    objects {
+        object { type plane point (0 -1 0) normal (0 1 0)
+            material { albedo (0.7 0.7 0.7) diffuse 0.8 ambient 0.05 }
+        }
+        object { type sphere center (0 0 0) radius 0.8
+            material { albedo (0.8 0.2 0.2) diffuse 0.7 ambient 0.1
+                transparency 0.8 ior 1.5 }
+        }
+    }
+}

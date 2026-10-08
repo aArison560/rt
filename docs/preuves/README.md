@@ -7,7 +7,7 @@
 ## Régénérer
 
 ```bash
-sh scripts/render_all.sh   # 12/12 images en ~8 s, sortie 0 si tout rend
+sh scripts/render_all.sh   # 14/14 images en ~9 s, sortie 0 si tout rend
 ```
 
 Le script supprime d'abord les anciens `*.png` (**depuis zéro**), rend chaque
@@ -29,7 +29,9 @@ requis, T035), puis affiche le résumé (`ok/total`, durée). Tout échec → so
 | `limits.png` | `tests/cases/valid/limits.rt` | limites + fond + ambiance |
 | `primitives.png` | `tests/cases/valid/primitives.rt` | 4 primitives |
 | `alias.png` | `tests/cases/valid/alias.rt` | alias + têtes (miroir R=0.5, T056) |
-| `opt_glass.png` | `scenes/opt_glass.rt` | verre Tr=0.9 ior=1.5 (Descartes, T057) |
+| `opt_glass.png` | `scenes/opt_glass.rt` | verre Tr=0.9 ior=1.5 (Descartes, T057, ombre claire T058) |
+| `opt_shadow_transp.png` | `scenes/opt_shadow_transp.rt` | ombre translucide Tr=0.8 (T058a) |
+| `opt_direct.png` | `scenes/opt_direct.rt` | spot headlight aveuglant (T058b) |
 
 Toutes les images sont **versionnées** (DoD T037) mais restent secondaires :
 la preuve, c'est le script + la scène, pas le PNG.

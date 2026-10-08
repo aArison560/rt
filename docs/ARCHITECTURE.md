@@ -324,8 +324,18 @@ if (anyHit(shadowRay, tMax)) :  lumiere coupée
 
 - `anyHit` = test **au premier impact** (plus rapide que `closestHit`), idéal pour la BVH.
 - **Ombre modulée par la transparence** (item *Shadows and transparency*) :
-  parcourir les transparences sur le trajet, ou échantillonner quelques points du trajet et
-  moyener le facteur d'atténuation → `visibility ∈ [0,1]` plutôt qu'un binaire.
+  parcourir les transparences sur le trajet → `visibility ∈ [0,1]` plutôt qu'un binaire.
+
+> Implémenté (T058a) : `render::shadowVisibility()` (produit des `transparency`
+> de chaque occulteur sur `[tMin, tMax]`, opaque `0` -> `0` immédiat, `Tr=0.8` -> `*0.8`,
+> cumul `0.5*0.5=0.25`, `noexcept`, sans allocation). Tests : `test_t058.cpp`
+> (DoD : zone d'ombre `Tr=0.8` plus claire que `Tr=0`, `opt_shadow_transp.rt`).
+>
+> Implémenté (T058b) : `lighting::SpotLight` (`spotDir`, `cosCut`, `isInSpotCone`,
+> `makeSpotParams`, `noexcept`, R2/R3) + `render::collectSpotLights` (spots exclus des
+> ponctuelles, ordre fichier) + boucle spot (cone + attenuation T051 + visibilite T058,
+> `target == camera` + `intensity 3` -> saturation blanche, aveuglement). Tests :
+> `test_t058.cpp` (dedans/dehors, unitaire cone, `opt_direct.rt` centre >0.85).
 - **Ombres douces** (item *In bulk — spot non ponctuel*) : échantillonner
   `AreaLight::samplePoint()` sur `N` échantillons et moyener (`setShadowSamples(n)` existe déjà).
 
