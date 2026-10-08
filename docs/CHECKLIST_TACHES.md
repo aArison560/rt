@@ -475,20 +475,20 @@ rt/
 - **Dépend** : T012, T041–T044 · **Sert** : M4 · **Doc** : [SPECIFICATIONS.md §3.2 b](SPECIFICATIONS.md)
 - **DoD** : test de transformation (translation + rotation) sur les 4 types ; normales normalisées après transformation non uniforme.
 
-#### T046 ⬜ — Scène multi-objets : tri, doublons, coexistence
-> **Fait le** : — · **Commit** : —
+#### T046 ✅ — Scène multi-objets : tri, doublons, coexistence
+> **Fait le** : 2026-10-08 · **Commit** : c277909
 - **Prompt** : « Dans `Renderer`, cherche l'intersection la plus proche parmi tous les objets (tri par `t`), gère **plusieurs objets du même type** et la coexistence des 4 types dans une scène. Ajoute le test : 6 objets dont 2 sphères → le plus proche gagne. »
 - **Dépend** : T041–T045 · **Sert** : M3 · **Doc** : [SPECIFICATIONS.md §3.2 b](SPECIFICATIONS.md)
 - **DoD** : test de tri vert ; scènes avec doublons rendues sans doublon visuel (test de pixels).
 
-#### T047 ⬜ — Batterie de tests géométrie
-> **Fait le** : — · **Commit** : —
+#### T047 ✅ — Batterie de tests géométrie
+> **Fait le** : 2026-10-08 · **Commit** : 1d529f5
 - **Prompt** : « Complète `tests/unit/test_geometry.cpp` : cas limites de chaque primitive, normalisation, `t` hors bornes, rayons dégénérés (direction nulle), objets superposés, objets fortement transformés. Exécute tout sous `make asan` et `valgrind`. »
 - **Dépend** : T046 · **Sert** : qualité, anti-crash · **Doc** : —
 - **DoD** : couverture des primitives > lignes critiques testées ; `make quality` vert.
 
-#### T048 ⬜ — Scène géométrique de référence (figure du sujet)
-> **Fait le** : — · **Commit** : —
+#### T048 ✅ — Scène géométrique de référence (figure du sujet)
+> **Fait le** : 2026-10-08 · **Commit** : a462408
 - **Prompt** : « Écris `scenes/fig_vi1_base.rt` : plan + sphère + cylindre + cône dans la même image, cohérents avec la figure VI.1 du sujet (dispositions, proportions). Sert de base aux tâches lumière (P5) et de scène obligatoire (T080). »
 - **Dépend** : T046, T029 · **Sert** : M3, M8 · **Doc** : `docs/subjects/fr.subject.pdf` (figure VI.1)
 - **DoD** : la scène rend sans erreur ; l'image est comparable à la figure du sujet (points communs vérifiables à l'œil : nombre d'objets, recouvrements).
