@@ -243,6 +243,24 @@ compare -metric AE reference.png rendered.png diff.png 2>&1   # nb de pixels dif
 convert tiles/*.png +append final.png
 ```
 
+> Implémenté (T034) : `include/rt/io/ImageWriter.hpp` — `writeImage(fb, path)` :
+> `.ppm` → PPM binaire P6 (sans dépendance) ; sinon PNG via **libpng système**
+> (`pkg-config --cflags/--libs libpng`, `-lpng16`, `PNG_COLOR_TYPE_RGB_ALPHA`
+> direct depuis `displayData()`, erreurs par `setjmp` sans `throw`), fallback PPM
+> si `<png.h>` absent à la compilation (documenté, jamais de crash). Choix assumé
+> ( §1.1) : `stb_image_write` **non vendored** — il ne passerait pas
+> `-Wall -Wextra -Werror` sans `-w` dédié, libpng étant déjà la voie normale
+> (présente 1.6.48, CI `libpng-dev`). Validation : `file` (signature
+> `89 50 4E 47…`) et `identify` ; échec (répertoire inexistant, vide) → `IoError`
+> + code ≠ 0. Tests : `tests/unit/test_image_writer.cpp` (signature PNG, P6,
+> erreurs, rendu réel `default.rt`).
+>
+> ```bash
+> ./rt scenes/default.rt 64 64 --out /tmp/x.png   # PNG valide
+> file /tmp/x.png && identify /tmp/x.png          # PNG image data, 64 x 64
+> ./rt scenes/default.rt --out /nonexistent/out.png  # message + code 1, sans crash
+> ```
+
 ---
 
 ## 6. Distribué et environnement de démo

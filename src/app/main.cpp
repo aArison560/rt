@@ -3,6 +3,7 @@
 
 #include "rt/app/Options.hpp"
 #include "rt/base/Log.hpp"
+#include "rt/io/ImageWriter.hpp"
 #include "rt/render/Framebuffer.hpp"
 #include "rt/render/Renderer.hpp"
 #include "rt/scene/Parser.hpp"
@@ -28,14 +29,11 @@ int printUsageError(const std::string& message) {
 }
 
 // T026 : ligne de commande complete via `rt::app::parseOptions` (testable).
-// Succes -> parse la scene, rend en memoire (T032) et sort 0 (l'ecriture
-// `--out` arrive en T034 : le flag est accepte mais n'ecrit pas encore).
-// T029 : affiche un resume `ok: <scene>: N objects, M lights, WxH, spp S`
-// (supprime par `--quiet`), pour que `./rt scenes/default.rt` "produise
-// quelque chose" avant le rendu (DoD T029). `--help`/`--version` -> 0
-// sans scene. Erreur CLI -> usage + 2. Erreur de scene/rendu -> message
-// `fichier:ligne:colonne` + 1. `./rt` sans argument -> usage + 2
-// (documente dans `README.md`).
+// Succes -> parse la scene, rend en memoire (T032), ecrit `--out` (T034)
+// et sort 0. T029 : affiche un resume `ok: ...` + `wrote <fichier>` sauf
+// `--quiet`. `--help`/`--version` -> 0 sans scene. Erreur CLI -> usage + 2.
+// Erreur de scene/rendu/ecriture -> message + 1 (`fichier:ligne:colonne`
+// pour la scene). `./rt` sans argument -> usage + 2 (README.md).
 int run(int argc, char** argv) {
 	rt::Result<rt::app::Options> parsed = rt::app::parseOptions(argc, argv);
 	if (parsed.isError()) {
@@ -68,10 +66,22 @@ int run(int argc, char** argv) {
 		rt::log::error(status.message);
 		return 1;
 	}
+	// T034 : `--out` -> PNG (libpng) ou PPM (`.ppm` / fallback sans lib).
+	// Echec (repertoire inexistant, chemin vide) -> message + 1, sans crash.
+	if (opts.hasOut) {
+		if (rt::Status status = rt::io::writeImage(framebuffer, opts.outPath); status.isError()) {
+			rt::log::error(status.message);
+			return 1;
+		}
+	}
 	if (!opts.quiet) {
 		std::cout << "ok: " << opts.scenePath << ": " << scene.totalObjectCount()
 		          << " objects, " << scene.lights.size() << " lights, " << width << "x"
-		          << height << ", spp " << spp << '\n';
+		          << height << ", spp " << spp;
+		if (opts.hasOut) {
+			std::cout << ", wrote " << opts.outPath;
+		}
+		std::cout << '\n';
 	}
 	return 0;
 }

@@ -12,7 +12,14 @@ FASTFLAGS = -O3 -march=native
 SRCDIR	= src
 OBJDIR	= obj
 
-SRCS	= main.cpp Options.cpp Directives.cpp Lexer.cpp Scene.cpp Parser.cpp Validator.cpp Framebuffer.cpp Camera.cpp Renderer.cpp Material.cpp
+# PNG (T034) : libpng systeme via pkg-config, vide si absente (fallback PPM).
+# La compilation garde `-Wall -Wextra -Werror` : `<png.h>` est un header
+# systeme (warnings neutralises), `stb` n'est pas vendored (ne passerait pas
+# ces flags sans `-w` dedie, voir docs/OUTILS.md §1.1).
+PNG_CFLAGS := $(shell pkg-config --cflags libpng 2>/dev/null)
+PNG_LIBS   := $(shell pkg-config --libs libpng 2>/dev/null)
+
+SRCS	= main.cpp Options.cpp Directives.cpp Lexer.cpp Scene.cpp Parser.cpp Validator.cpp Framebuffer.cpp Camera.cpp Renderer.cpp Material.cpp ImageWriter.cpp
 OBJS	= $(SRCS:%.cpp=$(OBJDIR)/%.o)
 
 VPATH	= src/app src/base src/schema src/scene src/geometry src/shading \
@@ -21,11 +28,11 @@ VPATH	= src/app src/base src/schema src/scene src/geometry src/shading \
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(CC) $(CXXFLAGS) $(LDFLAGS) $(OBJS) -o $(NAME)
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $(OBJS) $(PNG_LIBS) -o $(NAME)
 
 $(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CC) $(CXXFLAGS) -Iinclude -c $< -o $@
+	$(CC) $(CXXFLAGS) $(PNG_CFLAGS) -Iinclude -c $< -o $@
 
 # --- Tests (Catch2 vendored, T017) -----------------------------------------------
 #
@@ -40,15 +47,15 @@ INTDIR      = tests/integration
 TESTBIN     = rt_test
 TEST_OBJDIR = obj-test
 
-TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp) $(wildcard $(INTDIR)/*.cpp) src/app/Options.cpp src/schema/Directives.cpp src/scene/Lexer.cpp src/scene/Scene.cpp src/scene/Parser.cpp src/scene/Validator.cpp src/render/Framebuffer.cpp src/render/Camera.cpp src/render/Renderer.cpp src/shading/Material.cpp
+TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp) $(wildcard $(INTDIR)/*.cpp) src/app/Options.cpp src/schema/Directives.cpp src/scene/Lexer.cpp src/scene/Scene.cpp src/scene/Parser.cpp src/scene/Validator.cpp src/render/Framebuffer.cpp src/render/Camera.cpp src/render/Renderer.cpp src/shading/Material.cpp src/io/ImageWriter.cpp
 TEST_OBJS   = $(TEST_SRCS:%.cpp=$(TEST_OBJDIR)/%.o)
 
 $(TESTBIN): $(TEST_OBJS)
-	$(CC) $(CXXFLAGS) $(LDFLAGS) $(TEST_OBJS) -o $(TESTBIN)
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $(TEST_OBJS) $(PNG_LIBS) -o $(TESTBIN)
 
 $(TEST_OBJDIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CC) $(CXXFLAGS) -Iinclude -Ithirdparty -c $< -o $@
+	$(CC) $(CXXFLAGS) $(PNG_CFLAGS) -Iinclude -Ithirdparty -c $< -o $@
 
 # Build + exécution ; le code retour de Catch2 (≠ 0 si échec) est propagé.
 # Rejoue ensuite le jeu golden `tests/cases/` en headless (T027, < 10 s).
