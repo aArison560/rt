@@ -9,7 +9,8 @@
 // (`tri par t`, `tMax` resserre). Hit -> Lambert (T033) avec le materiau de
 // l'objet touche + ambiance + **toutes** les ponctuelles (T052 : multi-spot,
 // ombres par shadow ray `tMin` eps anti-acne, attenuation T051 par
-// `lighting::attenuationFactor`) ; miss -> fond.
+// `lighting::attenuationFactor`) + speculaire Blinn-Phong (T053 : `specular`,
+// `shininess`, `V = -ray.dir`, sature en blanc) ; miss -> fond.
 // Progressif T036 : batches externes + `seedFor` absolu + jitter sous-pixel
 // (AA en T120) + dithering deterministe minimal (moyenne -> 0 quand spp
 // grandit, conservé pour hit et miss afin que `spp 64 < spp 1` reste vrai).
@@ -350,10 +351,14 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 					// Ambiant une fois (lumiere d'intensite 0 = ambiant seul,
 					// defini), puis un diffus par source non occultee
 					// (`materiau.ambient = 0` pour ne pas recompter l'ambiant) :
-					// `total = saturate(ambiant + sum diffus_i)`. Mono-lumiere
-					// sans ombre == `shadeLambert()` historique (meme formule,
-					// meme `saturate` final). Chaque `diffus_i` applique
-					// l'attenuation T051 (`intensity * att`, registres, R3).
+					// `total = saturate(ambiant + sum diffus_i + sum spec_i)`.
+					// Mono-lumiere sans ombre == `shadeLambert()` historique +
+					// speculaire T053 (meme formule, meme `saturate` final).
+					// Chaque `diffus_i`/`spec_i` applique l'attenuation T051
+					// (`intensity * att`, registres, R3). Speculaire T053 :
+					// Blinn-Phong (`specular`, `shininess`, sature en blanc),
+					// `V = -ray.dir` (Camera normalise), `L` vers la source,
+					// ajoute seulement si non occultee (ombres T052).
 					// Shadow ray : `origine = P + N*eps` (anti-acne), `dir`
 					// vers la source, `tMax = dist - eps` (profondeur bornee) ;
 					// `occultee` -> contribution 0 de cette source.
@@ -366,6 +371,8 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 					const Vec3 unitN = normalize(rec.normal);
 					const Vec3 shadowOrigin =
 					    nearZero(unitN) ? rec.point : rec.point + unitN * kPrimaryTMin;
+					// T053 : direction vers l'oeil (rayon normalise par Camera).
+					const Vec3 viewDir = ray.direction * -1.0F;
 					for (const shading::PointLightParams& light : pointLights) {
 						const Vec3 toLight = light.position - rec.point;
 						if (!std::isfinite(toLight.x) || !std::isfinite(toLight.y) ||
@@ -396,6 +403,9 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 						effLight.intensity = light.intensity * att;
 						total += shading::shadeLambert(matNoAmb, rec.normal, rec.point,
 						                               effLight, ambient);
+						// T053 : reflet Blinn-Phong (sature en blanc, SPEC §3.2 d).
+						total += shading::specularTerm(rec.normal, viewDir, lightDir, mat,
+						                               effLight.color, effLight.intensity);
 					}
 					color = shading::saturate(total);
 				} else {

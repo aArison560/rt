@@ -31,6 +31,98 @@ Vec3 saturate(Vec3 color) noexcept {
 	return Vec3(sanitizeChannel(color.x), sanitizeChannel(color.y), sanitizeChannel(color.z));
 }
 
+Vec3 specularTerm(Vec3 normal, Vec3 viewDir, Vec3 lightDir, const MaterialParams& material,
+                   Vec3 lightColor, float lightIntensity) noexcept {
+	// Coeffs sanitizes (bornes schema R1 : specular 0..1, shininess 1..1024).
+	float specCoeff = 0.0F;
+	if (std::isfinite(material.specular) && material.specular > 0.0F) {
+		specCoeff = material.specular > 1.0F ? 1.0F : material.specular;
+	}
+	if (!(specCoeff > 0.0F)) {
+		return Vec3{};
+	}
+	float shininess = 0.0F;
+	if (std::isfinite(material.shininess) && material.shininess > 0.0F) {
+		shininess = material.shininess;
+		if (shininess < 1.0F) {
+			shininess = 1.0F;
+		} else if (shininess > 1024.0F) {
+			shininess = 1024.0F;
+		}
+	} else {
+		return Vec3{};
+	}
+	float intensity = 0.0F;
+	if (std::isfinite(lightIntensity) && lightIntensity > 0.0F) {
+		intensity = lightIntensity;
+	} else {
+		return Vec3{};
+	}
+	const Vec3 unitN = normalize(normal);
+	const Vec3 unitV = normalize(viewDir);
+	const Vec3 unitL = normalize(lightDir);
+	if (nearZero(unitN) || nearZero(unitV) || nearZero(unitL)) {
+		return Vec3{};
+	}
+	if (!std::isfinite(unitN.x) || !std::isfinite(unitV.x) || !std::isfinite(unitL.x)) {
+		return Vec3{};
+	}
+	float nDotL = dot(unitN, unitL);
+	if (!std::isfinite(nDotL) || nDotL <= 0.0F) {
+		// Dos a la lumiere : pas de reflet (evite le halo arriere).
+		return Vec3{};
+	}
+	const Vec3 halfVec = unitL + unitV;
+	if (nearZero(halfVec)) {
+		return Vec3{};
+	}
+	const Vec3 unitH = normalize(halfVec);
+	if (nearZero(unitH)) {
+		return Vec3{};
+	}
+	float nDotH = dot(unitN, unitH);
+	if (!std::isfinite(nDotH) || nDotH <= 0.0F) {
+		return Vec3{};
+	}
+	if (nDotH > 1.0F) {
+		nDotH = 1.0F;
+	}
+	const double specPow = std::pow(static_cast<double>(nDotH), static_cast<double>(shininess));
+	if (!std::isfinite(specPow) || specPow <= 0.0) {
+		return Vec3{};
+	}
+	const float spec = static_cast<float>(specPow) * specCoeff * intensity;
+	if (!std::isfinite(spec) || !(spec > 0.0F)) {
+		return Vec3{};
+	}
+	const Vec3 cleanColor = Vec3(sanitizeChannel(lightColor.x), sanitizeChannel(lightColor.y),
+	                             sanitizeChannel(lightColor.z));
+	return Vec3(cleanColor.x * spec, cleanColor.y * spec, cleanColor.z * spec);
+}
+
+Vec3 shadeSpecular(const MaterialParams& material, Vec3 normal, Vec3 viewDir, Vec3 hitPoint,
+                   const PointLightParams& light) noexcept {
+	const Vec3 toLight = light.position - hitPoint;
+	if (!std::isfinite(toLight.x) || !std::isfinite(toLight.y) || !std::isfinite(toLight.z)) {
+		return Vec3{};
+	}
+	const float distSq = dot(toLight, toLight);
+	if (!std::isfinite(distSq) || distSq <= kEpsilon * kEpsilon) {
+		return Vec3{};
+	}
+	float intensity = 0.0F;
+	if (std::isfinite(light.intensity) && light.intensity > 0.0F) {
+		intensity = light.intensity;
+	} else {
+		return Vec3{};
+	}
+	const Vec3 lightColor = Vec3(light.color.x, light.color.y, light.color.z);
+	// `normalize(toLight)` : `toLight` non nul ici (garde ci-dessus).
+	const float dist = std::sqrt(distSq);
+	const Vec3 lightDir = toLight / dist;
+	return specularTerm(normal, viewDir, lightDir, material, lightColor, intensity);
+}
+
 Vec3 shadeLambert(const MaterialParams& material, Vec3 normal, Vec3 hitPoint,
                   const PointLightParams& light, const AmbientParams& ambient) noexcept {
 	// Ambiant global : albedo * (couleur * intensite * coeff), sature.

@@ -83,4 +83,26 @@ struct PointLightParams {
                                 const PointLightParams& light,
                                 const AmbientParams& ambient) noexcept;
 
+// Speculaire Blinn-Phong (T053, M7 « petit point blanc ») : `H = norm(L+V)`,
+// `spec = pow(max(dot(N,H),0), shininess) * specular * lightColor*intensity`.
+// `normal`, `viewDir` (vers l'oeil, `-ray.dir`), `lightDir` (vers la source)
+// devraient etre normalises (renormalises par securite : nul -> 0).
+// Dos a la lumiere (`NdotL <= 0`), `specular <= 0`, `shininess` degeneree,
+// `H` degenere, NaN/Inf -> 0 (defini, jamais de NaN en sortie).
+// Le resultat N'EST PAS multiplie par l'albedo : il s'ajoute a la couleur
+// de l'objet pour saturer en blanc (SPECIFICATIONS §3.2 d). `noexcept`,
+// sans allocation (R2/R3). Choix Blinn-Phong (demi-vecteur) plutot que
+// Phong (`reflect`) : plus stable aux incidences rasantes, 1 `pow` par
+// lumiere (cout mesure en `docs/BENCH.md`, optimisable en T065).
+[[nodiscard]] Vec3 specularTerm(Vec3 normal, Vec3 viewDir, Vec3 lightDir,
+                                const MaterialParams& material, Vec3 lightColor,
+                                float lightIntensity) noexcept;
+
+// Commodite ponctuelle (T053) : `lightDir` derive de
+// `light.position - hitPoint` (confondue/NaN -> 0). `viewDir` vers l'oeil.
+// Appliquee par `render/` avec `intensity` deja ponderee par l'attenuation
+// T051 (registres, R3). `noexcept`, sans allocation.
+[[nodiscard]] Vec3 shadeSpecular(const MaterialParams& material, Vec3 normal, Vec3 viewDir,
+                                 Vec3 hitPoint, const PointLightParams& light) noexcept;
+
 } // namespace rt::shading

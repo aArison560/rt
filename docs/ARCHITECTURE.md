@@ -306,6 +306,15 @@ color   += lightColor * intensity * att
   ombres « assombries selon le nombre de sources visibles » (item *Lights*, image 3).
 - **Brillance** : terme spéculaire **ajouté** à la couleur de l'objet → saturation en blanc.
 
+> Implémenté (T053, M7) : `shading::specularTerm()` (Blinn-Phong, `H = norm(L+V)`,
+> `spec = pow(max(dot(N,H),0), shininess) * specular * lightColor*intensity`,
+> dos à la lumière / dégénérés / NaN → 0, jamais de NaN, `noexcept`, sans
+> allocation) + `shadeSpecular()` (ponctuelle, `L` depuis `position`) branchés
+> dans `render/` (`V = -ray.dir`, 1 `pow` par lumière non occultée, `saturate`
+> final en blanc). Tests : `tests/unit/test_specular.cpp` (pic `N=H` = 0.5,
+> dos/dégénérés = 0, DoD saturation `spec=1` → pixels 255 vs `spec=0` → 0,
+> dégradé `max-min > 0.5`).
+
 ### 4.5 Rayons d'ombre et transparence
 
 ```
