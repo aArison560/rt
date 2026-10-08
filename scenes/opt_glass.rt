@@ -1,0 +1,25 @@
+# Scène verre (T057) : refraction Snell/Descartes, `transparency` + `ior`.
+# Sphère de verre devant une sphère rouge : on voit le rouge à travers
+# (décalé par `ior`), preuve `transparency` + `ior` pilotables par fichier.
+scene {
+    limits { width 320 height 240 samples 4 max_depth 4 }
+    camera { position (0 1 4) target (0 0 0) fov 60 }
+    background { color (0.02 0.02 0.05) }
+    ambient { color (0.06 0.06 0.08) intensity 1.0 }
+    lights {
+        light { position (3 5 2) color (1 1 1) intensity 1.0 }
+    }
+    objects {
+        object { type plane point (0 -1 0) normal (0 1 0)
+            material { albedo (0.5 0.5 0.5) diffuse 0.8 ambient 0.05 }
+        }
+        object { type sphere center (0 0 -2) radius 0.5
+            material { albedo (0.9 0.1 0.1) diffuse 0.7 ambient 0.1 }
+        }
+        object { type sphere center (0 0 0) radius 1
+            material { albedo (0.9 0.9 0.9) diffuse 0.2 ambient 0.1
+                specular 0.5 shininess 64
+                transparency 0.9 ior 1.5 }
+        }
+    }
+}

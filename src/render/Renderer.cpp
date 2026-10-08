@@ -1,4 +1,4 @@
-// Boucle de rendu mono-thread (T032) + multi-objets (T046) + reflexion (T056) — implementation
+// Boucle de rendu mono-thread (T032) + multi-objets (T046) + reflexion (T056) + refraction (T057) — implementation
 // sans exception, sans SDL (R6) et sans allocation dans la boucle (R3).
 // Voir `include/rt/render/Renderer.hpp` pour le contrat et
 // `docs/ARCHITECTURE.md` §4 pour le pipeline (camera -> intersection ->
@@ -401,6 +401,18 @@ struct TraceContext {
 // secondaire). Recursion bornee `depth -> depth+1` (pile uniquement, R3),
 // `noexcept`, sans `throw` (R2). Degeneres (normale/direction nulles, NaN)
 // -> direct seul (defini).
+// T057 : refraction (transmission) via la loi de Descartes/Snell (SPEC 5.2 F
+// sous-criteres 3-5, le correcteur cherchera la formule dans le code) :
+//   n1 * sin(theta1) = n2 * sin(theta2)   (Descartes)
+//   ratio = n1 / n2 = frontFace ? 1/ior (air -> verre, entree) : ior/1 (verre -> air, sortie)
+//   T = refract(I, N, ratio)              (`Vec::refract`, N contre le rayon, normalisee)
+//   |T_perp|^2 > 1 -> reflexion totale interne (sentinelle vecteur nul) -> pas de transmission.
+// Ponderation continue : `mix = base*(1-Tr) + transmitted*Tr` (`transparency` 0..1,
+// 0 = opaque, 1 = on voit a travers). `Tr <= 0` ou `depth >= maxDepth` ou TIR
+// -> base seule (direct + eventuelle reflexion). Ordre : reflexion d'abord
+// (`base = direct*(1-R)+reflected*R`), puis transmission (`final = base*(1-Tr)+trans*Tr`)
+// pour que `Tr = 0` preserve exactement le DoD T056. Recursion bornee, pile
+// uniquement (R3), `noexcept`, sans `throw` (R2).
 [[nodiscard]] Vec3 traceRay(const Ray& ray, int depth, const TraceContext& ctx) noexcept {
 	HitRecord rec;
 	if (!findClosestHit(*ctx.objs, ray, kPrimaryTMin, kInfinity, rec)) {
@@ -408,35 +420,70 @@ struct TraceContext {
 	}
 	const Vec3 direct = shadeDirectForHit(rec, ray, ctx);
 	float refl = 0.0F;
+	float transp = 0.0F;
+	float ior = 1.0F;
 	if (rec.materialIndex < ctx.mats->size()) {
-		const float raw = (*ctx.mats)[rec.materialIndex].reflectivity;
-		if (std::isfinite(raw) && raw > 0.0F) {
-			refl = raw > 1.0F ? 1.0F : raw;
+		const shading::MaterialParams& mat = (*ctx.mats)[rec.materialIndex];
+		if (std::isfinite(mat.reflectivity) && mat.reflectivity > 0.0F) {
+			refl = mat.reflectivity > 1.0F ? 1.0F : mat.reflectivity;
+		}
+		if (std::isfinite(mat.transparency) && mat.transparency > 0.0F) {
+			transp = mat.transparency > 1.0F ? 1.0F : mat.transparency;
+		}
+		if (std::isfinite(mat.ior)) {
+			ior = mat.ior;
+			if (ior < 1.0F) {
+				ior = 1.0F;
+			} else if (ior > 3.0F) {
+				ior = 3.0F;
+			}
 		}
 	}
-	if (!(refl > 0.0F)) {
-		return direct;
-	}
-	if (depth >= ctx.maxDepth) {
+	const bool wantRefl = (refl > 0.0F) && (depth < ctx.maxDepth);
+	const bool wantTrans = (transp > 0.0F) && (depth < ctx.maxDepth);
+	if (!wantRefl && !wantTrans) {
 		return direct;
 	}
 	const Vec3 unitN = normalize(rec.normal);
 	if (nearZero(unitN)) {
 		return direct;
 	}
-	const Vec3 reflDir = reflect(ray.direction, unitN);
-	const Vec3 unitR = normalize(reflDir);
-	if (nearZero(unitR)) {
-		return direct;
+	Vec3 base = direct;
+	if (wantRefl) {
+		const Vec3 reflDir = reflect(ray.direction, unitN);
+		const Vec3 unitR = normalize(reflDir);
+		if (!nearZero(unitR)) {
+			const Vec3 origin = rec.point + unitN * kPrimaryTMin;
+			if (std::isfinite(origin.x) && std::isfinite(origin.y) &&
+			    std::isfinite(origin.z)) {
+				const Ray reflRay(origin, unitR, ray.depth + 1U);
+				const Vec3 reflected = traceRay(reflRay, depth + 1, ctx);
+				base = direct * (1.0F - refl) + reflected * refl;
+				base = shading::saturate(base);
+			}
+		}
 	}
-	const Vec3 origin = rec.point + unitN * kPrimaryTMin;
-	if (!std::isfinite(origin.x) || !std::isfinite(origin.y) || !std::isfinite(origin.z)) {
-		return direct;
+	if (wantTrans) {
+		// Descartes : n1*sin(t1) = n2*sin(t2), ratio = n1/n2.
+		const float ratio = rec.frontFace ? (1.0F / ior) : ior;
+		const Vec3 transDir = refract(ray.direction, unitN, ratio);
+		if (!nearZero(transDir)) {
+			const Vec3 unitT = normalize(transDir);
+			if (!nearZero(unitT)) {
+				const Vec3 originT = rec.point - unitN * kPrimaryTMin;
+				if (std::isfinite(originT.x) && std::isfinite(originT.y) &&
+				    std::isfinite(originT.z)) {
+					const Ray transRay(originT, unitT, ray.depth + 1U);
+					const Vec3 transmitted = traceRay(transRay, depth + 1, ctx);
+					const Vec3 mixedT = base * (1.0F - transp) + transmitted * transp;
+					return shading::saturate(mixedT);
+				}
+			}
+		}
+		// TIR (transDir nul) ou degenere : garde `base` (100% reflechi).
+		return shading::saturate(base);
 	}
-	const Ray reflRay(origin, unitR, ray.depth + 1U);
-	const Vec3 reflected = traceRay(reflRay, depth + 1, ctx);
-	const Vec3 mixed = direct * (1.0F - refl) + reflected * refl;
-	return shading::saturate(mixed);
+	return shading::saturate(base);
 }
 
 } // namespace

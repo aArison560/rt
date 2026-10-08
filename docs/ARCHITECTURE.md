@@ -352,7 +352,17 @@ if (dir.refract(N, ratio, T))                     // Snell/Descartes
 > `direct*(1-R) + reflected*R`, `R = 0` == direct historique, `R = 1` == miroir pur,
 > dégénérés -> direct seul, `noexcept`, sans allocation). Tests :
 > `tests/unit/test_reflection.cpp` (DoD : `0` identique, `1` reflet net, `maxDepth 0`
-> == mat, 2 miroirs face à face sans boucle). Réfraction en T057.
+> == mat, 2 miroirs face à face sans boucle).
+
+> Implémenté (T057) : transmission dans `traceRay()` via Descartes/Snell
+> (`n1*sin(t1) = n2*sin(t2)`, `ratio = frontFace ? 1/ior : ior`, `T = refract(I,N,ratio)`,
+> origine `P - N*eps`, TIR (vecteur nul) -> base seule, pondération
+> `base*(1-Tr) + transmitted*Tr`, `Tr = 0` préserve T056, `Tr = 1` = à travers,
+> `maxDepth 0` == direct, `noexcept`, sans allocation, formule commentée dans le code).
+> Tests : `tests/unit/test_refraction.cpp` (`ior=1` sans déviation, entrée/sortie + TIR,
+> fond à travers, `1.1` vs `1.5` diffèrent, `maxDepth 0` coupe, `opt_glass.rt` non-fond).
+> Preuves régénérées (`alias.png` R=0.5 par T056, `material.png` R=0.2/Tr=0.5 par T056+T057,
+> `opt_glass.png` nouveau).
 
 ### 4.7 Textures et UV
 

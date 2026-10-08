@@ -7,7 +7,7 @@
 ## Régénérer
 
 ```bash
-sh scripts/render_all.sh   # 11/11 images en ~6 s, sortie 0 si tout rend
+sh scripts/render_all.sh   # 12/12 images en ~8 s, sortie 0 si tout rend
 ```
 
 Le script supprime d'abord les anciens `*.png` (**depuis zéro**), rend chaque
@@ -23,12 +23,13 @@ requis, T035), puis affiche le résumé (`ok/total`, durée). Tout échec → so
 | `opt_parallel.png` | `scenes/opt_parallel.rt` | 320×240, spp 4 (soleil directionnel, T055) |
 | `minimal.png` | `tests/cases/valid/minimal.rt` | 640×480, spp 4 |
 | `group.png` | `tests/cases/valid/group.rt` | scène à groupes (File++) |
-| `material.png` | `tests/cases/valid/material.rt` | matériaux |
+| `material.png` | `tests/cases/valid/material.rt` | matériaux (R=0.2/Tr=0.5, T056+T057) |
 | `transform.rt` → `transform.png` | `tests/cases/valid/transform.rt` | transformations |
 | `lights.png` | `tests/cases/valid/lights.rt` | point + directionnel + spot |
 | `limits.png` | `tests/cases/valid/limits.rt` | limites + fond + ambiance |
 | `primitives.png` | `tests/cases/valid/primitives.rt` | 4 primitives |
-| `alias.png` | `tests/cases/valid/alias.rt` | alias + têtes |
+| `alias.png` | `tests/cases/valid/alias.rt` | alias + têtes (miroir R=0.5, T056) |
+| `opt_glass.png` | `scenes/opt_glass.rt` | verre Tr=0.9 ior=1.5 (Descartes, T057) |
 
 Toutes les images sont **versionnées** (DoD T037) mais restent secondaires :
 la preuve, c'est le script + la scène, pas le PNG.
