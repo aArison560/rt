@@ -463,8 +463,8 @@ rt/
 - **Dépend** : T040 · **Sert** : M3 · **Doc** : —
 - **DoD** : tests verts ; ASan/UBSan verts.
 
-#### T044 ⬜ — Cône
-> **Fait le** : — · **Commit** : —
+#### T044 ✅ — Cône
+> **Fait le** : 2026-10-08 · **Commit** : d315883
 - **Prompt** : « `src/geometry/Cone.cpp` : cône infini (deux nappes) autour de Y, racines par côté, détection de la nappe touchée, sommet, cas dégénéré (apex dans le rayon) → comportement défini sans throw, uv. Tests : nappe haute/basse, sommet, parallèle au générateur, rayon passant près de l'apex. »
 - **Dépend** : T040 · **Sert** : M3 · **Doc** : —
 - **DoD** : tests verts, y compris apex ; ASan/UBSan verts (c'est le cas limite qui a cassé la v1).
