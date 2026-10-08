@@ -173,6 +173,15 @@ ray = Ray(position, dir)
 **Exigence M5** : cette base doit être recalculable à partir de `position` + `lookAt` + `up`
 **arbitraires** (œil n'importe où, regard n'importe où) — cf. item « Did you know? ».
 
+> Implémenté (T032) : `include/rt/render/Renderer.hpp` — `rt::render::render(const Scene&,
+> Framebuffer&, RenderParams)` : boucle mono-thread pixels × `spp`, rayon via
+> `Camera::rayForPixel` (T031), miss → fond de scène, `addSample()` + `present()`
+> (T030). Profondeur max bornée 0..32 (`maxDepth`, pour la réflexion T056), graine
+> 0..4294967295 déjà validée (jitter/RNG en T036). Aucune allocation dans la boucle
+> (R3), aucun `throw` (R2), indépendant de SDL (R6 : `grep -R SDL src/render` vide).
+> La recherche d'intersection sera branchée en P4 (T040+) sans changer la boucle.
+> Tests : `tests/unit/test_renderer.cpp` (fond, déterminisme, erreurs).
+
 ### 4.2 Intersections — une fonction par primitive (exigence M3)
 
 Toutes résolvent `P(t) = O + t·D` et renvoient le plus petit `t > tMin` valide.
