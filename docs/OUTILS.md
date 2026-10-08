@@ -1,7 +1,7 @@
 # RT — Outils nécessaires au projet
 
 > Inventaire des outils par tâche (développement, qualité, mesure, rendu, distribué),
-> avec leur **présence réelle sur le poste de développement** (vérifiée le 3 octobre 2026)
+> avec leur **présence réelle sur le poste de développement** (vérifiée le 8 octobre 2026, voir §1.1)
 > et les commandes d'installation.
 >
 > Associe chaque outil à **l'item de fiche** qu'il permet de prouver.
@@ -24,6 +24,12 @@
 
 ## 1. État des lieux sur le poste
 
+> Vérifié le 2026-10-08 via `sh scripts/check_env.sh` (exit 0) + `pkg-config`
+> + `ls thirdparty/`. Détail par bibliothèque en §1.1 : ce qui est **présent**,
+> ce qui est **encore manquant**, et surtout **quoi installer via `apt`
+> vs quoi vendored dans `thirdparty/`** — SDL2/GTK/Qt ne doivent **jamais**
+> être clonés à la racine (voir §1.1).
+
 | Présent | Absent (à installer si besoin) |
 |---------|--------------------------------|
 | `ssh`, `rsync`, `docker`, `montage`/`convert` (ImageMagick), `valgrind`, `clang++`, `python3`, `make`, `gdb`* | `tmux`, `pdsh`, `ansible`, `ffmpeg`, `perf`, `bear`, `hyperfine`, `mpicc` (OpenMPI) |
@@ -36,6 +42,56 @@ sudo apt install tmux ffmpeg linux-tools-common bear \
                  libomp-dev openmpi-bin
 pip install --user hyperfine          # ou : cargo install hyperfine
 ```
+
+### 1.1 Bibliothèques graphiques et `thirdparty/` : présent / manquant, et règle de provenance
+
+> Règle de provenance (décidée ici, à appliquer dès T034/T070/T075) :
+> - **Via `apt` (système, jamais dans le dépôt)** : SDL2, libpng, libjpeg,
+>   et le cas échéant GTK/Qt. Ce sont des bibliothèques système lourdes :
+>   les cloner à la racine = centaines de Mo, build de plusieurs minutes,
+>   CI cassée, `valgrind`/sanitizers bruités, et violation de fait de R6
+>   (le calcul doit rester indépendant de l'affichage).
+> - **Vendored dans `thirdparty/` (petits fichiers versionnés)** : uniquement
+>   les libs header-only ou mono-fichier — Catch2, `stb`, `microui`.
+>   Elles sont compilées **avec** le projet (mêmes flags `-Wall -Wextra -Werror`)
+>   et épinglées à une version exacte.
+
+| Bibliothèque | Attendue par | Statut au 2026-10-08 | Action : installer ou vendorer |
+|--------------|--------------|-----------------------|--------------------------------|
+| **SDL2** (`sdl2`, 2.32.4 via `pkg-config`) | T070–T078, T035 (headless = pas de SDL), CI `libsdl2-dev` | ✔ **présent système**, absent de `thirdparty/` (normal) | **Voie normale : rien à cloner.** Sur poste vierge/CI : `sudo apt install libsdl2-dev`. Le link `-lSDL2` arrivera avec T070. **Sans apt ni sudo (poste nu) :** repli `sh scripts/install_sdl2_from_source.sh` (clone la branche `SDL2` de `https://github.com/libsdl-org/SDL` dans `./SDL/src`, **non versionné**, installe dans `./SDL/install`), puis `make re SDL2_PREFIX=$PWD/SDL/install`. Voir §1.2. |
+| **libpng** (1.6.48) / **libjpeg** (2.1.5) | T034, T102, CI | ✔ **présentes système** | **Rien à cloner.** Sur poste vierge : `sudo apt install libpng-dev libjpeg-dev`. Alternative sans dépendance système : `stb` (ligne suivante). |
+| **Catch2** (v3.16.0 amalgamé) | T017, `make test` | ✔ **présent** (`thirdparty/catch2/catch_amalgamated.{hpp,cpp}`) | Rien à faire. Ne pas régénérer à la main (`AGENTS.md`). |
+| **`stb`** (`stb_image.h`, `stb_image_write.h`) | T034 (PNG via `stb_image_write`), T102 (PNG/JPEG via `stb_image`) | ✖ **encore manquant** (`thirdparty/` ne contient que `catch2/`) | **À vendorer avant T034** : copier les 2 headers depuis `https://github.com/nothings/stb` vers `thirdparty/stb/`, noter le commit dans le message de commit T034, compiler avec le projet (header-only). |
+| **`microui`** (`microui.h`, `microui.c`) | T075, T108, T110 (`src/ui/`, `ARCHITECTURE.md` §2.1/§7) | ✖ **encore manquant** | **À vendorer avant T075** : copier depuis `https://github.com/rxi/microui` vers `thirdparty/microui/`, noter le commit, compiler côté C en `-std=c11`. |
+| **GDK/GTK** (`gtk+-3.0`, `gtk4`) et **Qt** (`Qt5Widgets`, `Qt6Widgets`) | Item *Environment 2* (« jolie interface (gtk ou QT) ») | ✖ absents au `pkg-config` — **normal, non bloquant** | **Rien à faire, et surtout ne pas cloner** (`https://gitlab.gnome.org/GNOME/gtk`, `https://code.qt.io/cgit/qt/qtbase.git`) **ni placer à la racine** : l'architecture retenue est **SDL2 + microui** (T070/T075), qui couvre déjà l'item. GTK/Qt ne seraient qu'une alternative, à prendre via `apt` (`libgtk-4-dev`, `qt6-base-dev`) si un jour décidée en ADR — jamais vendored. |
+
+Vérification reproductible :
+
+```bash
+sh scripts/check_env.sh                                    # ✔ SDL2/libpng/libjpeg système
+pkg-config --modversion sdl2 libpng libjpeg                 # versions ci-dessus
+pkg-config --modversion gtk+-3.0 gtk4 Qt5Widgets Qt6Widgets # vide = attendu, non requis
+ls thirdparty/  # catch2 ✔ · stb ✖ (avant T034) · microui ✖ (avant T075)
+```
+
+### 1.2 Poste sans SDL2 : procédure de repli (changement de PC)
+
+> Cas visé : nouveau poste sans SDL2 **et** sans `apt`/`sudo`.
+> Dans tous les autres cas, `sudo apt install libsdl2-dev` reste la voie normale.
+> Les sources SDL2 ne sont **jamais committées** : `./SDL/` est ignoré par git.
+
+```bash
+make setup-sdl                          # = sh scripts/install_sdl2_from_source.sh
+export SDL2_PREFIX="$PWD/SDL/install"  # rend la SDL2 locale visible
+export PKG_CONFIG_PATH="$SDL2_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH"
+pkg-config --modversion sdl2            # doit afficher la version compilée
+make re SDL2_PREFIX=$PWD/SDL/install    # build avec la SDL2 locale (actif dès T070)
+```
+
+- Dépôt cloné : `https://github.com/libsdl-org/SDL`, branche `SDL2`, dans `./SDL/src`.
+- Prérequis du repli : `git cmake c++ make pkg-config` (le script les vérifie et échoue sinon).
+- `--force` recompile même si une SDL2 système existe ; `SDL2_PREFIX`/`SDL2_SRC` surchargent les chemins.
+- GTK/Qt ne sont pas concernés : non requis (voir §1.1), aucun repli prévu.
 
 ---
 

@@ -53,5 +53,9 @@ rt_test
 rt_test_asan
 rt_test_tsan
 
+# SDL2 compilée depuis les sources en repli local (scripts/install_sdl2_from_source.sh)
+# Dossier NON versionné à la racine : sources + build + install.
+/SDL/
+
 # Prompt files
 *.pdb

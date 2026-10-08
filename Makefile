@@ -67,6 +67,26 @@ test-tsan:
 	$(MAKE) test CXXFLAGS="$(CXXFLAGS) $(TSANFLAGS)" LDFLAGS="$(TSANFLAGS)" \
 		TEST_OBJDIR=obj-test-tsan TESTBIN=rt_test_tsan
 
+# --- SDL2 (T070) : système par défaut, repli local si absente -----------------
+#
+# Fonctionnement principal (docs/OUTILS.md §1.1) : la SDL2 du système via
+# pkg-config. Sur un poste sans SDL2 et sans apt, le repli consiste à compiler
+# SDL2 depuis ses sources dans ./SDL/ (NON versionné, voir .gitignore) :
+#   sh scripts/install_sdl2_from_source.sh
+# puis compiler avec SDL2_PREFIX (les flags pkg-config suivent) :
+#   make re SDL2_PREFIX=$PWD/SDL/install
+# Tant que T070 (couche platform) n'est pas faite, ces variables sont sans
+# effet sur le build : elles documentent le mécanisme à l'avance.
+
+SDL2_PREFIX ?=
+ifneq ($(strip $(SDL2_PREFIX)),)
+export PKG_CONFIG_PATH := $(SDL2_PREFIX)/lib/pkgconfig:$(PKG_CONFIG_PATH)
+endif
+
+# Repli local : clone + compile SDL2 dans ./SDL/ (rien à committer).
+setup-sdl:
+	sh scripts/install_sdl2_from_source.sh
+
 # --- Cibles de qualité -------------------------------------------------------
 
 # Batterie complète (T018) : build, tests, ASan/UBSan, TSan, valgrind, résumé
@@ -131,4 +151,4 @@ fclean: clean fclean-test
 
 re: fclean all
 
-.PHONY: all clean fclean fclean-test re test test-asan test-tsan asan tsan fast compdb format lint quality
+.PHONY: all clean fclean fclean-test re test test-asan test-tsan asan tsan fast compdb format lint quality setup-sdl

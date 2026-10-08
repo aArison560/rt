@@ -59,6 +59,17 @@ rend 0 que si tout est vert (détail : `docs/OUTILS.md` §3.1).
 Vérification de l'environnement : `sh scripts/check_env.sh` (✔ présent, ✖ obligatoire manquant,
 ⚠ optionnel absent ; code retour 1 si un obligatoire manque). Voir `docs/OUTILS.md` §8–9.
 
+## Prérequis système
+
+```bash
+sudo apt install libsdl2-dev libpng-dev libjpeg-dev  # voie normale (CI incluse)
+```
+
+Poste sans SDL2 et sans `apt`/`sudo` (changement de PC) : repli documenté en
+`docs/OUTILS.md` §1.2 — `make setup-sdl` compile SDL2 depuis ses sources dans
+`./SDL/` (non versionné), puis `make re SDL2_PREFIX=$PWD/SDL/install`.
+GDK/GTK et Qt ne sont pas requis (l'interface retenue est SDL2 + microui).
+
 ## Intégration continue
 
 `.github/workflows/ci.yml` s'exécute à chaque push et PR sur `dev`, sur `ubuntu-24.04` :
