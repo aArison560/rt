@@ -205,6 +205,12 @@ Règles communes :
 > pour T045), `ObjectKind` + `toString`, dispatch **vtable** tranché dans
 > `docs/ADR/002-dispatch.md` (aucune macro `INTERSECT(`, aucun `switch`
 > générique). Tests : `tests/unit/test_geometry.cpp` (dispatch via base).
+>
+> Implémenté (T041) : `rt::geometry::Sphere` (centre + rayon, espace objet) —
+> quadratique `a·t²+b·t+c`, plus proche dans `[tMin,tMax]`, `setFaceNormal`,
+> `uv` sphériques, intermédiaires en `double` pour les sphères très loin,
+> dégénérés (`r <= ε`, direction nulle, `tMin > tMax`, `NaN`) → `false`.
+> `localBounds()` exacte (`C ± r`). Tests : 6 cas + dégénérés.
 
 ### 4.3 Transformations (exigence M4)
 

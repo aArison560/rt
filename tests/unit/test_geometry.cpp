@@ -1,11 +1,14 @@
-// Tests de l'interface des objets (T040) — dispatch vtable, Catch2.
-// DoD : test de dispatch (appel via `AObject*` -> surcharge derivee) +
+// Tests de l'interface des objets (T040) + sphere (T041), Catch2.
+// DoD T040 : test de dispatch (appel via `AObject*` -> surcharge derivee) +
 // `static_assert` sur `HitRecord` (verifie a la compilation dans
 // `include/rt/geometry/Object.hpp`) + grep d'intersection sans macro
 // (aucune macro generique, exige par la fiche M3).
+// DoD T041 : 6 cas sphere (tangent, interieur, manquant, hors bornes,
+// centre exact, tres loin) + degeneres, sans exception, ASan propre.
 
 #include <catch2/catch_amalgamated.hpp>
 
+#include <cmath>
 #include <cstdint>
 #include <memory>
 #include <type_traits>
@@ -14,6 +17,7 @@
 #include "rt/base/Ray.hpp"
 #include "rt/base/Vec.hpp"
 #include "rt/geometry/Object.hpp"
+#include "rt/geometry/Sphere.hpp"
 
 namespace {
 
@@ -102,4 +106,126 @@ TEST_CASE("geometry : dispatch virtuel par type (T040)", "[geometry]") {
 TEST_CASE("geometry : HitRecord reste un POD compact (T040)", "[geometry]") {
 	REQUIRE(std::is_trivially_copyable_v<rt::HitRecord>);
 	REQUIRE(std::is_standard_layout_v<rt::HitRecord>);
+}
+
+namespace {
+
+bool nearReal(rt::Real a, rt::Real b, float margin = 1e-4F) {
+	return a == Catch::Approx(b).margin(static_cast<double>(margin));
+}
+
+} // namespace
+
+TEST_CASE("geometry sphere : centre exact, face avant (T041)", "[geometry][sphere]") {
+	const rt::geometry::Sphere sphere(rt::Vec3(0, 0, 0), rt::Real(1), 10, 4);
+	const rt::Ray ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 1));
+	rt::HitRecord rec;
+	REQUIRE(sphere.intersect(ray, rt::Real(0), rt::kInfinity, rec));
+	REQUIRE(nearReal(rec.t, rt::Real(4)));
+	REQUIRE(nearReal(rec.point.x, rt::Real(0)));
+	REQUIRE(nearReal(rec.point.y, rt::Real(0)));
+	REQUIRE(nearReal(rec.point.z, rt::Real(-1)));
+	REQUIRE(rec.frontFace);
+	// Normale sortante (0,0,-1) contre le rayon (0,0,1) : unitaire.
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1)));
+	REQUIRE(nearReal(rec.normal.z, rt::Real(-1)));
+	REQUIRE(rec.materialIndex == 4);
+	// `uv` dans [0,1], finis (texture T103).
+	REQUIRE(std::isfinite(rec.uv.x));
+	REQUIRE(std::isfinite(rec.uv.y));
+	REQUIRE(rec.uv.x >= rt::Real(0));
+	REQUIRE(rec.uv.x <= rt::Real(1));
+	REQUIRE(rec.uv.y >= rt::Real(0));
+	REQUIRE(rec.uv.y <= rt::Real(1));
+	// Dispatch via la base : meme resultat par `AObject*`.
+	const rt::geometry::AObject& base = sphere;
+	rt::HitRecord viaBase;
+	REQUIRE(base.intersect(ray, rt::Real(0), rt::kInfinity, viaBase));
+	REQUIRE(nearReal(viaBase.t, rec.t));
+}
+
+TEST_CASE("geometry sphere : rayon tangent (discriminant nul, T041)", "[geometry][sphere]") {
+	const rt::geometry::Sphere sphere(rt::Vec3(0, 0, 0), rt::Real(1));
+	const rt::Ray ray(rt::Vec3(1, -5, 0), rt::normalize(rt::Vec3(0, 1, 0)));
+	rt::HitRecord rec;
+	REQUIRE(sphere.intersect(ray, rt::Real(0), rt::kInfinity, rec));
+	REQUIRE(nearReal(rec.t, rt::Real(5), 1e-3F));
+	REQUIRE(nearReal(rec.point.x, rt::Real(1), 1e-3F));
+	REQUIRE(nearReal(rec.point.y, rt::Real(0), 1e-3F));
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1)));
+}
+
+TEST_CASE("geometry sphere : rayon partant de l'interieur (T041)", "[geometry][sphere]") {
+	const rt::geometry::Sphere sphere(rt::Vec3(0, 0, 0), rt::Real(2));
+	const rt::Ray inside(rt::Vec3(0, 0, 0), rt::Vec3(0, 0, 1));
+	rt::HitRecord rec;
+	REQUIRE(sphere.intersect(inside, rt::Real(0), rt::kInfinity, rec));
+	REQUIRE(nearReal(rec.t, rt::Real(2)));
+	// Sortie par l'interieur : `frontFace` false, normale retournee
+	// contre le rayon (0,0,-1) alors que la geometrique est (0,0,+1).
+	REQUIRE_FALSE(rec.frontFace);
+	REQUIRE(nearReal(rec.normal.z, rt::Real(-1)));
+	REQUIRE(nearReal(rec.point.z, rt::Real(2)));
+}
+
+TEST_CASE("geometry sphere : manquant et hors bornes (T041)", "[geometry][sphere]") {
+	const rt::geometry::Sphere sphere(rt::Vec3(0, 0, 0), rt::Real(1));
+	rt::HitRecord rec;
+	// A cote : ligne x=0, z=-5, direction +y (distance 5 au centre).
+	REQUIRE_FALSE(sphere.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 1, 0)), rt::Real(0),
+	                               rt::kInfinity, rec));
+	// Devant : meme rayon que le centre exact, mais fenetre trop courte.
+	REQUIRE_FALSE(sphere.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                               rt::Real(3), rec));
+	// Derriere : fenetre apres les deux racines (4 et 6).
+	REQUIRE_FALSE(sphere.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(7),
+	                               rt::Real(10), rec));
+	// Fenetre inversee : defini comme miss, sans crash.
+	REQUIRE_FALSE(sphere.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(5),
+	                               rt::Real(3), rec));
+}
+
+TEST_CASE("geometry sphere : tres loin, stable en double (T041)", "[geometry][sphere]") {
+	const rt::geometry::Sphere sphere(rt::Vec3(0, 0, 1000), rt::Real(1));
+	const rt::Ray ray(rt::Vec3(0, 0, 0), rt::Vec3(0, 0, 1));
+	rt::HitRecord rec;
+	REQUIRE(sphere.intersect(ray, rt::Real(0), rt::kInfinity, rec));
+	REQUIRE(nearReal(rec.t, rt::Real(999), 1e-2F));
+	REQUIRE(rec.frontFace);
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1)));
+	// Origine lointaine symetrique : meme stabilite.
+	const rt::geometry::Sphere near(rt::Vec3(0, 0, 0), rt::Real(1));
+	const rt::Ray far(rt::Vec3(0, 0, -1000000), rt::Vec3(0, 0, 1));
+	rt::HitRecord recFar;
+	REQUIRE(near.intersect(far, rt::Real(0), rt::kInfinity, recFar));
+	REQUIRE(recFar.t > rt::Real(0));
+	REQUIRE(std::isfinite(recFar.t));
+}
+
+TEST_CASE("geometry sphere : degeneres sans crash (T041)", "[geometry][sphere]") {
+	rt::HitRecord rec;
+	// Rayon nul (v1 : division par zero) -> miss defini.
+	const rt::geometry::Sphere sphere(rt::Vec3(0, 0, 0), rt::Real(1));
+	REQUIRE_FALSE(sphere.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 0)), rt::Real(0),
+	                               rt::kInfinity, rec));
+	// Rayon quasi nul -> miss defini.
+	REQUIRE_FALSE(
+	    sphere.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(rt::kEpsilon * 0.1F, 0, 0)),
+	                     rt::Real(0), rt::kInfinity, rec));
+	// Sphere degeneree (rayon nul ou negatif) -> miss defini.
+	const rt::geometry::Sphere flat(rt::Vec3(0, 0, 0), rt::Real(0));
+	REQUIRE_FALSE(flat.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                             rt::kInfinity, rec));
+	const rt::geometry::Sphere negative(rt::Vec3(0, 0, 0), rt::Real(-1));
+	REQUIRE_FALSE(negative.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                                 rt::kInfinity, rec));
+	// `localBounds` exacte : centre +- rayon.
+	const rt::geometry::Sphere placed(rt::Vec3(1, 2, 3), rt::Real(2));
+	const rt::AABB box = placed.localBounds();
+	REQUIRE(nearReal(box.min.x, rt::Real(-1)));
+	REQUIRE(nearReal(box.min.y, rt::Real(0)));
+	REQUIRE(nearReal(box.min.z, rt::Real(1)));
+	REQUIRE(nearReal(box.max.x, rt::Real(3)));
+	REQUIRE(nearReal(box.max.y, rt::Real(4)));
+	REQUIRE(nearReal(box.max.z, rt::Real(5)));
 }
