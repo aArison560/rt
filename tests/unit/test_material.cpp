@@ -148,6 +148,10 @@ TEST_CASE("material : image rendue non noire, sans NaN (DoD T033)", "[material]"
 			}
 		}
 	}
-	// Fond bleu nuit + ambiance : aucun pixel totalement noir.
-	REQUIRE(minLuminance > 0.0F);
+	// T046 : l'ombrage (Lambert + ambiant) garantit un plancher > 0, mais le
+	// dithering deterministe T036 (±0.03, moyenne -> 0) peut pousser un pixel
+	// sombre sous 0 en `accum` (HDR, avant `present()` qui sature [0,1]).
+	// On exige donc le plancher ambiant moins le dithering, jamais de NaN.
+	// Sans dithering le plancher serait > 0 (cf. test face/dos ci-dessus).
+	REQUIRE(minLuminance > -0.031F);
 }

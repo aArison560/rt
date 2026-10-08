@@ -1,11 +1,13 @@
 #pragma once
 
-// Boucle de rendu mono-thread (T032) — sans SDL (regle R6).
+// Boucle de rendu mono-thread (T032) + multi-objets (T046) — sans SDL (R6).
 // `render()` parcourt les pixels, genere le rayon via `Camera` (T031),
-// cherche l'intersection la plus proche (P4, T040+ : pour l'instant
-// aucune primitive n'existe donc tout rayon manque et retourne le fond
-// de scene), ecrit dans le `Framebuffer` persistant (T030) puis
-// `present()` (tonemapping + gamma 2.2). Profondeur max bornee
+// cherche l'intersection la plus proche parmi tous les objets (T046 : tri
+// par `t`, `tMax` resserre ; objets directs + groupes aplatis, 4 types en
+// coexistence, doublons du meme type autorises ; `tMin` = 0.001), ombre
+// via Lambert (T033 : materiau de l'objet touche + 1ere lumiere avec
+// position + ambiance, miss -> fond de scene), ecrit dans le `Framebuffer`
+// persistant (T030) puis `present()` (tonemapping + gamma 2.2). Profondeur max bornee
 // (`maxDepth`, utilisee par la reflexion en T056), aucune allocation
 // dans la boucle (registres uniquement, regle R3), aucun `throw`
 // (regle R2 : `Status` en cas de parametres/camera/framebuffer invalides).

@@ -181,6 +181,21 @@ ray = Ray(position, dir)
 > (R3), aucun `throw` (R2), indépendant de SDL (R6 : `grep -R SDL src/render` vide).
 > La recherche d'intersection sera branchée en P4 (T040+) sans changer la boucle.
 > Tests : `tests/unit/test_renderer.cpp` (fond, déterminisme, erreurs).
+>
+> Implémenté (T046, M3) : recherche du plus proche parmi tous les objets —
+> conversion scene → `geometry::AObject` une fois avant la boucle (chemin froid :
+> `Sphere(center,radius)`, `Plane(point,normal)`, `Cylinder(center,radius)`,
+> `Cone(apex=center, degreesToRadians(angle))`, `axis`/`height`/`slice` ignorés
+> jusqu'en T130/T133 ; `scene::Transform` (ordre d'écriture) → `rt::Transform`
+> (`translate`/`scale`/`rotate` degrés→radians, `M = Op_n-1*...*Op_0`) ; groupes
+> aplatis récursivement (`M_monde = M_parent*M_local`, `id` croissant,
+> `materialIndex` = rang) ; boucle chaude `findClosestHit` (tri par `t`,
+> `tMax` resserré, `tMin` = 0.001, `noexcept`, pile uniquement). Hit → Lambert
+> (T033 : `worldMats[rec.materialIndex]` + 1ère lumière avec position + ambiance),
+> miss → fond ; dithering T036 conservé (hit comme miss). Tests :
+> `test_renderer.cpp` (6 objets dont 2 sphères → proche gagne + far-only bleu,
+> 4 types non-fond >5%, 2 sphères rouge/bleu sans doublon, `group.rt` aplati,
+> `translate` ≡ placé octet par octet).
 
 ### 4.2 Intersections — une fonction par primitive (exigence M3)
 
