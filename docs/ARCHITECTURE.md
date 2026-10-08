@@ -258,6 +258,16 @@ intersections.
 > `transformPoint` (w=1), `transformVector` (w=0), `transformNormal` (inverse-transposée
 > de la partie 3×3, renormalisée). Approche A retenue : rayons en espace objet,
 > normales via `(M⁻¹)ᵀ`. Tests : `tests/unit/test_mat4.cpp`.
+>
+> Implémenté (T045, M4) : approche A branchée dans les 4 primitives —
+> `AObject::worldToObjectRay` (`O' = M⁻¹·O`, `D' = M⁻¹·D` non renormalisée
+> pour conserver `t` ; `nullopt` → miss si `M` singulière), intersection en
+> espace objet, `objectToWorldPoint` (`M`) + `objectToWorldNormal`
+> (`(M⁻¹)ᵀ` renormalisée, unitaire même après scale non uniforme),
+> `frontFace` recalculée en monde (même signe). Preuve du sujet :
+> sphère `(0,0,0)` + `translate(42,42,42)` ≡ sphère placée en `(42,42,42)`
+> (même `t`, point, normale). Tests : translation + rotation sur les 4
+> types, scale non uniforme (normales unitaires), singulière → `false`.
 
 ### 4.4 Modèle d'ombrage (exigence M7)
 

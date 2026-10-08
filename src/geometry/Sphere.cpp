@@ -23,6 +23,13 @@ bool Sphere::intersect(const Ray& ray, Real tMin, Real tMax, HitRecord& rec) con
 	if (std::isnan(tMin) || std::isnan(tMax)) {
 		return false;
 	}
+	// T045 (M4, approche A) : passage en espace objet par `M⁻¹` (`t`
+	// conserve, direction non renormalisee). `M` singuliere -> miss.
+	const std::optional<Ray> objRayOpt = worldToObjectRay(ray);
+	if (!objRayOpt) {
+		return false;
+	}
+	const Ray& objRay = *objRayOpt;
 	if (radius_ <= kEpsilon) {
 		return false;
 	}
@@ -30,19 +37,19 @@ bool Sphere::intersect(const Ray& ray, Real tMin, Real tMax, HitRecord& rec) con
 	    !std::isfinite(radius_)) {
 		return false;
 	}
-	if (!std::isfinite(ray.origin.x) || !std::isfinite(ray.origin.y) ||
-	    !std::isfinite(ray.origin.z) || !std::isfinite(ray.direction.x) ||
-	    !std::isfinite(ray.direction.y) || !std::isfinite(ray.direction.z)) {
+	if (!std::isfinite(objRay.origin.x) || !std::isfinite(objRay.origin.y) ||
+	    !std::isfinite(objRay.origin.z) || !std::isfinite(objRay.direction.x) ||
+	    !std::isfinite(objRay.direction.y) || !std::isfinite(objRay.direction.z)) {
 		return false;
 	}
 	// Intermediaires en double : stables pour les spheres tres loin
 	// (t ~ 1e6, `a·t²` ~ 1e12 tient en float mais perd en precision).
-	const double dx = static_cast<double>(ray.direction.x);
-	const double dy = static_cast<double>(ray.direction.y);
-	const double dz = static_cast<double>(ray.direction.z);
-	const double ox = static_cast<double>(ray.origin.x) - static_cast<double>(center_.x);
-	const double oy = static_cast<double>(ray.origin.y) - static_cast<double>(center_.y);
-	const double oz = static_cast<double>(ray.origin.z) - static_cast<double>(center_.z);
+	const double dx = static_cast<double>(objRay.direction.x);
+	const double dy = static_cast<double>(objRay.direction.y);
+	const double dz = static_cast<double>(objRay.direction.z);
+	const double ox = static_cast<double>(objRay.origin.x) - static_cast<double>(center_.x);
+	const double oy = static_cast<double>(objRay.origin.y) - static_cast<double>(center_.y);
+	const double oz = static_cast<double>(objRay.origin.z) - static_cast<double>(center_.z);
 	const double radius = static_cast<double>(radius_);
 	const double a = dx * dx + dy * dy + dz * dz;
 	if (!(a > static_cast<double>(kEpsilon) * static_cast<double>(kEpsilon))) {
@@ -71,32 +78,45 @@ bool Sphere::intersect(const Ray& ray, Real tMin, Real tMax, HitRecord& rec) con
 		return false;
 	}
 	const Real t = static_cast<Real>(tHit);
-	const Vec3 hitPoint = ray.at(t);
-	if (!std::isfinite(hitPoint.x) || !std::isfinite(hitPoint.y) || !std::isfinite(hitPoint.z)) {
+	const Vec3 pointObj = objRay.at(t);
+	if (!std::isfinite(pointObj.x) || !std::isfinite(pointObj.y) || !std::isfinite(pointObj.z)) {
 		return false;
 	}
 	// Normale sortante `(P - C) / r`, renormalisee par securite.
-	Vec3 outward = (hitPoint - center_) / radius_;
-	if (!std::isfinite(outward.x) || !std::isfinite(outward.y) || !std::isfinite(outward.z)) {
+	Vec3 outwardObj = (pointObj - center_) / radius_;
+	if (!std::isfinite(outwardObj.x) || !std::isfinite(outwardObj.y) || !std::isfinite(outwardObj.z)) {
 		return false;
 	}
-	outward = normalize(outward);
-	if (nearZero(outward)) {
+	outwardObj = normalize(outwardObj);
+	if (nearZero(outwardObj)) {
 		return false;
 	}
 	// `uv` spheriques pour la texture (T103 les exploitera) : `p` unitaire.
-	const double px = static_cast<double>(outward.x);
-	const double py = static_cast<double>(outward.y);
-	const double pz = static_cast<double>(outward.z);
+	const double px = static_cast<double>(outwardObj.x);
+	const double py = static_cast<double>(outwardObj.y);
+	const double pz = static_cast<double>(outwardObj.z);
 	const double clampedY = py < -1.0 ? -1.0 : (py > 1.0 ? 1.0 : py);
 	const double theta = std::atan2(pz, px);
 	const double phi = std::acos(clampedY);
 	const Real u = static_cast<Real>(1.0 - (theta + static_cast<double>(kPi)) /
 	                                           (2.0 * static_cast<double>(kPi)));
 	const Real v = static_cast<Real>(1.0 - phi / static_cast<double>(kPi));
+	// Retour en monde (T045) : point par `M`, normale par `(M⁻¹)ᵀ`, `t`
+	// conserve (direction objet non renormalisee), `frontFace` recalcule
+	// en monde (meme signe qu'en objet).
+	const Vec3 worldPoint = objectToWorldPoint(pointObj);
+	if (!std::isfinite(worldPoint.x) || !std::isfinite(worldPoint.y) ||
+	    !std::isfinite(worldPoint.z)) {
+		return false;
+	}
+	const Vec3 worldOutward = objectToWorldNormal(outwardObj);
+	if (!std::isfinite(worldOutward.x) || !std::isfinite(worldOutward.y) ||
+	    !std::isfinite(worldOutward.z) || nearZero(worldOutward)) {
+		return false;
+	}
 	rec.t = t;
-	rec.point = hitPoint;
-	rec.setFaceNormal(ray, outward);
+	rec.point = worldPoint;
+	rec.setFaceNormal(ray, worldOutward);
 	rec.materialIndex = materialIndex();
 	rec.uv = Vec2(u, v);
 	return true;

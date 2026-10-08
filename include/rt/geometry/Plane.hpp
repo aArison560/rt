@@ -6,8 +6,11 @@
 // -> miss defini (parallele, jamais de division par zero, UBSan propre).
 // Normale via `setFaceNormal` (coherente des deux cotes), `uv` derives des
 // axes tangents (`u = dot(P-P0, uAxis)`, `v = dot(P-P0, vAxis)`).
-// Degeneres : normale quasi nulle, `tMin > tMax`, `NaN`, `t` hors bornes
-// -> `false` defini, jamais d'exception (R2), aucune allocation (R3).
+// Degeneres : normale quasi nulle, `tMin > tMax`, `NaN`, `t` hors bornes,
+// `M` singuliere -> `false` defini, jamais d'exception (R2), aucune
+// allocation (R3). `objectToWorld` (T045, M4, approche A) : rayon monde
+// ramene en objet par `M⁻¹`, point de retour par `M`, normale par
+// `(M⁻¹)ᵀ` (unitaire meme apres scale non uniforme).
 // `localBounds()` = grande boite `±kPlaneExtent` (documentee) car le plan
 // est infini ; la BVH (T060+) traitera ce cas a part.
 // Espace objet == monde en T042 (transform identite) ; T045 branchera

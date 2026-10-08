@@ -9,6 +9,9 @@
 // `c = ox²+oz²-k²·oy²` (`o = O-apex`). Racines par ordre croissant, la
 // premiere dans `[tMin,tMax]` a normale definie gagne (tangente =
 // discriminant nul, interieur = petite racine hors bornes -> grande).
+// `objectToWorld` (T045, M4, approche A) : rayon monde ramene en objet
+// par `M⁻¹` (`t` conserve), point de retour par `M`, normale par
+// `(M⁻¹)ᵀ` ; `localBounds()` reste en espace objet.
 // `|a| <= eps` -> equation lineaire `b·t+c = 0` (rayon parallele a une
 // generatrice : un seul `t` defini, jamais de division par zero).
 // Nappe touchee : `Py >= ay` -> haute, sinon basse (signe de `y-ay`).
@@ -17,13 +20,12 @@
 // `G` quasi nul) -> candidat ignore (comportement defini sans `throw` :
 // le sommet n'a pas de normale ; un rayon visant exactement l'apex est
 // un miss sauf autre racine valide). `uv` coniques (`u` = azimut dans
-// [0,1], `v` = hauteur monde `Py`). Degeneres : `angle` hors ]0,pi/2[,
-// `apex`/`rayon` non finis, direction quasi nulle, `tMin > tMax`,
-// `NaN` -> `false` defini, jamais d'exception (R2), aucune allocation
-// (R3). Espace objet == monde en T044 (transform identite) ; T045
-// branchera `objectToWorld`. La limitation (troncature + base) sera faite
-// en T133 ; `localBounds()` = boite documentee `y = ±1e6`, `x/z` =
-// `apex ± (k·1e6+1)` (le cone s'evase avec `|y|`).
+// [0,1], `v` = hauteur objet). Degeneres : `angle` hors ]0,pi/2[,
+// `apex` non fini, direction quasi nulle, `tMin > tMax`, `NaN`, `M`
+// singuliere -> `false` defini, jamais d'exception (R2), aucune
+// allocation (R3). La limitation (troncature + base) sera faite en T133 ;
+// `localBounds()` = boite documentee `y = ±1e6`, `x/z` =
+// `apex ± (k·1e6+1)` (le cone s'evase avec `|y|`), en espace objet.
 
 #include "rt/base/Ray.hpp"
 #include "rt/base/Vec.hpp"

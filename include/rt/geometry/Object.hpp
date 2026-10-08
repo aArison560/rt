@@ -8,12 +8,18 @@
 // `throw` (R2), aucune allocation dans `intersect` (R3 : registres + pile).
 // Calque `geometry/` : ne voit que `base/` (regle d'or §2.1) — jamais
 // `scene/` : la conversion `scene::Object -> geometry::*` se fera en T046.
-// `objectToWorld` est stocke des T040 (identite par defaut) ; son
-// exploitation (rayon en espace objet, normale via inverse-transposee)
-// est branchee en T045 (M4). En attendant, les intersections T041+
-// travaillent en espace objet == monde (transform identite dans les tests).
+// Approche A retenue (T012, ARCHITECTURE §4.3) et branchee en T045 (M4) :
+// le rayon monde est ramene en espace objet par `M⁻¹` (sans renormaliser
+// la direction, donc `t` est conserve : `rayonObjet(t) = M⁻¹·rayonMonde(t)`),
+// l'intersection s'y fait avec les parametres objet (centre, rayon, ...),
+// puis le point revient par `M` et la normale par `(M⁻¹)ᵀ` normalisee
+// (`applyNormal`). `frontFace` est recalcule en monde (meme signe qu'en
+// objet : `dot(M·D, (M⁻¹)ᵀ·N) = dot(D, N)`). `M` singuliere -> miss
+// defini (`nullopt`, jamais de `throw`). `localBounds()` reste en espace
+// objet (la BVH T060+ la transformera).
 
 #include <cstdint>
+#include <optional>
 #include <type_traits>
 
 #include "rt/base/Mat4.hpp"
@@ -60,9 +66,22 @@ public:
 
 	void setId(std::uint32_t id) noexcept { id_ = id; }
 	void setMaterialIndex(std::uint32_t index) noexcept { materialIndex_ = index; }
-	// Translation/rotation depuis le schema (T045 exploitera) : remplace
-	// la matrice monde (identite par defaut, donc monde == objet en T040).
+	// Translation/rotation depuis le schema (T045 l'exploite) : remplace
+	// la matrice monde (identite par defaut, donc monde == objet sans
+	// `setTransform`). Voir les helpers ci-dessous pour le passage
+	// monde <-> objet (approche A, M4).
 	void setTransform(const Transform& transform) noexcept { objectToWorld_ = transform; }
+
+	// Ramene un rayon monde en espace objet : `O' = M⁻¹·O` (point),
+	// `D' = M⁻¹·D` (vecteur, volontairement non renormalise pour que
+	// `t` soit conserve). `nullopt` si `M` non inversible -> l'appelant
+	// renvoie `false` (miss defini). `noexcept`, sans allocation (R2/R3).
+	[[nodiscard]] std::optional<Ray> worldToObjectRay(const Ray& worldRay) const noexcept;
+	// Point objet -> monde (`M`, w=1). `noexcept`, sans allocation.
+	[[nodiscard]] Vec3 objectToWorldPoint(Vec3 p) const noexcept;
+	// Normale objet -> monde (`(M⁻¹)ᵀ` puis normalisee ; vecteur nul si
+	// singuliere). `noexcept`, sans allocation.
+	[[nodiscard]] Vec3 objectToWorldNormal(Vec3 n) const noexcept;
 
 protected:
 	ObjectKind kind_ = ObjectKind::Sphere;

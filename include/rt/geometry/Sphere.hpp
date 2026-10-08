@@ -8,9 +8,10 @@
 // false via `setFaceNormal`). Normale `outward = (P - C) / r` normalisee,
 // `uv` spheriques (`theta = atan2(p.z, p.x)`, `phi = acos(p.y)`).
 // Degeneres : `r <= kEpsilon`, direction quasi nulle (`a <= eps²`),
-// `tMin > tMax`, `NaN/Inf` -> `false` defini, jamais d'exception (R2),
-// aucune allocation (R3). Espace objet == monde en T041 (transform
-// identite) ; T045 branchera `objectToWorld`.
+// `tMin > tMax`, `NaN/Inf`, `M` singuliere -> `false` defini, jamais
+// d'exception (R2), aucune allocation (R3). `objectToWorld` (T045, M4,
+// approche A) : rayon monde ramene en objet par `M⁻¹` (`t` conserve),
+// point de retour par `M`, normale par `(M⁻¹)ᵀ`.
 
 #include "rt/base/Ray.hpp"
 #include "rt/base/Vec.hpp"

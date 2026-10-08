@@ -1,4 +1,5 @@
-// Tests de l'interface des objets (T040) + sphere (T041) + plan (T042) + cylindre (T043) + cone (T044), Catch2.
+// Tests de l'interface des objets (T040) + sphere (T041) + plan (T042) + cylindre (T043) + cone (T044)
+// + transformations (T045, M4), Catch2.
 // DoD T040 : test de dispatch (appel via `AObject*` -> surcharge derivee) +
 // `static_assert` sur `HitRecord` (verifie a la compilation dans
 // `include/rt/geometry/Object.hpp`) + grep d'intersection sans macro
@@ -554,4 +555,162 @@ TEST_CASE("geometry cone : pres de l'apex et degenere (T044)", "[geometry][cone]
 	REQUIRE(box.max.y == Catch::Approx(1e6).margin(1.0));
 	REQUIRE(box.min.x == Catch::Approx(-1e6 - 1.0).margin(10.0));
 	REQUIRE(box.max.x == Catch::Approx(1e6 + 1.0).margin(10.0));
+}
+
+TEST_CASE("geometry transform : sphere (0,0,0) -> (42,42,42), exemple du sujet (T045)",
+          "[geometry][transform]") {
+	// Meme objet declare a l'origine puis deplace : comportement identique
+	// a la sphere placee directement (coherence des « images » au niveau
+	// geometrique : meme `t`, meme point, meme normale).
+	rt::geometry::Sphere moved(rt::Vec3(0, 0, 0), rt::Real(1));
+	moved.setTransform(rt::Transform::translate(rt::Vec3(42, 42, 42)));
+	const rt::geometry::Sphere placed(rt::Vec3(42, 42, 42), rt::Real(1));
+	const rt::Ray ray(rt::Vec3(42, 42, 47), rt::Vec3(0, 0, -1));
+	rt::HitRecord viaTransform;
+	rt::HitRecord direct;
+	REQUIRE(moved.intersect(ray, rt::Real(0), rt::kInfinity, viaTransform));
+	REQUIRE(placed.intersect(ray, rt::Real(0), rt::kInfinity, direct));
+	REQUIRE(viaTransform.t == Catch::Approx(4.0).margin(1e-4));
+	REQUIRE(direct.t == Catch::Approx(4.0).margin(1e-4));
+	REQUIRE(nearReal(viaTransform.point.x, direct.point.x));
+	REQUIRE(nearReal(viaTransform.point.y, direct.point.y));
+	REQUIRE(nearReal(viaTransform.point.z, direct.point.z));
+	REQUIRE(nearReal(viaTransform.normal.x, direct.normal.x));
+	REQUIRE(nearReal(viaTransform.normal.y, direct.normal.y));
+	REQUIRE(nearReal(viaTransform.normal.z, direct.normal.z));
+	REQUIRE(viaTransform.frontFace == direct.frontFace);
+	// Rotation d'une sphere centree : invariante (le branchement rotation
+	// ne casse pas le cas symetrique).
+	rt::geometry::Sphere spun(rt::Vec3(0, 0, 0), rt::Real(1));
+	spun.setTransform(rt::Transform::rotateY(rt::kPi / rt::Real(4)));
+	rt::HitRecord rot;
+	REQUIRE(spun.intersect(rt::Ray(rt::Vec3(2, 0, 0), rt::Vec3(-1, 0, 0)), rt::Real(0),
+	                       rt::kInfinity, rot));
+	REQUIRE(rot.t == Catch::Approx(1.0).margin(1e-4));
+	REQUIRE(nearReal(rt::length(rot.normal), rt::Real(1)));
+}
+
+TEST_CASE("geometry transform : plan translate et pivote (T045)", "[geometry][transform]") {
+	// Translation : plan y=0 monte en y=1.
+	rt::geometry::Plane lifted(rt::Vec3(0, 0, 0), rt::Vec3(0, 1, 0));
+	lifted.setTransform(rt::Transform::translate(rt::Vec3(0, 1, 0)));
+	const rt::geometry::Plane placed(rt::Vec3(0, 1, 0), rt::Vec3(0, 1, 0));
+	const rt::Ray down(rt::Vec3(0, 5, 0), rt::Vec3(0, -1, 0));
+	rt::HitRecord viaTransform;
+	rt::HitRecord direct;
+	REQUIRE(lifted.intersect(down, rt::Real(0), rt::kInfinity, viaTransform));
+	REQUIRE(placed.intersect(down, rt::Real(0), rt::kInfinity, direct));
+	REQUIRE(viaTransform.t == Catch::Approx(4.0).margin(1e-4));
+	REQUIRE(direct.t == Catch::Approx(4.0).margin(1e-4));
+	REQUIRE(nearReal(viaTransform.point.y, rt::Real(1)));
+	REQUIRE(nearReal(viaTransform.normal.y, rt::Real(1)));
+	REQUIRE(viaTransform.frontFace);
+	// Rotation : plan horizontal (0,1,0) pivote en plan vertical (0,0,1).
+	rt::geometry::Plane turned(rt::Vec3(0, 0, 0), rt::Vec3(0, 1, 0));
+	turned.setTransform(rt::Transform::rotateX(rt::kPi / rt::Real(2)));
+	const rt::geometry::Plane vertical(rt::Vec3(0, 0, 0), rt::Vec3(0, 0, 1));
+	const rt::Ray forward(rt::Vec3(0, 0, 5), rt::Vec3(0, 0, -1));
+	rt::HitRecord viaRot;
+	rt::HitRecord vertRef;
+	REQUIRE(turned.intersect(forward, rt::Real(0), rt::kInfinity, viaRot));
+	REQUIRE(vertical.intersect(forward, rt::Real(0), rt::kInfinity, vertRef));
+	REQUIRE(viaRot.t == Catch::Approx(5.0).margin(1e-3));
+	REQUIRE(vertRef.t == Catch::Approx(5.0).margin(1e-3));
+	REQUIRE(nearReal(viaRot.point.z, rt::Real(0), 1e-3F));
+	REQUIRE(nearReal(viaRot.normal.z, rt::Real(1), 1e-3F));
+	REQUIRE(nearReal(rt::length(viaRot.normal), rt::Real(1)));
+}
+
+TEST_CASE("geometry transform : cylindre translate et pivote (T045)", "[geometry][transform]") {
+	// Translation : fut en x=0 decale en x=3.
+	rt::geometry::Cylinder shifted(rt::Vec3(0, 0, 0), rt::Real(1));
+	shifted.setTransform(rt::Transform::translate(rt::Vec3(3, 0, 0)));
+	const rt::geometry::Cylinder placed(rt::Vec3(3, 0, 0), rt::Real(1));
+	const rt::Ray ray(rt::Vec3(5, 0, 0), rt::Vec3(-1, 0, 0));
+	rt::HitRecord viaTransform;
+	rt::HitRecord direct;
+	REQUIRE(shifted.intersect(ray, rt::Real(0), rt::kInfinity, viaTransform));
+	REQUIRE(placed.intersect(ray, rt::Real(0), rt::kInfinity, direct));
+	REQUIRE(viaTransform.t == Catch::Approx(1.0).margin(1e-4));
+	REQUIRE(nearReal(viaTransform.point.x, rt::Real(4)));
+	REQUIRE(nearReal(viaTransform.normal.x, rt::Real(1)));
+	// Rotation Z 90 degres : axe Y -> axe X (fut couche).
+	rt::geometry::Cylinder lain(rt::Vec3(0, 0, 0), rt::Real(1));
+	lain.setTransform(rt::Transform::rotateZ(rt::kPi / rt::Real(2)));
+	rt::HitRecord side;
+	REQUIRE(lain.intersect(rt::Ray(rt::Vec3(0, 2, 0), rt::Vec3(0, -1, 0)), rt::Real(0),
+	                       rt::kInfinity, side));
+	REQUIRE(side.t == Catch::Approx(1.0).margin(1e-3));
+	REQUIRE(nearReal(side.point.y, rt::Real(1), 1e-3F));
+	REQUIRE(nearReal(side.normal.y, rt::Real(1), 1e-3F));
+	REQUIRE(nearReal(rt::length(side.normal), rt::Real(1)));
+}
+
+TEST_CASE("geometry transform : cone translate et pivote (T045)", "[geometry][transform]") {
+	const rt::Real half = rt::degreesToRadians(rt::Real(45));
+	// Translation : sommet en (0,0,0) decale en (3,0,0).
+	rt::geometry::Cone shifted(rt::Vec3(0, 0, 0), half);
+	shifted.setTransform(rt::Transform::translate(rt::Vec3(3, 0, 0)));
+	const rt::geometry::Cone placed(rt::Vec3(3, 0, 0), half);
+	const rt::Ray ray(rt::Vec3(3, 1, -5), rt::Vec3(0, 0, 1));
+	rt::HitRecord viaTransform;
+	rt::HitRecord direct;
+	REQUIRE(shifted.intersect(ray, rt::Real(0), rt::kInfinity, viaTransform));
+	REQUIRE(placed.intersect(ray, rt::Real(0), rt::kInfinity, direct));
+	REQUIRE(viaTransform.t == Catch::Approx(4.0).margin(1e-3));
+	REQUIRE(nearReal(viaTransform.point.x, rt::Real(3), 1e-3F));
+	// Rotation Z 90 degres : axe Y -> axe X (nappe le long de X).
+	rt::geometry::Cone tipped(rt::Vec3(0, 0, 0), half);
+	tipped.setTransform(rt::Transform::rotateZ(rt::kPi / rt::Real(2)));
+	rt::HitRecord side;
+	REQUIRE(tipped.intersect(rt::Ray(rt::Vec3(-5, 1, 0), rt::Vec3(1, 0, 0)), rt::Real(0),
+	                         rt::kInfinity, side));
+	REQUIRE(side.t == Catch::Approx(4.0).margin(1e-3));
+	REQUIRE(nearReal(side.point.x, rt::Real(-1), 1e-3F));
+	REQUIRE(nearReal(side.point.y, rt::Real(1), 1e-3F));
+	REQUIRE(nearReal(rt::length(side.normal), rt::Real(1)));
+}
+
+TEST_CASE("geometry transform : scale non uniforme, normales unitaires (T045)",
+          "[geometry][transform]") {
+	// Sphere etiree x2 : le point (1,0,0) objet devient (2,0,0) monde,
+	// la normale (inverse-transposee puis renormalisee) reste unitaire.
+	rt::geometry::Sphere stretched(rt::Vec3(0, 0, 0), rt::Real(1));
+	stretched.setTransform(rt::Transform::scale(rt::Vec3(2, 1, 1)));
+	rt::HitRecord rec;
+	REQUIRE(stretched.intersect(rt::Ray(rt::Vec3(3, 0, 0), rt::Vec3(-1, 0, 0)), rt::Real(0),
+	                            rt::kInfinity, rec));
+	REQUIRE(rec.t == Catch::Approx(1.0).margin(1e-4));
+	REQUIRE(nearReal(rec.point.x, rt::Real(2)));
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1), 1e-5F));
+	REQUIRE(nearReal(rec.normal.x, rt::Real(1), 1e-3F));
+	// Plan ecrase en Y : y=0 invariant, normale (0,1,0) renormalisee.
+	rt::geometry::Plane squashed(rt::Vec3(0, 0, 0), rt::Vec3(0, 1, 0));
+	squashed.setTransform(rt::Transform::scale(rt::Vec3(1, 2, 1)));
+	rt::HitRecord flat;
+	REQUIRE(squashed.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(0, -1, 0)), rt::Real(0),
+	                           rt::kInfinity, flat));
+	REQUIRE(flat.t == Catch::Approx(5.0).margin(1e-4));
+	REQUIRE(nearReal(rt::length(flat.normal), rt::Real(1), 1e-5F));
+	REQUIRE(nearReal(flat.normal.y, rt::Real(1), 1e-3F));
+}
+
+TEST_CASE("geometry transform : matrice singuliere -> miss defini (T045)",
+          "[geometry][transform]") {
+	rt::HitRecord rec;
+	// Scale nul : `M⁻¹` inexistante -> `false`, sans crash ni `throw`.
+	rt::geometry::Sphere crushed(rt::Vec3(0, 0, 0), rt::Real(1));
+	crushed.setTransform(rt::Transform::scale(rt::Vec3(0, 0, 0)));
+	REQUIRE_FALSE(crushed.intersect(rt::Ray(rt::Vec3(2, 0, 0), rt::Vec3(-1, 0, 0)), rt::Real(0),
+	                               rt::kInfinity, rec));
+	rt::geometry::Plane flattened(rt::Vec3(0, 0, 0), rt::Vec3(0, 1, 0));
+	flattened.setTransform(rt::Transform::scale(rt::Vec3(1, 0, 1)));
+	REQUIRE_FALSE(flattened.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(0, -1, 0)),
+	                                  rt::Real(0), rt::kInfinity, rec));
+	// Identite par defaut : monde == objet (non-regression T041-T044).
+	const rt::geometry::Sphere plain(rt::Vec3(0, 0, 0), rt::Real(1));
+	rt::HitRecord ref;
+	REQUIRE(plain.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                        rt::kInfinity, ref));
+	REQUIRE(ref.t == Catch::Approx(4.0).margin(1e-4));
 }

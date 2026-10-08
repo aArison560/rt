@@ -3,6 +3,9 @@
 // Cylindre (T043) — cylindre infini autour de l'axe local Y, `noexcept`.
 // Defini par un point `center` sur l'axe (seuls `x`/`z` fixent la ligne,
 // `y` est un point de passage sans effet sur l'infini) et un rayon `r`.
+// `objectToWorld` (T045, M4, approche A) : rayon monde ramene en objet
+// par `M⁻¹` (`t` conserve), point de retour par `M`, normale par
+// `(M⁻¹)ᵀ` ; `localBounds()` reste en espace objet.
 // Equation `(x-cx)² + (z-cz)² = r²` soit `a·t² + b·t + c = 0` avec
 // `a = dx²+dz²`, `b = 2·(ox·dx+oz·dz)`, `c = ox²+oz² - r²`
 // (`ox = Ox-cx`, `oz = Oz-cz`). Racine la plus proche dans `[tMin,tMax]`
@@ -13,11 +16,11 @@
 // Cas parallele a l'axe (`a <= eps²`) -> miss defini (mur jamais touche,
 // meme depuis l'interieur : le rayon longe le fut sans le couper).
 // Degeneres : `r <= kEpsilon`, direction quasi nulle, `tMin > tMax`,
-// `NaN/Inf` -> `false` defini, jamais d'exception (R2), aucune
-// allocation (R3). Espace objet == monde en T043 (transform identite) ;
-// T045 branchera `objectToWorld`. La limitation en hauteur sera faite
+// `NaN/Inf`, `M` singuliere -> `false` defini, jamais d'exception (R2),
+// aucune allocation (R3). La limitation en hauteur sera faite
 // en T133 (cylindre borne + caps) ; `localBounds()` = boite
-// `x/z` serree (`cx±r`, `cz±r`), `y` = `±kCylinderExtent` documentee.
+// `x/z` serree (`cx±r`, `cz±r`), `y` = `±kCylinderExtent` documentee,
+// en espace objet.
 
 #include "rt/base/Ray.hpp"
 #include "rt/base/Vec.hpp"
