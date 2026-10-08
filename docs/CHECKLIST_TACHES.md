@@ -425,8 +425,8 @@ rt/
 - **Dépend** : T032, T034, T026 · **Sert** : cluster, tests · **Doc** : [DISTRIBUTED_RENDERING.md §2.1](DISTRIBUTED_RENDERING.md)
 - **DoD** : `env -u DISPLAY ./rt scenes/default.rt 64 64 --out /tmp/a.png` → code 0 ; test automatisé dans `make test`.
 
-#### T036 ⬜ — Rendu progressif par batches
-> **Fait le** : — · **Commit** : —
+#### T036 ✅ — Rendu progressif par batches
+> **Fait le** : 2026-10-08 · **Commit** : 8bf2d2b
 - **Prompt** : « Ajoute le mode progressif : `--spp n` échantillons par pixel accumulés en batches, callback `onProgress(done, total)` (futur affichage), temps restant estimé. Garantit la reproductibilité : mêmes `spp` + même `seed` → mêmes pixels. »
 - **Dépend** : T032, T016 · **Sert** : *Environment 1*, performance · **Doc** : —
 - **DoD** : deux exécutions identiques → même hash d'image ; `--spp 4` est plus rapide que `--spp 64` et plus bruité (constaté).
