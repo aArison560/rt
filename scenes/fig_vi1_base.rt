@@ -1,0 +1,87 @@
+# scenes/fig_vi1_base.rt — scene geometrique de reference (T048, base M3/M4).
+# Plan + 2 spheres + cylindre + cone dans la meme image, disposition inspiree
+# de la figure VI.1 du sujet (`docs/subjects/fr.subject.pdf`, p.9) :
+# sol gris, sphere rouge a gauche, verte a droite, cylindre magenta en
+# diagonale au centre (recouvrant les spheres), cone jaune en arriere-plan.
+# Sert de base aux taches lumiere (P5) et de scene obligatoire (T080 :
+# `fig_vi1.rt` ajoutera 2 spots, ombres et brillance).
+# Toute directive existe dans `docs/FORMAT_SCENE.md` §5 (table `src/schema/`, R1).
+scene "fig_vi1_base" {
+    limits {
+        width 320
+        height 240
+        samples 4
+        max_depth 4
+        seed 0
+    }
+    camera {
+        position (0 2 6)
+        target (0 0 0)
+        up (0 1 0)
+        fov 50
+    }
+    background {
+        color (0.1 0.1 0.4)
+    }
+    ambient {
+        color (0.06 0.06 0.08)
+        intensity 1.0
+    }
+    lights {
+        light point "key" {
+            position (3 5 4)
+            color (1 1 1)
+            intensity 1.0
+        }
+        light point "fill" {
+            position (-3 3 4)
+            color (0.7 0.7 0.9)
+            intensity 0.5
+        }
+    }
+    objects {
+        object plane "sol" {
+            point (0 -1 0)
+            normal (0 1 0)
+            material {
+                albedo (0.5 0.5 0.5)
+                diffuse 0.7
+            }
+        }
+        object sphere "rouge" {
+            center (-2.2 0 0)
+            radius 1
+            material {
+                albedo (0.9 0.1 0.1)
+                diffuse 0.7
+            }
+        }
+        object sphere "verte" {
+            center (2.2 0 0)
+            radius 1
+            material {
+                albedo (0.1 0.9 0.1)
+                diffuse 0.7
+            }
+        }
+        object cylinder "magenta" {
+            center (0 0.5 0)
+            radius 0.5
+            transform {
+                rotate axis z angle 45
+            }
+            material {
+                albedo (0.9 0.1 0.8)
+                diffuse 0.7
+            }
+        }
+        object cone "jaune" {
+            center (0 1 -2)
+            angle 20
+            material {
+                albedo (0.9 0.9 0.1)
+                diffuse 0.7
+            }
+        }
+    }
+}
