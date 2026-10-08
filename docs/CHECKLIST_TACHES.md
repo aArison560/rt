@@ -419,8 +419,8 @@ rt/
 - **Dépend** : T030 · **Sert** : *Technical effects* (screenshot), preuves · **Doc** : [OUTILS.md §5](OUTILS.md)
 - **DoD** : le PNG produit est valide (`identify`/`file` le confirme) ; échec d'écriture (répertoire inexistant) → message et code ≠ 0.
 
-#### T035 ⬜ — Mode headless obligatoire
-> **Fait le** : — · **Commit** : —
+#### T035 ✅ — Mode headless obligatoire
+> **Fait le** : 2026-10-08 · **Commit** : 03507c0
 - **Prompt** : « Garantit que `./rt <scene> --out f.png` fonctionne **sans `DISPLAY`** : aucune initialisation SDL dans ce chemin, détection à l'exécution ou option `--headless`. Structure `main` en : parse → load → render → write → exit (composition root dans `src/app/`). »
 - **Dépend** : T032, T034, T026 · **Sert** : cluster, tests · **Doc** : [DISTRIBUTED_RENDERING.md §2.1](DISTRIBUTED_RENDERING.md)
 - **DoD** : `env -u DISPLAY ./rt scenes/default.rt 64 64 --out /tmp/a.png` → code 0 ; test automatisé dans `make test`.
