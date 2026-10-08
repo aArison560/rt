@@ -1,3 +1,5 @@
+#include <chrono>
+#include <cstdio>
 #include <exception>
 #include <iostream>
 
@@ -28,6 +30,35 @@ int printUsageError(const std::string& message) {
 	return 2;
 }
 
+// T036 : progression par batches + ETA (stderr, sauf `--quiet`).
+// Appele 1x par batch (spp fois max, hors hot path par pixel), `noexcept`
+// (R2) et sans allocation dans `render/` (R3, pointeur brut + `void*`).
+// L'UI future (T075/T108) branchera le meme callback sur une barre.
+struct ProgressClock {
+	std::chrono::steady_clock::time_point start{};
+};
+
+void onProgressPrint(int done, int total, void* user) noexcept {
+	if (user == nullptr || total <= 0 || done <= 0) {
+		return;
+	}
+	const auto* clock = static_cast<const ProgressClock*>(user);
+	const auto now = std::chrono::steady_clock::now();
+	const double elapsed =
+	    std::chrono::duration<double>(now - clock->start).count();
+	double eta = 0.0;
+	if (done < total) {
+		eta = elapsed * static_cast<double>(total - done) / static_cast<double>(done);
+	}
+	std::fprintf(stderr, "\rprogress: %d/%d (%.0f%%, eta %.1fs)", done, total,
+	             100.0 * static_cast<double>(done) / static_cast<double>(total), eta);
+	std::fflush(stderr);
+	if (done == total) {
+		std::fprintf(stderr, "\n");
+		std::fflush(stderr);
+	}
+}
+
 // T026 : ligne de commande complete via `rt::app::parseOptions` (testable).
 // T035 : composition root headless — parse -> load -> render -> write -> exit.
 // Aucune initialisation SDL dans ce chemin (R6) : `--out` ecrit et sort,
@@ -52,8 +83,16 @@ int runHeadless(const rt::app::Options& opts) {
 	const int height = opts.hasHeight ? opts.height : scene.limits.height;
 	const int spp = opts.hasSpp ? opts.spp : scene.limits.samples;
 	const long long seed = opts.hasSeed ? opts.seed : scene.limits.seed;
-	const rt::render::RenderParams params{
+	// T036 : `--spp`/`--seed` -> batches progressifs, reproductibles
+	// (meme spp + meme seed = memes pixels). Callback + ETA sur stderr
+	// sauf `--quiet` (futur affichage T075/T108).
+	ProgressClock clock{std::chrono::steady_clock::now()};
+	rt::render::RenderParams params{
 	    .width = width, .height = height, .spp = spp, .maxDepth = scene.limits.maxDepth, .seed = seed};
+	if (!opts.quiet) {
+		params.onProgress = &onProgressPrint;
+		params.progressUser = &clock;
+	}
 	rt::render::Framebuffer framebuffer;
 	if (rt::Status status = rt::render::render(scene, framebuffer, params); status.isError()) {
 		rt::log::error(status.message);
