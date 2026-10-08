@@ -439,8 +439,8 @@ rt/
 
 ### Phase P4 — Géométrie (M3, M4)
 
-#### T040 ⬜ — Interface des objets
-> **Fait le** : — · **Commit** : —
+#### T040 ✅ — Interface des objets
+> **Fait le** : 2026-10-08 · **Commit** : 3ff5426
 - **Prompt** : « Définis `rt::AObject` : `intersect(ray, tMin, tMax, HitRecord&) -> bool` **spécifique à chaque type** (pas de macro ni de switch générique — exigence de la fiche), `localBounds()`, `objectToWorld`, `transform` (translation/rotation depuis le schéma), `materialIndex`, `id`. Table de dispatch par type (vtable ou `std::variant` — tranché dans l'ADR). »
 - **Dépend** : T013, T028 · **Sert** : M3, M4 · **Doc** : [SPECIFICATIONS.md §3.2 b](SPECIFICATIONS.md)
 - **DoD** : `grep -R "INTERSECT(" src/geometry` sans macro ; test de dispatch ; `static_assert` sur `HitRecord`.
