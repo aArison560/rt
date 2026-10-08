@@ -531,20 +531,20 @@ rt/
 - **Dépend** : T052 · **Sert** : *Parallel light* · **Doc** : [SPECIFICATIONS.md §5.2 E](SPECIFICATIONS.md)
 - **DoD** : le test comparatif passe ; scène `scenes/opt_parallel.rt` versionnée.
 
-#### T056 ⬜ — Réflexion (miroir, % réglable)
-> **Fait le** : — · **Commit** : —
+#### T056 ✅ — Réflexion (miroir, % réglable)
+> **Fait le** : 2026-10-08 · **Commit** : 99b6e2f
 - **Prompt** : « Ajoute le rayon réfléchi avec profondeur bornée (paramètre `max_depth` dans la scène), `reflectivity` en **pourcentage continu** (0 = mat, 1 = miroir pur), pondération correcte avec la composante diffuse. Tests : `reflectivity=0` identique au rendu sans miroir, `reflectivity=1` = reflet net. »
 - **Dépend** : T053 · **Sert** : *Reflection & transparency* sous-critères 1-2 · **Doc** : [SPECIFICATIONS.md §5.2 F](SPECIFICATIONS.md)
 - **DoD** : les 2 tests de bornes passent ; pas de boucle infinie (profondeur bornée, test le prouve).
 
-#### T057 ⬜ — Transparence et réfraction (Snell/Descartes)
-> **Fait le** : — · **Commit** : —
+#### T057 ✅ — Transparence et réfraction (Snell/Descartes)
+> **Fait le** : 2026-10-08 · **Commit** : 70d6034
 - **Prompt** : « Implémente la réfraction avec l'**indice de réfraction** (`ior`) via la loi de Descartes (code lisible et commenté — le correcteur cherchera la formule), `transparency` en pourcentage, gestion de la réflexion totale interne. Tests : `ior=1` → pas de déviation ; réfraction vers l'extérieur = courbure cohérente. »
 - **Dépend** : T056 · **Sert** : *Reflection & transparency* sous-critères 3-5 · **Doc** : [SPECIFICATIONS.md §5.2 F](SPECIFICATIONS.md)
 - **DoD** : tests d'`ior` verts ; la formule est commentée dans le code ; scène `scenes/opt_glass.rt`.
 
-#### T058 ⬜ — Ombres affinées par transparence + *Direct light*
-> **Fait le** : — · **Commit** : —
+#### T058 ✅ — Ombres affinées par transparence + *Direct light*
+> **Fait le** : 2026-10-08 · **Commit** : bc8b3fc
 - **Prompt** : « (a) *Shadows and transparency* : l'ombre d'un objet translucide est **moins sombre** que celle d'un objet opaque (atténuation proportionnelle à la transparence et au `ior`). (b) *Direct light* : spotlight orienté vers la caméra/observateur qui **aveugle** (éclairage face à l'utilisateur, saturation du pixel). Scènes de preuve pour chacun. »
 - **Dépend** : T057, T052 · **Sert** : *Shadows and transparency*, *Direct light* · **Doc** : [SPECIFICATIONS.md §5.2 E](SPECIFICATIONS.md), [SPECIFICATIONS.md §5.2 F](SPECIFICATIONS.md)
 - **DoD** : 2 scènes de preuve + test de densité d'ombre (ombre translucide > ombre opaque en luminosité).
