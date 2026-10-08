@@ -10,7 +10,8 @@
 // eps anti-acne + attenuation T051, miss -> fond de scene), ecrit dans le
 // `Framebuffer` persistant (T030) puis `present()` (tonemapping + gamma 2.2).
 // persistant (T030) puis `present()` (tonemapping + gamma 2.2). Profondeur max bornee
-// (`maxDepth`, utilisee par la reflexion en T056), aucune allocation
+// (`maxDepth`, bornee par la reflexion en T056 : `traceRay` recursif `depth -> depth+1`,
+// `R = reflect(I,N)`, `P+N*eps`, `direct*(1-R)+reflected*R`, 0 = mat / 1 = miroir pur), aucune allocation
 // dans la boucle (registres uniquement, regle R3), aucun `throw`
 // (regle R2 : `Status` en cas de parametres/camera/framebuffer invalides).
 // Progressif (T036) : `spp` echantillons accumules en batches (1 batch =

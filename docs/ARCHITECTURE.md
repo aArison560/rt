@@ -346,8 +346,13 @@ if (dir.refract(N, ratio, T))                     // Snell/Descartes
 - **Profondeur bornée** : `maxRecursionDepth` (défaut 4) + *Russian roulette* au-delà.
 - Les **5 sous-critères** de l'item *Reflection and transparency* exigent que **reflectivity et
   transparency soient pilotables par fichier** (`0.0 → 1.0`), pas codés en dur.
-  ⚠ audit statique : `material` n'expose aujourd'hui que `reflect` (+`roughness`) ;
-  `transparency` et `ior` **ne sont pas lisibles depuis le fichier** → à ajouter (voir §5).
+
+> Implémenté (T056) : `render::traceRay()` (récursion `depth -> depth+1` bornée par
+> `maxDepth` de `limits`, `R = reflect(I, N)`, origine `P + N*eps`, pondération
+> `direct*(1-R) + reflected*R`, `R = 0` == direct historique, `R = 1` == miroir pur,
+> dégénérés -> direct seul, `noexcept`, sans allocation). Tests :
+> `tests/unit/test_reflection.cpp` (DoD : `0` identique, `1` reflet net, `maxDepth 0`
+> == mat, 2 miroirs face à face sans boucle). Réfraction en T057.
 
 ### 4.7 Textures et UV
 
