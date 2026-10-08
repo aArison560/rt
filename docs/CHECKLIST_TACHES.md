@@ -431,8 +431,8 @@ rt/
 - **Dépend** : T032, T016 · **Sert** : *Environment 1*, performance · **Doc** : —
 - **DoD** : deux exécutions identiques → même hash d'image ; `--spp 4` est plus rapide que `--spp 64` et plus bruité (constaté).
 
-#### T037 ⬜ — Première preuve générée par script
-> **Fait le** : — · **Commit** : —
+#### T037 ✅ — Première preuve générée par script
+> **Fait le** : 2026-10-08 · **Commit** : 85fdc85
 - **Prompt** : « Écris `scripts/render_all.sh` qui rend une liste de scènes en mode headless et dépose les images dans `docs/preuves/` avec un nom explicite ; ajoute `docs/preuves/README.md` expliquant **que ces images sont régénérables** (jamais une preuve unique, règle du sujet). »
 - **Dépend** : T035 · **Sert** : preuves · **Doc** : [CHECKLIST_DEFENSE.md §9.2](CHECKLIST_DEFENSE.md)
 - **DoD** : `sh scripts/render_all.sh` régénère tout depuis zéro ; le résultat est versionné.
