@@ -13,6 +13,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <type_traits>
 #include <vector>
@@ -713,4 +714,223 @@ TEST_CASE("geometry transform : matrice singuliere -> miss defini (T045)",
 	REQUIRE(plain.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
 	                        rt::kInfinity, ref));
 	REQUIRE(ref.t == Catch::Approx(4.0).margin(1e-4));
+}
+
+// Batterie geometrie (T047) : cas limites, normalisation, `t` hors bornes,
+// rayons degeneres, objets superposes, objets fortement transformes.
+// Aucun `throw`, aucune division par zero, ASan/UBSan/valgrind propres.
+
+TEST_CASE("geometry batterie : normales unitaires sur les 4 types (T047)",
+          "[geometry][t047]") {
+	rt::HitRecord rec;
+	// Sphere : hit frontal -> normale unitaire.
+	const rt::geometry::Sphere sphere(rt::Vec3(0, 0, 0), rt::Real(1));
+	REQUIRE(sphere.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                         rt::kInfinity, rec));
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1), 1e-5F));
+	// Plan : dessus et dessous -> unitaires.
+	const rt::geometry::Plane plane(rt::Vec3(0, 0, 0), rt::Vec3(0, 1, 0));
+	REQUIRE(plane.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(0, -1, 0)), rt::Real(0),
+	                        rt::kInfinity, rec));
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1), 1e-5F));
+	REQUIRE(plane.intersect(rt::Ray(rt::Vec3(0, -5, 0), rt::Vec3(0, 1, 0)), rt::Real(0),
+	                        rt::kInfinity, rec));
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1), 1e-5F));
+	// Cylindre : face -> radiale unitaire.
+	const rt::geometry::Cylinder cylinder(rt::Vec3(0, 0, 0), rt::Real(1));
+	REQUIRE(cylinder.intersect(rt::Ray(rt::Vec3(2, 0, 0), rt::Vec3(-1, 0, 0)), rt::Real(0),
+	                           rt::kInfinity, rec));
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1), 1e-5F));
+	// Cone 45 degres : nappe haute -> gradient normalise unitaire.
+	const rt::geometry::Cone cone(rt::Vec3(0, 0, 0), rt::degreesToRadians(rt::Real(45)));
+	REQUIRE(cone.intersect(rt::Ray(rt::Vec3(0, 1, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                               rt::kInfinity, rec));
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1), 1e-5F));
+	// Apres scale non uniforme (2,1,1) : toujours unitaires (inverse-transposee).
+	rt::geometry::Sphere stretched(rt::Vec3(0, 0, 0), rt::Real(1));
+	stretched.setTransform(rt::Transform::scale(rt::Vec3(2, 1, 1)));
+	REQUIRE(stretched.intersect(rt::Ray(rt::Vec3(3, 0, 0), rt::Vec3(-1, 0, 0)), rt::Real(0),
+	                            rt::kInfinity, rec));
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1), 1e-5F));
+	rt::geometry::Cylinder squeezed(rt::Vec3(0, 0, 0), rt::Real(1));
+	squeezed.setTransform(rt::Transform::scale(rt::Vec3(1, 1, 3)));
+	REQUIRE(squeezed.intersect(rt::Ray(rt::Vec3(2, 0, 0), rt::Vec3(-1, 0, 0)), rt::Real(0),
+	                           rt::kInfinity, rec));
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1), 1e-5F));
+	rt::geometry::Cone pinched(rt::Vec3(0, 0, 0), rt::degreesToRadians(rt::Real(45)));
+	pinched.setTransform(rt::Transform::scale(rt::Vec3(1, 2, 1)));
+	REQUIRE(pinched.intersect(rt::Ray(rt::Vec3(0, 1, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                          rt::kInfinity, rec));
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1), 1e-5F));
+}
+
+TEST_CASE("geometry batterie : t hors bornes sur les 4 types (T047)", "[geometry][t047]") {
+	rt::HitRecord rec;
+	// Sphere : hit a t=4 (entree) et t=6 (sortie) ; fenetre [0,3] -> miss,
+	// [5,10] -> hit (sortie a t=6), [7,10] -> miss (apres les 2 racines).
+	const rt::geometry::Sphere sphere(rt::Vec3(0, 0, 0), rt::Real(1));
+	REQUIRE_FALSE(sphere.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                               rt::Real(3), rec));
+	REQUIRE(sphere.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(5),
+	                         rt::Real(10), rec));
+	REQUIRE(rec.t == Catch::Approx(6.0).margin(1e-4));
+	REQUIRE_FALSE(sphere.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(7),
+	                               rt::Real(10), rec));
+	REQUIRE_FALSE(sphere.intersect(rt::Ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(5),
+	                               rt::Real(3), rec));
+	// Plan : hit a t=5, fenetre courte -> miss.
+	const rt::geometry::Plane plane(rt::Vec3(0, 0, 0), rt::Vec3(0, 1, 0));
+	REQUIRE_FALSE(plane.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(0, -1, 0)), rt::Real(0),
+	                              rt::Real(4), rec));
+	// Cylindre : hit a t=1 (entree) et t=3 (sortie opposee, fut infini) ;
+	// fenetre [4,10] -> miss (apres les 2 racines).
+	const rt::geometry::Cylinder cylinder(rt::Vec3(0, 0, 0), rt::Real(1));
+	REQUIRE_FALSE(cylinder.intersect(rt::Ray(rt::Vec3(2, 0, 0), rt::Vec3(-1, 0, 0)),
+	                                 rt::Real(4), rt::Real(10), rec));
+	// Cone : hit a t=4, fenetre [0,3] -> miss.
+	const rt::geometry::Cone cone(rt::Vec3(0, 0, 0), rt::degreesToRadians(rt::Real(45)));
+	REQUIRE_FALSE(cone.intersect(rt::Ray(rt::Vec3(0, 1, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                             rt::Real(3), rec));
+	// Transforme : sphere deplacee en (10,0,0), hit a t=1 (entree) et t=3
+	// (sortie) ; fenetre [4,10] -> miss.
+	rt::geometry::Sphere moved(rt::Vec3(0, 0, 0), rt::Real(1));
+	moved.setTransform(rt::Transform::translate(rt::Vec3(10, 0, 0)));
+	REQUIRE(moved.intersect(rt::Ray(rt::Vec3(12, 0, 0), rt::Vec3(-1, 0, 0)), rt::Real(0),
+	                        rt::kInfinity, rec));
+	REQUIRE(rec.t == Catch::Approx(1.0).margin(1e-4));
+	REQUIRE_FALSE(moved.intersect(rt::Ray(rt::Vec3(12, 0, 0), rt::Vec3(-1, 0, 0)), rt::Real(4),
+	                              rt::Real(10), rec));
+}
+
+TEST_CASE("geometry batterie : rayons degeneres sans crash (T047)", "[geometry][t047]") {
+	rt::HitRecord rec;
+	const rt::Vec3 nullDir(0, 0, 0);
+	// Direction nulle : les 4 types -> miss defini, sans division par zero.
+	const rt::geometry::Sphere sphere(rt::Vec3(0, 0, 0), rt::Real(1));
+	REQUIRE_FALSE(
+	    sphere.intersect(rt::Ray(rt::Vec3(0, 0, -5), nullDir), rt::Real(0), rt::kInfinity, rec));
+	const rt::geometry::Plane plane(rt::Vec3(0, 0, 0), rt::Vec3(0, 1, 0));
+	REQUIRE_FALSE(
+	    plane.intersect(rt::Ray(rt::Vec3(0, 5, 0), nullDir), rt::Real(0), rt::kInfinity, rec));
+	const rt::geometry::Cylinder cylinder(rt::Vec3(0, 0, 0), rt::Real(1));
+	REQUIRE_FALSE(cylinder.intersect(rt::Ray(rt::Vec3(2, 0, 0), nullDir), rt::Real(0),
+	                                 rt::kInfinity, rec));
+	const rt::geometry::Cone cone(rt::Vec3(0, 0, 0), rt::degreesToRadians(rt::Real(45)));
+	REQUIRE_FALSE(cone.intersect(rt::Ray(rt::Vec3(0, 1, -5), nullDir), rt::Real(0),
+	                             rt::kInfinity, rec));
+	// Direction quasi nulle (1e-9 < eps) -> miss defini.
+	const rt::Vec3 tiny(rt::kEpsilon * 0.01F, 0, 0);
+	REQUIRE_FALSE(
+	    sphere.intersect(rt::Ray(rt::Vec3(0, 0, -5), tiny), rt::Real(0), rt::kInfinity, rec));
+	// Origine NaN -> miss defini, fini.
+	const float nan = std::numeric_limits<rt::Real>::quiet_NaN();
+	REQUIRE_FALSE(sphere.intersect(rt::Ray(rt::Vec3(nan, 0, -5), rt::Vec3(0, 0, 1)),
+	                               rt::Real(0), rt::kInfinity, rec));
+	// Transforme + direction nulle -> miss defini (pas de `M⁻¹` degeneree liee au rayon).
+	rt::geometry::Sphere moved(rt::Vec3(0, 0, 0), rt::Real(1));
+	moved.setTransform(rt::Transform::translate(rt::Vec3(5, 0, 0)));
+	REQUIRE_FALSE(
+	    moved.intersect(rt::Ray(rt::Vec3(7, 0, 0), nullDir), rt::Real(0), rt::kInfinity, rec));
+}
+
+TEST_CASE("geometry batterie : objets superposes, le plus proche gagne (T047)",
+          "[geometry][t047]") {
+	// Deux spheres concentriques (r=1 et r=2) : le rayon touche l'externe
+	// en premier (t=3 vs t=4). Tri manuel comme `Renderer::findClosestHit`.
+	const rt::geometry::Sphere inner(rt::Vec3(0, 0, 0), rt::Real(1));
+	const rt::geometry::Sphere outer(rt::Vec3(0, 0, 0), rt::Real(2));
+	const rt::Ray ray(rt::Vec3(0, 0, -5), rt::Vec3(0, 0, 1));
+	rt::HitRecord recInner;
+	rt::HitRecord recOuter;
+	REQUIRE(inner.intersect(ray, rt::Real(0), rt::kInfinity, recInner));
+	REQUIRE(outer.intersect(ray, rt::Real(0), rt::kInfinity, recOuter));
+	REQUIRE(recInner.t == Catch::Approx(4.0).margin(1e-4));
+	REQUIRE(recOuter.t == Catch::Approx(3.0).margin(1e-4));
+	REQUIRE(recOuter.t < recInner.t);
+	// Deux spheres identiques superposees : meme `t`, pas de crash, normales finies.
+	const rt::geometry::Sphere twinA(rt::Vec3(1, 0, 0), rt::Real(1));
+	const rt::geometry::Sphere twinB(rt::Vec3(1, 0, 0), rt::Real(1));
+	rt::HitRecord recA;
+	rt::HitRecord recB;
+	REQUIRE(twinA.intersect(rt::Ray(rt::Vec3(1, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                        rt::kInfinity, recA));
+	REQUIRE(twinB.intersect(rt::Ray(rt::Vec3(1, 0, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                        rt::kInfinity, recB));
+	REQUIRE(recA.t == Catch::Approx(recB.t).margin(1e-6));
+	REQUIRE(std::isfinite(recA.t));
+	// Sphere + plan au meme point : les deux touchent, le tri choisit le min.
+	const rt::geometry::Plane floor(rt::Vec3(0, -1, 0), rt::Vec3(0, 1, 0));
+	rt::HitRecord recFloor;
+	REQUIRE(floor.intersect(rt::Ray(rt::Vec3(0, 5, 0), rt::Vec3(0, -1, 0)), rt::Real(0),
+	                        rt::kInfinity, recFloor));
+	REQUIRE(recFloor.t == Catch::Approx(6.0).margin(1e-4));
+	// Tri a 3 objets (boucle comme le renderer) : le min gagne.
+	const rt::geometry::AObject* objs[3] = {&inner, &outer, &floor};
+	rt::Real best = rt::kInfinity;
+	for (const auto* obj : objs) {
+		rt::HitRecord tmp;
+		if (obj->intersect(ray, rt::Real(0), best, tmp)) {
+			best = tmp.t;
+		}
+	}
+	REQUIRE(best == Catch::Approx(3.0).margin(1e-4));
+}
+
+TEST_CASE("geometry batterie : objets fortement transformes (T047)", "[geometry][t047]") {
+	rt::HitRecord rec;
+	// Translation lointaine (1000,0,0) : meme `t` qu'une sphere placee.
+	rt::geometry::Sphere far(rt::Vec3(0, 0, 0), rt::Real(1));
+	far.setTransform(rt::Transform::translate(rt::Vec3(1000, 0, 0)));
+	const rt::geometry::Sphere placed(rt::Vec3(1000, 0, 0), rt::Real(1));
+	const rt::Ray ray(rt::Vec3(1002, 0, 0), rt::Vec3(-1, 0, 0));
+	rt::HitRecord viaTransform;
+	rt::HitRecord direct;
+	REQUIRE(far.intersect(ray, rt::Real(0), rt::kInfinity, viaTransform));
+	REQUIRE(placed.intersect(ray, rt::Real(0), rt::kInfinity, direct));
+	REQUIRE(viaTransform.t == Catch::Approx(direct.t).margin(1e-3));
+	REQUIRE(nearReal(rt::length(viaTransform.normal), rt::Real(1), 1e-4F));
+	// Scale geant (100x) : rayon 1 -> 100, hit a t=50 depuis x=150.
+	rt::geometry::Sphere giant(rt::Vec3(0, 0, 0), rt::Real(1));
+	giant.setTransform(rt::Transform::scale(rt::Vec3(100, 100, 100)));
+	REQUIRE(giant.intersect(rt::Ray(rt::Vec3(150, 0, 0), rt::Vec3(-1, 0, 0)), rt::Real(0),
+	                        rt::kInfinity, rec));
+	REQUIRE(rec.t == Catch::Approx(50.0).margin(1e-2));
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1), 1e-4F));
+	// Scale minuscule (0.01x) : rayon 1 -> 0.01, hit a t=0.99 depuis x=1.
+	rt::geometry::Sphere tiny(rt::Vec3(0, 0, 0), rt::Real(1));
+	tiny.setTransform(rt::Transform::scale(rt::Vec3(0.01F, 0.01F, 0.01F)));
+	REQUIRE(tiny.intersect(rt::Ray(rt::Vec3(1, 0, 0), rt::Vec3(-1, 0, 0)), rt::Real(0),
+	                       rt::kInfinity, rec));
+	REQUIRE(rec.t == Catch::Approx(0.99).margin(1e-3));
+	REQUIRE(std::isfinite(rec.t));
+	// Rotation 720 degres (4*pi) : invariante pour la sphere, definie.
+	rt::geometry::Sphere spun(rt::Vec3(0, 0, 0), rt::Real(1));
+	spun.setTransform(rt::Transform::rotateY(rt::Real(4) * rt::kPi));
+	REQUIRE(spun.intersect(rt::Ray(rt::Vec3(2, 0, 0), rt::Vec3(-1, 0, 0)), rt::Real(0),
+	                       rt::kInfinity, rec));
+	REQUIRE(rec.t == Catch::Approx(1.0).margin(1e-3));
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1), 1e-4F));
+	// Combine translate + rotate + scale non uniforme : defini, normale unitaire.
+	rt::geometry::Cylinder combo(rt::Vec3(0, 0, 0), rt::Real(1));
+	const rt::Transform comboT = rt::Transform::translate(rt::Vec3(5, 0, 0))
+	                                 .compose(rt::Transform::rotateZ(rt::kPi / rt::Real(4)))
+	                                 .compose(rt::Transform::scale(rt::Vec3(2, 1, 1)));
+	combo.setTransform(comboT);
+	rt::HitRecord comboRec;
+	const bool comboHit =
+	    combo.intersect(rt::Ray(rt::Vec3(5, 3, 0), rt::Vec3(0, -1, 0)), rt::Real(0),
+	                    rt::kInfinity, comboRec);
+	// Le combine peut toucher ou manquer selon la geometrie, mais jamais crasher ;
+	// s'il touche, la normale est unitaire et finie.
+	if (comboHit) {
+		REQUIRE(nearReal(rt::length(comboRec.normal), rt::Real(1), 1e-3F));
+		REQUIRE(std::isfinite(comboRec.t));
+	}
+	// Cone couche + deplace : hit defini, `t` fini.
+	rt::geometry::Cone tipped(rt::Vec3(0, 0, 0), rt::degreesToRadians(rt::Real(30)));
+	tipped.setTransform(rt::Transform::translate(rt::Vec3(-5, 0, 0)));
+	REQUIRE(tipped.intersect(rt::Ray(rt::Vec3(-5, 1, -5), rt::Vec3(0, 0, 1)), rt::Real(0),
+	                         rt::kInfinity, rec));
+	REQUIRE(std::isfinite(rec.t));
+	REQUIRE(nearReal(rt::length(rec.normal), rt::Real(1), 1e-3F));
 }
