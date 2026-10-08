@@ -5,8 +5,10 @@
 // cherche l'intersection la plus proche parmi tous les objets (T046 : tri
 // par `t`, `tMax` resserre ; objets directs + groupes aplatis, 4 types en
 // coexistence, doublons du meme type autorises ; `tMin` = 0.001), ombre
-// via Lambert (T033 : materiau de l'objet touche + 1ere lumiere avec
-// position + ambiance, miss -> fond de scene), ecrit dans le `Framebuffer`
+// via Lambert (T033 : materiau de l'objet touche + ambiance + **toutes** les
+// ponctuelles avec position, T052 : multi-spot melange, shadow ray `tMin`
+// eps anti-acne + attenuation T051, miss -> fond de scene), ecrit dans le
+// `Framebuffer` persistant (T030) puis `present()` (tonemapping + gamma 2.2).
 // persistant (T030) puis `present()` (tonemapping + gamma 2.2). Profondeur max bornee
 // (`maxDepth`, utilisee par la reflexion en T056), aucune allocation
 // dans la boucle (registres uniquement, regle R3), aucun `throw`
