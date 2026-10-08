@@ -451,8 +451,8 @@ rt/
 - **Dépend** : T040 · **Sert** : M3 · **Doc** : —
 - **DoD** : tests verts, y compris cas dégénérés ; aucun throw ; ASan propre.
 
-#### T042 ⬜ — Plan
-> **Fait le** : — · **Commit** : —
+#### T042 ✅ — Plan
+> **Fait le** : 2026-10-08 · **Commit** : 8a96458
 - **Prompt** : « `src/geometry/Plane.cpp` : plan infini défini par un point et une normale (dans l'espace objet), intersection stable quand le rayon est quasi parallèle (epsilon, pas de division par zéro), normale cohérente, uv dérivés des axes tangents. Tests : parallèle, dans le plan, avant/après. »
 - **Dépend** : T040 · **Sert** : M3 · **Doc** : —
 - **DoD** : tests verts ; aucun `throw` ni division par zéro détectée (UBSan vert).
