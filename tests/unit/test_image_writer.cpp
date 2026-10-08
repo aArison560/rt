@@ -6,8 +6,10 @@
 #include <catch2/catch_amalgamated.hpp>
 
 #include <cstdio>
+#include <filesystem>
 #include <fstream>
 #include <string>
+#include <system_error>
 
 #include "rt/io/ImageWriter.hpp"
 #include "rt/render/Framebuffer.hpp"
@@ -18,6 +20,12 @@ namespace {
 
 const char* kPngTmp = "/tmp/opencode/rt_test_image.png";
 const char* kPpmTmp = "/tmp/opencode/rt_test_image.ppm";
+
+void ensureTmpDir() {
+	std::error_code ec;
+	std::filesystem::create_directories(
+	    std::filesystem::path(kPngTmp).parent_path(), ec);
+}
 
 rt::render::Framebuffer makeSmall() {
 	rt::render::Framebuffer fb;
@@ -41,6 +49,7 @@ std::string readPrefix(const char* path, std::size_t count) {
 
 TEST_CASE("imagewriter : ecrit un PNG valide (signature PNG)", "[imagewriter]") {
 	const rt::render::Framebuffer fb = makeSmall();
+	ensureTmpDir();
 	std::remove(kPngTmp);
 	REQUIRE(rt::io::writeImage(fb, kPngTmp).isOk());
 	// Signature PNG : 89 50 4E 47 0D 0A 1A 0A.
@@ -61,6 +70,7 @@ TEST_CASE("imagewriter : ecrit un PNG valide (signature PNG)", "[imagewriter]") 
 
 TEST_CASE("imagewriter : ecrit un PPM P6 pour .ppm", "[imagewriter]") {
 	const rt::render::Framebuffer fb = makeSmall();
+	ensureTmpDir();
 	std::remove(kPpmTmp);
 	REQUIRE(rt::io::writeImage(fb, kPpmTmp).isOk());
 	const std::string prefix = readPrefix(kPpmTmp, 2);
@@ -90,6 +100,7 @@ TEST_CASE("imagewriter : rendu reel de default.rt en PNG", "[imagewriter]") {
 	rt::render::Framebuffer fb;
 	const rt::render::RenderParams params{.width = 32, .height = 24, .spp = 1};
 	REQUIRE(rt::render::render(parsed.value(), fb, params).isOk());
+	ensureTmpDir();
 	std::remove(kPngTmp);
 	REQUIRE(rt::io::writeImage(fb, kPngTmp).isOk());
 	const std::string prefix = readPrefix(kPngTmp, 8);

@@ -39,13 +39,13 @@ jobs:
       - name: Installer g++-14
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++-14
+          sudo apt-get install -y g++-14 libsdl2-dev libpng-dev libjpeg-dev
 
       - name: Build ASan/UBSan
         run: make asan CC=g++-14
 
       - name: Tests sous sanitizers
-        run: make test CC=g++-14
+        run: make test-asan CC=g++-14
 
       - name: Exécution sous ASan/UBSan
         run: ./rt --version
