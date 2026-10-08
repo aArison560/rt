@@ -215,6 +215,16 @@ Ordre recommandé (ROI décroissant). Les détails sont dans les sections suivan
 | 4 | **Indice de réfraction** fonctionne (formule de Descartes) | ✔ (`Vec3::refract`) | **Ajouter `ior` au parseur** |
 | 5 | **% de transparence modifiable** | ✔ (`setTransparency`) | **Ajouter au parseur** |
 
+> T050 : le bloc `material` est désormais complet côté données — `albedo`,
+> `ambient`, `diffuse`, `specular`, `shininess`, `reflectivity`,
+> `transparency`, `ior`, `texture`, `pattern` sont parsés (T023), validés
+> (T024, `ior > 1` si transparence) et recopiés dans
+> `shading::MaterialParams` (POD, R3) par `render/` — chaque champ est
+> pilotable depuis le fichier et testé par champ
+> (`tests/unit/test_material.cpp`, `[t050]`). L'effet visuel arrive avec sa
+> tâche : spéculaire T053, réflexion T056, réfraction T057, textures T102,
+> patterns T105.
+
 - **Implémentation restante (≈ 4 h)** : étendre le bloc `material` :
   ```
   material { ... reflect 0.2  transparency 0.7  ior 1.5 }

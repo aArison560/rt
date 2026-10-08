@@ -97,6 +97,13 @@ constexpr Real kPrimaryTMin = 0.001F;
 	out.albedo = src.albedo;
 	out.ambient = src.ambient;
 	out.diffuse = src.diffuse;
+	out.specular = src.specular;
+	out.shininess = src.shininess;
+	out.reflectivity = src.reflectivity;
+	out.transparency = src.transparency;
+	out.ior = src.ior;
+	out.hasTexture = src.texture.present;
+	out.hasPattern = src.pattern.present;
 	return out;
 }
 
