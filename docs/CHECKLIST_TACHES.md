@@ -401,8 +401,8 @@ rt/
 - **Dépend** : T013, T030 · **Sert** : M5 · **Doc** : `docs/FORMAT_SCENE.md`
 - **DoD** : tests verts ; déplacement de la caméra change l'image (constaté par un test de pixels).
 
-#### T032 ⬜ — Boucle de rendu mono-thread
-> **Fait le** : — · **Commit** : —
+#### T032 ✅ — Boucle de rendu mono-thread
+> **Fait le** : 2026-10-08 · **Commit** : 6899ba7
 - **Prompt** : « Écris `src/render/Renderer.cpp::render(const Scene&, Framebuffer&, RenderParams)` : parcourt les pixels, génère le rayon, cherche la intersection, écrit la couleur (miss → fond de scène), profondeur max bornée, aucune allocation dans la boucle (registres/arena). Le rendu est **indépendant de SDL** (rèle R6). »
 - **Dépend** : T031, T028 · **Sert** : M2 · **Doc** : [ARCHITECTURE.md §4](ARCHITECTURE.md)
 - **DoD** : `./rt scenes/default.rt 64 64 --out /tmp/x.png` → code 0 ; ASan/TSan verts ; test de déterminisme.
