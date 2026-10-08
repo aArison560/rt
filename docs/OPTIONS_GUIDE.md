@@ -136,6 +136,14 @@ Ordre recommandé (ROI décroissant). Les détails sont dans les sections suivan
   rester visible (dégradé sombre mais **pas noir pur**).
 - **Preuve** : scène où tous les points lumineux sont derrière les objets.
 
+> Implémenté (T033) : `include/rt/shading/Material.hpp` — `shadeLambert()` (albedo,
+> ambient, diffuse + 1 ponctuelle + ambiante globale, saturé [0,1], NaN → 0, gamma
+> en sortie via `Framebuffer::present()`). Dos à la lumière → plancher ambiant > 0 ;
+> doubler l'intensité double la part diffuse (testé). Le `Renderer` (T032, miss →
+> fond) rend déjà une image non noire (fond + ambiance) ; P4 branchera `shadeLambert()`
+> sur chaque intersection sans changer la boucle. Tests : `tests/unit/test_material.cpp`
+> (Lambert, dégénérés, DoD luminosité minimale > 0 et `isfinite` sur `default.rt`).
+
 ### 2.4 Ambiance ++ — ☐ Oui/Non
 
 **Critère** : l'ambiance se pilote **depuis le fichier de configuration**.
