@@ -43,6 +43,7 @@
 #include "rt/render/Camera.hpp"
 #include "rt/render/Framebuffer.hpp"
 #include "rt/scene/Scene.hpp"
+#include "rt/sched/ThreadPool.hpp"
 #include "rt/shading/Material.hpp"
 
 namespace rt::render {
@@ -56,6 +57,10 @@ constexpr int kMinSpp = 1;
 constexpr int kMaxSpp = 1024;
 constexpr int kMinDepth = 0;
 constexpr int kMaxDepth = 32;
+constexpr int kMinThreads = 1;
+constexpr int kMaxThreads = 256;
+// T063 : tuiles 32×32 (localite cache, cf. `ARCHITECTURE.md` §8.2).
+constexpr int kTileSize = 32;
 constexpr long long kMinSeed = 0;
 constexpr long long kMaxSeed = 4294967295LL;
 // T036 : dithering deterministe minimal (±kDitherAmp/2 par echantillon,
@@ -708,6 +713,55 @@ struct TraceCtx {
 	return shading::saturate(blended);
 }
 
+// T063 : rend une region rectangulaire `[x0,x0+w) × [y0,y0+h)` pour
+// l'echantillon `s` (un batch). `noexcept`, sans allocation (R2/R3) :
+// `Rng` sur pile, `traceRay` recursif borne, `addSample` disjoint (tuiles
+// disjointes -> TSan-vert, chaque thread ecrit ses pixels).
+// C'est le `renderRegion(x0, y0, w, h)` du Prompt.
+void renderTile(const Camera& camera, const TraceCtx& ctx, Framebuffer& fb, std::uint32_t sceneSeed,
+                int sample, int x0, int y0, int w, int h) noexcept {
+	for (int y = y0; y < y0 + h; ++y) {
+		for (int x = x0; x < x0 + w; ++x) {
+			Rng rng = rngFor(x, y, sample, sceneSeed);
+			const Vec2 jitter(rng.nextFloat() - 0.5F, rng.nextFloat() - 0.5F);
+			const Ray ray = camera.rayForPixel(x, y, jitter);
+			Vec3 color = traceRay(ray, 0, ctx);
+			color.x += (rng.nextFloat() - 0.5F) * kDitherAmp;
+			color.y += (rng.nextFloat() - 0.5F) * kDitherAmp;
+			color.z += (rng.nextFloat() - 0.5F) * kDitherAmp;
+			fb.addSample(x, y, color);
+		}
+	}
+}
+
+struct Tile {
+	int x0 = 0;
+	int y0 = 0;
+	int w = 0;
+	int h = 0;
+};
+
+// Decoupe l'image en tuiles `kTileSize × kTileSize` (derniere ligne/colonne
+// eventuellement plus petite, 0 pixel de recouvrement). Chemin froid.
+void splitTiles(int width, int height, std::vector<Tile>& out) {
+	out.clear();
+	out.reserve(static_cast<std::size_t>((width + kTileSize - 1) / kTileSize) *
+	            static_cast<std::size_t>((height + kTileSize - 1) / kTileSize));
+	for (int y0 = 0; y0 < height; y0 += kTileSize) {
+		for (int x0 = 0; x0 < width; x0 += kTileSize) {
+			int w = width - x0;
+			if (w > kTileSize) {
+				w = kTileSize;
+			}
+			int h = height - y0;
+			if (h > kTileSize) {
+				h = kTileSize;
+			}
+			out.push_back(Tile{x0, y0, w, h});
+		}
+	}
+}
+
 } // namespace
 
 Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& params) {
@@ -727,6 +781,10 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	if (params.seed < kMinSeed || params.seed > kMaxSeed) {
 		return Status::error(StatusCode::InvalidArgument,
 		                     "bad render seed: expected 0..4294967295", __LINE__);
+	}
+	if (params.threads < kMinThreads || params.threads > kMaxThreads) {
+		return Status::error(StatusCode::InvalidArgument, "bad render threads: expected 1..256",
+		                     __LINE__);
 	}
 	Camera camera;
 	if (Status status = camera.init(scene.camera, params.width, params.height);
@@ -765,18 +823,45 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	const auto sceneSeed = static_cast<std::uint32_t>(params.seed);
 	const TraceCtx traceCtx{&worldObjs, &worldMats, &pointLights, &dirLights, &spotLights,
 	                        ambient, scene.background.color, params.maxDepth};
-	for (int s = 0; s < params.spp; ++s) {
-		for (int y = 0; y < params.height; ++y) {
-			for (int x = 0; x < params.width; ++x) {
-				Rng rng = rngFor(x, y, s, sceneSeed);
-				const Vec2 jitter(rng.nextFloat() - 0.5F, rng.nextFloat() - 0.5F);
-				const Ray ray = camera.rayForPixel(x, y, jitter);
-				Vec3 color = traceRay(ray, 0, traceCtx);
-				color.x += (rng.nextFloat() - 0.5F) * kDitherAmp;
-				color.y += (rng.nextFloat() - 0.5F) * kDitherAmp;
-				color.z += (rng.nextFloat() - 0.5F) * kDitherAmp;
-				fb.addSample(x, y, color);
+	// T063 : mono-thread historique (octet par octet identique au T032-T058)
+	// ou tuiles paralleles (memes pixels via la graine absolue T016).
+	if (params.threads <= 1) {
+		for (int s = 0; s < params.spp; ++s) {
+			for (int y = 0; y < params.height; ++y) {
+				for (int x = 0; x < params.width; ++x) {
+					Rng rng = rngFor(x, y, s, sceneSeed);
+					const Vec2 jitter(rng.nextFloat() - 0.5F, rng.nextFloat() - 0.5F);
+					const Ray ray = camera.rayForPixel(x, y, jitter);
+					Vec3 color = traceRay(ray, 0, traceCtx);
+					color.x += (rng.nextFloat() - 0.5F) * kDitherAmp;
+					color.y += (rng.nextFloat() - 0.5F) * kDitherAmp;
+					color.z += (rng.nextFloat() - 0.5F) * kDitherAmp;
+					fb.addSample(x, y, color);
+				}
 			}
+			if (params.onProgress != nullptr) {
+				params.onProgress(s + 1, params.spp, params.progressUser);
+			}
+		}
+		fb.present();
+		return Status::ok();
+	}
+	// Multi-thread : pool cree **une fois** par rendu (`jthread`), batches
+	// externes sequentiels (1 `onProgress` par batch, depuis ce thread),
+	// tuiles 32×32 disjointes en parallele (determinisme absolu, TSan-vert).
+	sched::ThreadPool pool(static_cast<std::size_t>(params.threads));
+	std::vector<Tile> tiles;
+	for (int s = 0; s < params.spp; ++s) {
+		splitTiles(params.width, params.height, tiles);
+		for (const Tile& tile : tiles) {
+			pool.submit([&camera, &traceCtx, &fb, sceneSeed, s, tile] {
+				renderTile(camera, traceCtx, fb, sceneSeed, s, tile.x0, tile.y0, tile.w,
+				           tile.h);
+			});
+		}
+		pool.waitIdle();
+		if (pool.hasError()) {
+			return Status::error(StatusCode::Internal, "render task failed", __LINE__);
 		}
 		if (params.onProgress != nullptr) {
 			params.onProgress(s + 1, params.spp, params.progressUser);

@@ -610,6 +610,23 @@ outils ») imposent une vraie surface d'interaction.
 - `renderRegion()` existe déjà (rendu progressif / par région).
 - **Aucune donnée partagée mutable** hors du framebuffer : chaque thread écrit ses pixels.
 
+> Implémenté (T063) : `rt::sched::ThreadPool` (`include/rt/sched/ThreadPool.hpp` +
+> `src/sched/ThreadPool.cpp`) — pool créé **une fois** par rendu
+> (`std::jthread`, 1..256), file de tuiles 32×32 (`splitTiles`, 0 recouvrement),
+> `renderTile(camera, ctx, fb, seed, s, x0, y0, w, h)` par travailleur
+> (`noexcept`, sans allocation, R2/R3) ; arrêt propre (`stop` + `join`,
+> file drainée), erreurs par tâche interceptées (`hasError()`/`firstError()`,
+> pas de `std::terminate`), attente économe (2 conditions, pas de spin).
+> `Renderer::render()` : batches `spp` séquentiels (1 `onProgress` par batch
+> depuis le thread appelant), tuiles parallèles par batch, `threads <= 1` =
+> chemin mono historique octet-identique ; déterminisme par graine absolue
+> (`rngFor(x, y, s, seed)`, T016) — `--threads 1/2/4/8` = mêmes pixels
+> (sha256 identique vérifié sur `default.rt` 64×48). `--threads` câblé dans
+> `main` (défaut 1, borne 1..256 validée en `Options` et en `render`).
+> Tests : `tests/unit/test_threads.cpp` (100 tâches → compteur exact +
+> réutilisable, `throw` intercepté sans `terminate`, 1/2/4/8 identiques,
+> bornes 0/257 rejetées, 256 acceptée).
+
 ### 8.3 Rendu progressif (feedback utilisateur)
 
 ```

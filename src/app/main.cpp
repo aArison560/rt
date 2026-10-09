@@ -83,12 +83,14 @@ int runHeadless(const rt::app::Options& opts) {
 	const int height = opts.hasHeight ? opts.height : scene.limits.height;
 	const int spp = opts.hasSpp ? opts.spp : scene.limits.samples;
 	const long long seed = opts.hasSeed ? opts.seed : scene.limits.seed;
+	// T063 : `--threads` (1..256 valides en T026, defaut 1 = mono historique).
+	const int threads = opts.hasThreads ? opts.threads : 1;
 	// T036 : `--spp`/`--seed` -> batches progressifs, reproductibles
 	// (meme spp + meme seed = memes pixels). Callback + ETA sur stderr
 	// sauf `--quiet` (futur affichage T075/T108).
 	ProgressClock clock{std::chrono::steady_clock::now()};
 	rt::render::RenderParams params{
-	    .width = width, .height = height, .spp = spp, .maxDepth = scene.limits.maxDepth, .seed = seed};
+	    .width = width, .height = height, .spp = spp, .maxDepth = scene.limits.maxDepth, .seed = seed, .threads = threads};
 	if (!opts.quiet) {
 		params.onProgress = &onProgressPrint;
 		params.progressUser = &clock;
@@ -109,7 +111,7 @@ int runHeadless(const rt::app::Options& opts) {
 	if (!opts.quiet) {
 		std::cout << "ok: " << opts.scenePath << ": " << scene.totalObjectCount()
 		          << " objects, " << scene.lights.size() << " lights, " << width << "x"
-		          << height << ", spp " << spp;
+		          << height << ", spp " << spp << ", threads " << threads;
 		if (opts.hasOut) {
 			std::cout << ", wrote " << opts.outPath;
 		}

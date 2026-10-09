@@ -2,7 +2,7 @@
 
 // Boucle de rendu mono-thread (T032) + multi-objets (T046) + reflexion (T056)
 // + refraction (T057) + ombres transparentes et spot aveuglant (T058)
-// — sans SDL (R6).
+// + tuiles multi-thread (T063) — sans SDL (R6).
 // `render()` parcourt les pixels, genere le rayon via `Camera` (T031),
 // cherche l'intersection la plus proche parmi tous les objets (T046 : tri
 // par `t`, `tMax` resserre ; objets directs + groupes aplatis, 4 types en
@@ -51,6 +51,12 @@ struct RenderParams {
 	int spp = 4;
 	int maxDepth = 4;
 	long long seed = 0;
+	// Threads de rendu (T063) : 1 = mono-thread historique (octet par octet
+	// identique), N > 1 = tuiles 32×32 sur `ThreadPool` (`std::jthread`,
+	// file + conditions, pas de spin). Determinisme par graine absolue
+	// (`seedFor(x, y, s, seed)`, T016) : 1/2/4/8 threads = memes pixels.
+	// Borne 1..256 (comme `--threads`, R1) ; hors borne -> `Status`.
+	int threads = 1;
 	// Callback progressif (T036) : appele apres chaque echantillon-batch
 	// avec (done in 1..spp, total == spp). Pointeur brut + `void*`
 	// (pas de `std::function`, aucune allocation, R3). `nullptr` = muet.
