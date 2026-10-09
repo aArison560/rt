@@ -30,6 +30,74 @@
   mesure n'est un temps de rendu que si la commande rend.
 
 ## Résultats
+### t064-threads-8 — 2026-10-09 10:31:03 EAT
+
+- **Commande** : `./rt scenes/fig_vi1.rt 320 240 --out /tmp/bench_t064_8.png --quiet --threads 8`
+- **Note** : T064: fig_vi1 320x240 spp4 8 threads, tuiles 32x32
+- **Protocole** : 5 exécution(s) mesurée(s), 1 échauffement(s), outil `date +%s.%N`, horloge `date +%s.%N`
+- **Machine** : Linux 6.12.111+deb13-amd64 x86_64 · epsilon
+- **Commit au moment de la mesure** : `67b8d5b`
+
+| runs | moyenne (s) | écart-type (s) | min (s) | max (s) | CV (%) |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 0.252267 | 0.003176 | 0.248355 | 0.255622 | 1.26 |
+
+Détail brut :
+
+```json
+{"command":"./rt scenes/fig_vi1.rt 320 240 --out /tmp/bench_t064_8.png --quiet --threads 8","label":"t064-threads-8","n":5,"warmup":1,"tool":"date +%s.%N","clock":"date +%s.%N","unit":"s","mean":0.252267,"stddev":0.003176,"min":0.248355,"max":0.255622,"times":[0.251909,0.255622,0.255297,0.248355,0.250151],"timestamp":"2026-10-09T10:31:03+03:00"}
+```
+### t064-threads-4 — 2026-10-09 10:30:58 EAT
+
+- **Commande** : `./rt scenes/fig_vi1.rt 320 240 --out /tmp/bench_t064_4.png --quiet --threads 4`
+- **Note** : T064: fig_vi1 320x240 spp4 4 threads, tuiles 32x32
+- **Protocole** : 5 exécution(s) mesurée(s), 1 échauffement(s), outil `date +%s.%N`, horloge `date +%s.%N`
+- **Machine** : Linux 6.12.111+deb13-amd64 x86_64 · epsilon
+- **Commit au moment de la mesure** : `67b8d5b`
+
+| runs | moyenne (s) | écart-type (s) | min (s) | max (s) | CV (%) |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 0.268519 | 0.017702 | 0.254885 | 0.298419 | 6.59 |
+
+Détail brut :
+
+```json
+{"command":"./rt scenes/fig_vi1.rt 320 240 --out /tmp/bench_t064_4.png --quiet --threads 4","label":"t064-threads-4","n":5,"warmup":1,"tool":"date +%s.%N","clock":"date +%s.%N","unit":"s","mean":0.268519,"stddev":0.017702,"min":0.254885,"max":0.298419,"times":[0.265072,0.268419,0.254885,0.255802,0.298419],"timestamp":"2026-10-09T10:30:58+03:00"}
+```
+### t064-threads-2 — 2026-10-09 10:30:55 EAT
+
+- **Commande** : `./rt scenes/fig_vi1.rt 320 240 --out /tmp/bench_t064_2.png --quiet --threads 2`
+- **Note** : T064: fig_vi1 320x240 spp4 2 threads, tuiles 32x32
+- **Protocole** : 5 exécution(s) mesurée(s), 1 échauffement(s), outil `date +%s.%N`, horloge `date +%s.%N`
+- **Machine** : Linux 6.12.111+deb13-amd64 x86_64 · epsilon
+- **Commit au moment de la mesure** : `67b8d5b`
+
+| runs | moyenne (s) | écart-type (s) | min (s) | max (s) | CV (%) |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 0.411556 | 0.018911 | 0.391779 | 0.443069 | 4.60 |
+
+Détail brut :
+
+```json
+{"command":"./rt scenes/fig_vi1.rt 320 240 --out /tmp/bench_t064_2.png --quiet --threads 2","label":"t064-threads-2","n":5,"warmup":1,"tool":"date +%s.%N","clock":"date +%s.%N","unit":"s","mean":0.411556,"stddev":0.018911,"min":0.391779,"max":0.443069,"times":[0.407978,0.443069,0.407773,0.407180,0.391779],"timestamp":"2026-10-09T10:30:55+03:00"}
+```
+### t064-threads-1 — 2026-10-09 10:30:47 EAT
+
+- **Commande** : `./rt scenes/fig_vi1.rt 320 240 --out /tmp/bench_t064_1.png --quiet --threads 1`
+- **Note** : T064: fig_vi1 320x240 spp4 (scene) 1 thread, lineaire (BVH non branchee)
+- **Protocole** : 5 exécution(s) mesurée(s), 1 échauffement(s), outil `date +%s.%N`, horloge `date +%s.%N`
+- **Machine** : Linux 6.12.111+deb13-amd64 x86_64 · epsilon
+- **Commit au moment de la mesure** : `67b8d5b`
+
+| runs | moyenne (s) | écart-type (s) | min (s) | max (s) | CV (%) |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 0.735890 | 0.027068 | 0.708513 | 0.774556 | 3.68 |
+
+Détail brut :
+
+```json
+{"command":"./rt scenes/fig_vi1.rt 320 240 --out /tmp/bench_t064_1.png --quiet --threads 1","label":"t064-threads-1","n":5,"warmup":1,"tool":"date +%s.%N","clock":"date +%s.%N","unit":"s","mean":0.735890,"stddev":0.027068,"min":0.708513,"max":0.774556,"times":[0.774556,0.715364,0.751050,0.708513,0.729967],"timestamp":"2026-10-09T10:30:47+03:00"}
+```
 ### t061-bvh-traverse — 2026-10-09 09:53:09 EAT
 
 - **Commande** : `sh scripts/bench_bvh.sh traverse 1000 2000`
@@ -115,3 +183,26 @@ Détail brut :
 ```json
 {"command":"./rt tests/cases/valid/minimal.rt","label":"minimal","n":5,"warmup":1,"tool":"date +%s.%N","clock":"date +%s.%N","unit":"s","mean":0.002134,"stddev":0.000145,"min":0.001938,"max":0.002336,"times":[0.002336,0.002179,0.002139,0.002078,0.001938],"timestamp":"2026-10-06T16:45:10+03:00"}
 ```
+
+## T064 — Synthèse speedup 1/2/4/8 threads (manuelle, chiffres de `bench.sh`)
+
+> Synthèse **manuelle** des 4 sections `t064-threads-*` ci-dessus (mêmes
+> moyennes/écarts-types, aucune valeur estimée). Commandes reproductibles :
+> `sh scripts/bench.sh scenes/fig_vi1.rt --args "320 240 --out /tmp/bench_t064_N.png --quiet --threads N" --label t064-threads-N --runs 5`.
+> Scène `fig_vi1.rt` (5 objets, 2 spots, 320×240 spp4), 8 cœurs, `date +%s.%N`.
+
+| threads | moyenne (s) | écart-type (s) | speedup vs 1 | efficacité (speedup/N) |
+|---:|---:|---:|---:|---:|
+| 1 | 0.735890 | 0.027068 | 1.00 | 1.00 |
+| 2 | 0.411556 | 0.018911 | 1.79 | 0.89 |
+| 4 | 0.268519 | 0.017702 | 2.74 | 0.69 |
+| 8 | 0.252267 | 0.003176 | 2.92 | 0.36 |
+
+- **Speedup croissant** : 1.00 < 1.79 < 2.74 < 2.92 (DoD T064).
+- **Efficacité < 1 attendue** : 0.89 / 0.69 / 0.36 (tuiles 32×32, `spp` batches
+  séquentiels + `present()` mono, scène à 5 objets : le grain est fin, 8
+  threads saturent — honnête et documenté).
+- **Compteurs** : `RenderStats` (`rays/s`, objets, temps build/render, threads,
+  `bvhBuilds`) affichés en fin de rendu sur `stderr` sauf `--quiet`
+  (ex. `fig_vi1.rt` 160×120 spp2 : `rays=38400 … rays/s=425390`), prêts pour
+  l'UI (T075).

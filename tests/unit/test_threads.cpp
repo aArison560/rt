@@ -125,3 +125,26 @@ TEST_CASE("renderer threads : bornes 1..256 (T063)", "[threads][t063]") {
 	REQUIRE(rt::render::render(scene, fb, {.width = 16, .height = 12, .spp = 1, .threads = 256})
 	            .isOk());
 }
+
+TEST_CASE("renderer stats : compteurs coherents (T064)", "[threads][t064]") {
+	const rt::scene::Scene scene = loadTwoSpheres();
+	rt::render::Framebuffer fb;
+	rt::render::RenderStats stats;
+	const rt::render::RenderParams params{
+	    .width = 48, .height = 36, .spp = 2, .maxDepth = 4, .seed = 11, .threads = 2};
+	REQUIRE(rt::render::render(scene, fb, params, &stats).isOk());
+	// `primaryRays` deterministe, objets/lumieres lus de la scene, threads
+	// repris des params, temps positifs, rays/s coherent.
+	REQUIRE(stats.primaryRays == 48 * 36 * 2);
+	REQUIRE(stats.objects == static_cast<int>(scene.totalObjectCount()));
+	REQUIRE(stats.lights == static_cast<int>(scene.lights.size()));
+	REQUIRE(stats.threadsUsed == 2);
+	REQUIRE(stats.buildMs >= 0.0);
+	REQUIRE(stats.renderMs > 0.0);
+	REQUIRE(stats.totalMs >= stats.renderMs);
+	REQUIRE(stats.raysPerSec > 0.0);
+	// Sans `stats` : meme image (le compteur ne change rien aux pixels).
+	rt::render::Framebuffer plain;
+	REQUIRE(rt::render::render(scene, plain, params).isOk());
+	REQUIRE(framebuffersEqual(fb, plain));
+}

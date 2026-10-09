@@ -626,6 +626,18 @@ outils ») imposent une vraie surface d'interaction.
 > Tests : `tests/unit/test_threads.cpp` (100 tâches → compteur exact +
 > réutilisable, `throw` intercepté sans `terminate`, 1/2/4/8 identiques,
 > bornes 0/257 rejetées, 256 acceptée).
+>
+> Implémenté (T064) : `rt::render::RenderStats` (`Renderer.hpp`) —
+> `primaryRays` (W×H×spp), `objects`/`lights`, `threadsUsed`, `buildMs`
+> (collecte), `renderMs` (tuiles + `present()`), `totalMs`, `raysPerSec`,
+> `bvhBuilds` (0 jusqu'en T065) ; rempli par `render(..., stats)` après
+> `waitIdle` (sans atomique, hors boucle chaude), affiché en fin de rendu
+> sur `stderr` sauf `--quiet` (`[stats] rays=… rays/s=…`), prêt pour l'UI
+> (T075). Mesuré (`scripts/bench.sh`, `docs/BENCH.md` `t064-threads-1/2/4/8`
+> + synthèse) : `fig_vi1.rt` 320×240 spp4, 0.736s → 0.412s → 0.269s →
+> 0.252s (speedup 1.00/1.79/2.74/2.92 croissant, efficacité 1.00/0.89/0.69/
+> 0.36 < 1). Tests : `[t064]` (compteurs cohérents, `stats==nullptr` =
+> mêmes pixels).
 
 ### 8.3 Rendu progressif (feedback utilisateur)
 

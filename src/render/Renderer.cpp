@@ -26,6 +26,7 @@
 
 #include "rt/render/Renderer.hpp"
 
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -764,7 +765,8 @@ void splitTiles(int width, int height, std::vector<Tile>& out) {
 
 } // namespace
 
-Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& params) {
+Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& params,
+              RenderStats* stats) {
 	if (params.width < kMinDim || params.width > kMaxDim || params.height < kMinDim ||
 	    params.height > kMaxDim) {
 		return Status::error(StatusCode::InvalidArgument, "bad render size: expected 1..8192",
@@ -786,6 +788,10 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 		return Status::error(StatusCode::InvalidArgument, "bad render threads: expected 1..256",
 		                     __LINE__);
 	}
+	// T064 : chronometrage par phase (chemin froid, `steady_clock`, sans
+	// allocation). `buildMs` = camera + framebuffer + collecte scene ;
+	// `renderMs` = boucle tuiles + `present()` ; `totalMs` = les deux.
+	const auto buildStart = std::chrono::steady_clock::now();
 	Camera camera;
 	if (Status status = camera.init(scene.camera, params.width, params.height);
 	    status.isError()) {
@@ -823,9 +829,36 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	const auto sceneSeed = static_cast<std::uint32_t>(params.seed);
 	const TraceCtx traceCtx{&worldObjs, &worldMats, &pointLights, &dirLights, &spotLights,
 	                        ambient, scene.background.color, params.maxDepth};
+	const auto buildEnd = std::chrono::steady_clock::now();
+	// T064 : remplissage des compteurs (sans atomique : calcule apres
+	// `waitIdle`, jamais dans la boucle chaude). `bvhBuilds` = 0 jusqu'en
+	// T065 (BVH non branchee au rendu : micro-bench `bench_bvh.sh` seul).
+	auto fillStats = [&](const std::chrono::steady_clock::time_point& renderStart,
+	                     const std::chrono::steady_clock::time_point& renderEnd) {
+		if (stats == nullptr) {
+			return;
+		}
+		const double buildMs =
+		    std::chrono::duration<double, std::milli>(buildEnd - buildStart).count();
+		const double renderMs =
+		    std::chrono::duration<double, std::milli>(renderEnd - renderStart).count();
+		const long long rays =
+		    static_cast<long long>(params.width) * static_cast<long long>(params.height) *
+		    static_cast<long long>(params.spp);
+		stats->primaryRays = rays;
+		stats->objects = static_cast<int>(worldObjs.size());
+		stats->lights = static_cast<int>(scene.lights.size());
+		stats->threadsUsed = params.threads;
+		stats->buildMs = buildMs;
+		stats->renderMs = renderMs;
+		stats->totalMs = buildMs + renderMs;
+		stats->raysPerSec = renderMs > 0.0 ? (static_cast<double>(rays) / (renderMs / 1000.0)) : 0.0;
+		stats->bvhBuilds = 0;
+	};
 	// T063 : mono-thread historique (octet par octet identique au T032-T058)
 	// ou tuiles paralleles (memes pixels via la graine absolue T016).
 	if (params.threads <= 1) {
+		const auto renderStart = std::chrono::steady_clock::now();
 		for (int s = 0; s < params.spp; ++s) {
 			for (int y = 0; y < params.height; ++y) {
 				for (int x = 0; x < params.width; ++x) {
@@ -844,6 +877,7 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 			}
 		}
 		fb.present();
+		fillStats(renderStart, std::chrono::steady_clock::now());
 		return Status::ok();
 	}
 	// Multi-thread : pool cree **une fois** par rendu (`jthread`), batches
@@ -851,6 +885,7 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	// tuiles 32×32 disjointes en parallele (determinisme absolu, TSan-vert).
 	sched::ThreadPool pool(static_cast<std::size_t>(params.threads));
 	std::vector<Tile> tiles;
+	const auto renderStart = std::chrono::steady_clock::now();
 	for (int s = 0; s < params.spp; ++s) {
 		splitTiles(params.width, params.height, tiles);
 		for (const Tile& tile : tiles) {
@@ -868,6 +903,7 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 		}
 	}
 	fb.present();
+	fillStats(renderStart, std::chrono::steady_clock::now());
 	return Status::ok();
 }
 

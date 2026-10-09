@@ -96,9 +96,21 @@ int runHeadless(const rt::app::Options& opts) {
 		params.progressUser = &clock;
 	}
 	rt::render::Framebuffer framebuffer;
-	if (rt::Status status = rt::render::render(scene, framebuffer, params); status.isError()) {
+	// T064 : compteurs affiches en fin de rendu (`stderr`, sauf `--quiet`) et
+	// prets pour l'UI (T075 : `RenderStats` alimente la barre + rays/s).
+	rt::render::RenderStats stats;
+	if (rt::Status status = rt::render::render(scene, framebuffer, params, &stats);
+	    status.isError()) {
 		rt::log::error(status.message);
 		return 1;
+	}
+	if (!opts.quiet) {
+		std::fprintf(stderr,
+		             "[stats] rays=%lld objects=%d lights=%d threads=%d build=%.1fms "
+		             "render=%.1fms total=%.1fms rays/s=%.0f bvhBuilds=%zu\n",
+		             stats.primaryRays, stats.objects, stats.lights, stats.threadsUsed,
+		             stats.buildMs, stats.renderMs, stats.totalMs, stats.raysPerSec,
+		             stats.bvhBuilds);
 	}
 	// T034 : `--out` -> PNG (libpng) ou PPM (`.ppm` / fallback sans lib).
 	// Echec (repertoire inexistant, chemin vide) -> message + 1, sans crash.

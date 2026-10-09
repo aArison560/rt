@@ -34,6 +34,8 @@
 
 #include "rt/base/Status.hpp"
 
+#include <cstddef>
+
 namespace rt::scene {
 struct Scene;
 }
@@ -66,11 +68,32 @@ struct RenderParams {
 	void* progressUser = nullptr;
 };
 
+// Compteurs de rendu (T064) — remplis par `render()` quand `stats != nullptr`
+// (chemin froid, apres `waitIdle`, sans atomique : aucune allocation, aucun
+// verrou dans la boucle chaude). Prets pour l'UI (T075 : barre + rays/s) et
+// pour `docs/BENCH.md` (tableau threads/speedup, T064-T067).
+// `primaryRays` = `W*H*spp` (deterministe, pas de compteur par rayon) ;
+// `buildMs` = collecte scene + lumieres (BVH en T065) ; `renderMs` = boucle
+// tuiles ; `totalMs` = `buildMs + renderMs + present` ; `raysPerSec` =
+// `primaryRays / (renderMs/1000)` (0 si `renderMs <= 0`).
+struct RenderStats {
+	long long primaryRays = 0;
+	int objects = 0;
+	int lights = 0;
+	int threadsUsed = 1;
+	double buildMs = 0.0;
+	double renderMs = 0.0;
+	double totalMs = 0.0;
+	double raysPerSec = 0.0;
+	std::size_t bvhBuilds = 0;
+};
+
 // Rend `scene` dans `fb` (reallouee une seule fois si la resolution
 // change, chemin froid). `fb` contient l'image presente en sortie.
+// `stats` (optionnel, defaut `nullptr`) recoit les compteurs T064.
 // Erreur -> `Status` (parametres hors bornes, camera degeneree,
-// framebuffer invalide), jamais de `throw`, jamais de SDL.
+// framebuffer invalide, tache echouee), jamais de `throw`, jamais de SDL.
 [[nodiscard]] Status render(const scene::Scene& scene, Framebuffer& fb,
-                            const RenderParams& params);
+                            const RenderParams& params, RenderStats* stats = nullptr);
 
 } // namespace rt::render
