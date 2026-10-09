@@ -37,6 +37,7 @@ struct Options {
 	int tileCount = 1;
 	bool hasTile = false;
 	bool headless = false;
+	bool showWindow = false;
 	bool quiet = false;
 	bool showHelp = false;
 	bool showVersion = false;

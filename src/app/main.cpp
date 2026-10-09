@@ -1,11 +1,14 @@
 #include <chrono>
 #include <cstdio>
+#include <cstdlib>
 #include <exception>
 #include <iostream>
+#include <thread>
 
 #include "rt/app/Options.hpp"
 #include "rt/base/Log.hpp"
 #include "rt/io/ImageWriter.hpp"
+#include "rt/platform/Window.hpp"
 #include "rt/render/Framebuffer.hpp"
 #include "rt/render/Renderer.hpp"
 #include "rt/scene/Parser.hpp"
@@ -60,15 +63,19 @@ void onProgressPrint(int done, int total, void* user) noexcept {
 }
 
 // T026 : ligne de commande complete via `rt::app::parseOptions` (testable).
-// T035 : composition root headless — parse -> load -> render -> write -> exit.
-// Aucune initialisation SDL dans ce chemin (R6) : `--out` ecrit et sort,
-// `--headless` explicite le mode sans fenetre (defaut avec `--out`, et seul
-// mode jusqu'a T070). L'absence de `DISPLAY` n'est donc jamais un echec :
-// ce binaire ne lit meme pas cette variable. Succes -> 0, scene/rendu/
-// ecriture -> 1 avec message `fichier:ligne:colonne` pour la scene.
+// T035 : composition root headless — parse -> load -> trace -> write -> exit.
+// Aucune init video dans le chemin sans `--window` (R6) : `--out` ecrit et
+// sort, `--headless` explicite le mode sans fenetre. L'absence de `DISPLAY`
+// n'est donc jamais un echec sans `--window` : ce chemin ne lit meme pas
+// cette variable. Succes -> 0, scene/rendu/ecriture -> 1 avec message
+// `fichier:ligne:colonne` pour la scene.
 // CLI -> usage + 2. `./rt` sans argument -> usage + 2 (README.md).
 // T029 : affiche un resume `ok: ...` + `wrote <fichier>` sauf `--quiet`.
 // `--help`/`--version` -> 0 sans scene.
+// T070 : `--window` sans `--headless` ouvre une fenetre (voir `runWindowed`
+// ci-dessous, SDL isole dans `platform/`).
+int runWindowed(const rt::app::Options& opts, const rt::scene::Scene& scene,
+                rt::render::Framebuffer& framebuffer, int width, int height);
 int runHeadless(const rt::app::Options& opts) {
 	rt::Result<rt::scene::Scene> result = rt::scene::parseFile(opts.scenePath);
 	if (result.isError()) {
@@ -129,14 +136,51 @@ int runHeadless(const rt::app::Options& opts) {
 		}
 		std::cout << '\n';
 	}
+	// T070 : `--window` sans `--headless` -> montre le tampon persistant.
+	// Sans ce fanion, aucun appel video n'a eu lieu ci-dessus (R6).
+	if (opts.showWindow && !opts.headless) {
+		return runWindowed(opts, scene, framebuffer, width, height);
+	}
 	return 0;
 }
 
-// Parse CLI (T026) puis composition root headless (T035). Jusqu'a T070,
-// tout appel avec scene passe par `runHeadless` : `--headless` ou non,
-// avec ou sans `--out`, avec ou sans `DISPLAY` — aucun chemin n'ouvre
-// de fenetre. T070 branchera ici le mode fenetre quand `--out` est absent
-// et `--headless` n'est pas demande.
+// Parse CLI (T026) puis composition root (T035 + T070).
+// T035 : chemin sans fenetre — parse -> load -> trace -> write -> exit.
+// Aucune init video dans ce chemin (R6) : `--out` ecrit et sort,
+// `--headless` explicite le mode sans fenetre. L'absence de `DISPLAY` n'est
+// donc jamais un echec ici : ce chemin ne lit meme pas cette variable.
+// T070 : `--window` (sans `--headless`) ouvre une fenetre SDL (RAII),
+// y copie le tampon persistant puis boucle d'evenements jusqu'a fermeture.
+// `--headless` l'emporte sur `--window` (repli sans reseau ni ecran, T078).
+int runWindowed(const rt::app::Options& opts, const rt::scene::Scene& /*scene*/,
+                rt::render::Framebuffer& framebuffer, int width, int height) {
+	// T078 : sans ecran, echec propre immediat (pas de blocage, code 1).
+	// `SDL_VIDEODRIVER=dummy` reste accepte pour les tests (pilote factice).
+	if (std::getenv("DISPLAY") == nullptr && std::getenv("WAYLAND_DISPLAY") == nullptr &&
+	    std::getenv("SDL_VIDEODRIVER") == nullptr) {
+		rt::log::error("no DISPLAY: cannot open window (use --headless or --out)");
+		return 1;
+	}
+	rt::platform::Window window;
+	if (rt::Status status = window.init(width, height, opts.scenePath.c_str());
+	    status.isError()) {
+		rt::log::error(status.message);
+		return 1;
+	}
+	window.blit(framebuffer);
+	if (!opts.quiet) {
+		std::cout << "window: " << width << "x" << height << " (close to quit)\n";
+	}
+	while (!window.pollQuit()) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(16));
+	}
+	return 0;
+}
+
+// Parse CLI (T026) puis composition root headless (T035). Par defaut tout
+// appel avec scene passe par `runHeadless` : `--headless` ou non, avec ou
+// sans `--out`, avec ou sans `DISPLAY` — aucun chemin n'ouvre de fenetre
+// sauf `--window` sans `--headless` (T070, SDL isole dans `platform/`).
 int run(int argc, char** argv) {
 	rt::Result<rt::app::Options> parsed = rt::app::parseOptions(argc, argv);
 	if (parsed.isError()) {

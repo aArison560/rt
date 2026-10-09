@@ -534,6 +534,30 @@ Pour **prouver** les options en soutenance, le format doit piloter au moins :
 - **Preuve à préparer** : afficher le temps de redisplay vs temps de rendu dans un coin
   (ex. `render: 412 ms — redraw: 3 ms`) ou dans les logs → argument imparable pendant la démo.
 
+> Implémenté (T070) : `include/rt/platform/Window.hpp` + `src/platform/Window.cpp` —
+> `rt::platform::Window` (RAII : destructeur = `SDL_Destroy*` + `SDL_Quit`, sans fuite ;
+> `init(w,h,title)` 64..8192, minimum effectif 64x64, `SDL_SetWindowMinimumSize` ;
+> `blit(fb)` copie l'affichage persistant vers la texture puis presente ;
+> `shutdown()` idempotent). Aucun acces scene/moteur (seule `Framebuffer` lue).
+> `--window` (sans `--headless`) ouvre la fenetre depuis `src/app/main.cpp`
+> (`runWindowed`, boucle `pollQuit` + sommeil 16 ms) ; `--headless` l'emporte
+> (repli sans ecran, T078) et le chemin sans `--window` n'appelle jamais SDL (R6).
+> SDL2 via `pkg-config sdl2` (`Makefile` : `SDL_CFLAGS`/`SDL_LIBS`, repli
+> `SDL2_PREFIX` inchange). Tests : `tests/unit/test_window.cpp` (dimensions,
+> double init, blit+expose, `--window` reconnu ; sans `DISPLAY` : erreur propre,
+> jamais de crash).
+>
+> Implémenté (T071, R4) : chemin expose dédié — `Window::presentCached()`
+> (re-présente la texture conservée : `RenderClear` + `RenderCopy` +
+> `RenderPresent`, sans `UpdateTexture`, sans tampon, sans moteur) branché sur
+> `SDL_WINDOWEVENT_EXPOSED` et `SDL_WINDOWEVENT_RESIZED` dans `pollQuit()`
+> (recopie proportionnelle par étirement, aucun nouveau calcul, marqué dans le
+> code) ; `pollExpose()` pour les tests manuels. Garantie :
+> `grep -n "render(" src/platform/` vide (aucun appel au moteur dans ce chemin,
+> vérifié) ; preuve chronométrée en T072. Tests :
+> `tests/unit/test_expose.cpp` (1 `blit` + 3 exposes → `blitCount` fixe,
+> `exposeCount` = 3, tampon inchangé).
+
 ---
 
 ## 7. Interface, interaction et preuves en direct

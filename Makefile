@@ -19,7 +19,13 @@ OBJDIR	= obj
 PNG_CFLAGS := $(shell pkg-config --cflags libpng 2>/dev/null)
 PNG_LIBS   := $(shell pkg-config --libs libpng 2>/dev/null)
 
-SRCS	= main.cpp Options.cpp Directives.cpp Lexer.cpp Scene.cpp Parser.cpp Validator.cpp Framebuffer.cpp Camera.cpp Renderer.cpp Material.cpp PointLight.cpp DirectionalLight.cpp SpotLight.cpp ImageWriter.cpp Object.cpp Sphere.cpp Plane.cpp Cylinder.cpp Cone.cpp Bvh.cpp BvhCache.cpp ThreadPool.cpp
+# SDL2 (T070) : fenetre via pkg-config (voie normale `libsdl2-dev`), repli
+# local via SDL2_PREFIX (voir plus bas). Vide si absente : le build echoue
+# alors sur `#include <SDL.h>` avec un message clair (T070 exige SDL).
+SDL_CFLAGS := $(shell pkg-config --cflags sdl2 2>/dev/null)
+SDL_LIBS   := $(shell pkg-config --libs sdl2 2>/dev/null)
+
+SRCS	= main.cpp Options.cpp Directives.cpp Lexer.cpp Scene.cpp Parser.cpp Validator.cpp Framebuffer.cpp Camera.cpp Renderer.cpp Material.cpp PointLight.cpp DirectionalLight.cpp SpotLight.cpp ImageWriter.cpp Object.cpp Sphere.cpp Plane.cpp Cylinder.cpp Cone.cpp Bvh.cpp BvhCache.cpp ThreadPool.cpp Window.cpp
 OBJS	= $(SRCS:%.cpp=$(OBJDIR)/%.o)
 
 VPATH	= src/app src/base src/schema src/scene src/geometry src/shading \
@@ -28,11 +34,11 @@ VPATH	= src/app src/base src/schema src/scene src/geometry src/shading \
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(CC) $(CXXFLAGS) $(LDFLAGS) $(OBJS) $(PNG_LIBS) -o $(NAME)
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $(OBJS) $(PNG_LIBS) $(SDL_LIBS) -o $(NAME)
 
 $(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CC) $(CXXFLAGS) $(PNG_CFLAGS) -Iinclude -c $< -o $@
+	$(CC) $(CXXFLAGS) $(PNG_CFLAGS) $(SDL_CFLAGS) -Iinclude -c $< -o $@
 
 # --- Tests (Catch2 vendored, T017) -----------------------------------------------
 #
@@ -47,15 +53,15 @@ INTDIR      = tests/integration
 TESTBIN     = rt_test
 TEST_OBJDIR = obj-test
 
-TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp) $(wildcard $(INTDIR)/*.cpp) src/app/Options.cpp src/schema/Directives.cpp src/scene/Lexer.cpp src/scene/Scene.cpp src/scene/Parser.cpp src/scene/Validator.cpp src/render/Framebuffer.cpp src/render/Camera.cpp src/render/Renderer.cpp src/shading/Material.cpp src/lighting/PointLight.cpp src/lighting/DirectionalLight.cpp src/lighting/SpotLight.cpp src/io/ImageWriter.cpp src/geometry/Object.cpp src/geometry/Sphere.cpp src/geometry/Plane.cpp src/geometry/Cylinder.cpp src/geometry/Cone.cpp src/accel/Bvh.cpp src/accel/BvhCache.cpp src/sched/ThreadPool.cpp
+TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp) $(wildcard $(INTDIR)/*.cpp) src/app/Options.cpp src/schema/Directives.cpp src/scene/Lexer.cpp src/scene/Scene.cpp src/scene/Parser.cpp src/scene/Validator.cpp src/render/Framebuffer.cpp src/render/Camera.cpp src/render/Renderer.cpp src/shading/Material.cpp src/lighting/PointLight.cpp src/lighting/DirectionalLight.cpp src/lighting/SpotLight.cpp src/io/ImageWriter.cpp src/geometry/Object.cpp src/geometry/Sphere.cpp src/geometry/Plane.cpp src/geometry/Cylinder.cpp src/geometry/Cone.cpp src/accel/Bvh.cpp src/accel/BvhCache.cpp src/sched/ThreadPool.cpp src/platform/Window.cpp
 TEST_OBJS   = $(TEST_SRCS:%.cpp=$(TEST_OBJDIR)/%.o)
 
 $(TESTBIN): $(TEST_OBJS)
-	$(CC) $(CXXFLAGS) $(LDFLAGS) $(TEST_OBJS) $(PNG_LIBS) -o $(TESTBIN)
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $(TEST_OBJS) $(PNG_LIBS) $(SDL_LIBS) -o $(TESTBIN)
 
 $(TEST_OBJDIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CC) $(CXXFLAGS) $(PNG_CFLAGS) -Iinclude -Ithirdparty -c $< -o $@
+	$(CC) $(CXXFLAGS) $(PNG_CFLAGS) $(SDL_CFLAGS) -Iinclude -Ithirdparty -c $< -o $@
 
 # Build + exécution ; le code retour de Catch2 (≠ 0 si échec) est propagé.
 # Rejoue ensuite le jeu golden `tests/cases/` en headless (T027, < 10 s).

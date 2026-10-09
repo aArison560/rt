@@ -37,6 +37,7 @@ make fclean  # nettoyage complet
 | `--tile <k/n>` | `n` 1..64, `k` 0..n-1, 0 pixel de recouvrement |
 | `--width <n>`, `--height <n>` | alias de `[width height]` (1..8192) |
 | `--headless` | sans fenêtre (défaut avec `--out`) |
+| `--window` | ouvre une fenêtre SDL2 (T070, exige `DISPLAY`, ignoré si `--headless`) |
 | `--quiet`, `-q` | sortie réduite |
 | `--` | fin des options |
 

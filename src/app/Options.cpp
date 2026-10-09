@@ -121,6 +121,7 @@ std::string usageText() {
 	out += "  --tile <k/n>                 tile k of n, 0 pixel overlap (n 1..64, k 0..n-1)\n";
 	out += "  --width <n>, --height <n>    aliases for positional width/height (1..8192)\n";
 	out += "  --headless                   no window (default when --out is given)\n";
+	out += "  --window                     open an SDL window (T070, needs DISPLAY)\n";
 	out += "  --quiet, -q                  suppress progress output\n";
 	out += "  --help, -h                   show this help (exit 0)\n";
 	out += "  --version, -v                show version (exit 0)\n";
@@ -213,6 +214,11 @@ namespace {
 		}
 		if (arg == "--headless") {
 			opts.headless = true;
+			++cur.pos;
+			continue;
+		}
+		if (arg == "--window") {
+			opts.showWindow = true;
 			++cur.pos;
 			continue;
 		}
