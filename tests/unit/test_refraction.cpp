@@ -227,6 +227,12 @@ TEST_CASE("refraction (T057) : sortie objet = courbure exterieure coherente", "[
 TEST_CASE("refraction (T057) : pourcentage continu 0.5 = moyenne opaque/transmis", "[refraction][t057]") {
 	// `out = base*(1-T) + transmis*T` (avec `R = 0`, `base = direct`) : a 0.5,
 	// le centre vaut la moyenne des deux bornes (ponderation correcte).
+	// Note T058 (*Shadows and transparency*) : la face arrière vue par le rayon
+	// transmis est désormais éclaircie par l'ombre continue (`trans_eff > 0`
+	// à travers la face avant translucide, contre 0 en binaire T057), donc le
+	// 0.5 dépasse la moyenne naïve d'environ +0.12 (mesuré 0.539 vs 0.421).
+	// L'ordre (mat > demi > transmis) reste strict et prouve la pondération ;
+	// la moyenne exacte est vérifiée à 0.15 près (contre 0.05 en binaire).
 	rt::scene::Scene opaque = parseOrDie(sphereScene("transparency 0.0"), "mix0.rt");
 	rt::scene::Scene half = parseOrDie(sphereScene("transparency 0.5 ior 1.5"), "mix05.rt");
 	rt::scene::Scene full = parseOrDie(sphereScene("transparency 1.0 ior 1.5"), "mix1.rt");
@@ -244,9 +250,9 @@ TEST_CASE("refraction (T057) : pourcentage continu 0.5 = moyenne opaque/transmis
 	REQUIRE(c0.x > cHalf.x);
 	REQUIRE(cHalf.x > c1.x);
 	const float expected = (c0.x + c1.x) * 0.5F;
-	REQUIRE(cHalf.x == Catch::Approx(expected).margin(0.05));
+	REQUIRE(cHalf.x == Catch::Approx(expected).margin(0.15));
 	const float expectedG = (c0.y + c1.y) * 0.5F;
-	REQUIRE(cHalf.y == Catch::Approx(expectedG).margin(0.05));
+	REQUIRE(cHalf.y == Catch::Approx(expectedG).margin(0.15));
 }
 
 TEST_CASE("refraction (T057) : reflexion totale interne repliee, profondeur bornee", "[refraction][t057]") {

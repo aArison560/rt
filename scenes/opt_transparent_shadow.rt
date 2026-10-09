@@ -1,0 +1,73 @@
+# scenes/opt_transparent_shadow.rt — ombres et transparence (T058, *Shadows and transparency*).
+# L'ombre est moins sombre selon la transparence (`transparency`) et l'`ior`
+# (`trans_eff = transparency * 1.5/ior`, voir `render::shadowTransmittance`) :
+# sphère opaque rouge à gauche (`transparency 0` -> ombre noire, `vis = 0`) +
+# sphère de verre à droite (`transparency 0.8, ior 1.5` -> ombre éclaircie,
+# `vis ~ 0.8`) + sol gris. Même lumière ponctuelle latérale (4 5 3) : les deux
+# ombres portées sont côte à côte, la translucide nettement plus claire.
+# Le correcteur passe `transparency 0 -> 0.8` et relance : l'ombre s'éclaircit.
+# Toute directive existe dans `docs/FORMAT_SCENE.md` §5 (table `src/schema/`, R1).
+scene "opt_transparent_shadow" {
+    limits {
+        width 320
+        height 240
+        samples 4
+        max_depth 4
+        seed 0
+    }
+    camera {
+        position (0 2 6)
+        target (0 0 0)
+        up (0 1 0)
+        fov 50
+    }
+    background {
+        color (0.02 0.02 0.05)
+    }
+    ambient {
+        color (0.06 0.06 0.08)
+        intensity 1.0
+    }
+    lights {
+        light point "key" {
+            position (4 5 3)
+            color (1 1 1)
+            intensity 1.2
+        }
+    }
+    objects {
+        object plane "sol" {
+            point (0 -1 0)
+            normal (0 1 0)
+            material {
+                albedo (0.6 0.6 0.6)
+                diffuse 0.8
+                ambient 0.05
+            }
+        }
+        object sphere "opaque" {
+            center (-1.2 0 0)
+            radius 1
+            material {
+                albedo (0.9 0.1 0.1)
+                diffuse 0.7
+                ambient 0.1
+                specular 0.3
+                shininess 32
+            }
+        }
+        object sphere "verre" {
+            center (1.2 0 0)
+            radius 1
+            material {
+                albedo (0.9 0.95 1.0)
+                diffuse 0.3
+                ambient 0.05
+                specular 0.5
+                shininess 32
+                transparency 0.8
+                ior 1.5
+            }
+        }
+    }
+}

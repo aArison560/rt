@@ -184,9 +184,22 @@ Ordre recommandé (ROI décroissant). Les détails sont dans les sections suivan
 > symétriques : ponctuelle latérale droite +8.7 vs directionnelle −1.0,
 > ombres avec/sans occultrice 3.3 vs 164, `opt_parallel.rt` non-fond >5%).
 
-### 3.2 Direct light — ☐ Oui/Non
+### 3.2 Direct light — ☑ Oui (T058)
 
 **Critère** : « We're blinded by light spot facing us. »
+
+> Implémenté (T058) : `lighting::spotAxis()` (`normalize(target-position)`)
+> + `spotConeFactor()` (cône `cosAngle vs cos(angle)`, pénombre `smoothstep`
+> 0.02, hors cône = 0) branchés dans `render::shadeDirect()` (diffus +
+> speculaire pondérés par `att * cone * vis`, `noexcept` R2/R3) +
+> `spotBlindingFactor()` (observateur dans le cône ET rayon vers la source
+> dans 8° → `render::traceRay()` sur les manqués mélange fond + source
+> saturée, centre = blanc). `SpotLightParams` POD (R3) via `collectSpotLights`
+> (ordre fichier). Tests : `tests/unit/test_t058.cpp` (cône dedans/dehors +
+> dégénérés, face vs opposé : centre > 0.9 vs < 0.3, scènes de preuve rendent).
+> Preuve : `scenes/opt_direct.rt` (spot (0 1 -2) → caméra (0 1 5), 30°,
+> intensité 5, centre saturé 254 vs côtés sombres ; caméra à l'opposé =
+> sombre).
 
 - **État** ✖ (aucun `spot`).
 - **Implémentation** :
@@ -276,9 +289,24 @@ Ordre recommandé (ROI décroissant). Les détails sont dans les sections suivan
 > commentée). Preuve : `scenes/opt_glass.rt` (verre `transparency 0.9 ior 1.5`
 > + opaque, `sh scripts/render_all.sh` → `docs/preuves/opt_glass.png`).
 
-### 4.2 Shadows and transparency — ☐ Oui/Non
+### 4.2 Shadows and transparency — ☑ Oui (T058)
 
 **Critère** : l'ombre est **plus ou moins assombrie** selon la transparence de l'objet.
+
+> Implémenté (T058) : `render::shadowTransmittance()` remplace le test binaire
+> (`isOccluded`) — `transmit = 1`, pour chaque occulteur sur le trajet :
+> `trans_eff = clamp(transparency,0,1) * clamp(1.5/ior,0.5,1)` (opaque = 0
+> immédiat, octet-identique à T052 ; verre `0.8/1.5` ≈ 0.8, dense `0.8/3.0` =
+> 0.4 ; 8 occulteurs max, `P+N*eps`, `tMax = dist-eps`, `noexcept` R2/R3),
+> `contribution *= transmit` (diffus + speculaire, ponctuelles +
+> directionnelles + spots). Note : le guide proposait `visibility *=
+> (1-transparency)` (inversé : opaque = 1 = plein jour) — implémenté
+> `transmit *= transparency_eff` (opaque = 0 = ombre, correct). Tests :
+> `tests/unit/test_t058.cpp` (même sphère opaque vs `0.8/1.5` : moyenne ombre
+> +0.03, `1.5` vs `3.0` : +0.005) + ajustement `test_refraction.cpp` (face
+> arrière éclaircie +0.12, marge 0.05 → 0.15 documentée). Preuve :
+> `scenes/opt_transparent_shadow.rt` (opaque gauche/ombre noire + verre
+> droite/ombre claire, même spot latéral).
 
 - **Implémentation** : passer d'un test binaire à une **visibilité continue** :
   ```

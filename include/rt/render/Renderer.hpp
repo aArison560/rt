@@ -1,17 +1,21 @@
 #pragma once
 
 // Boucle de rendu mono-thread (T032) + multi-objets (T046) + reflexion (T056)
-// + refraction (T057) — sans SDL (R6).
+// + refraction (T057) + ombres transparentes et spot aveuglant (T058)
+// — sans SDL (R6).
 // `render()` parcourt les pixels, genere le rayon via `Camera` (T031),
 // cherche l'intersection la plus proche parmi tous les objets (T046 : tri
 // par `t`, `tMax` resserre ; objets directs + groupes aplatis, 4 types en
 // coexistence, doublons du meme type autorises ; `tMin` = 0.001), ombre
 // via Lambert (T033 : materiau de l'objet touche + ambiance + **toutes** les
 // ponctuelles avec position, T052 : multi-spot melange, shadow ray `tMin`
-// eps anti-acne + attenuation T051, miss -> fond de scene) + speculaire
-// Blinn-Phong (T053) + reflexion bornee (T056 : `reflectivity` 0 = mat /
-// 1 = miroir pur, `out = direct*(1-R) + reflechi*R`, `maxDepth` 0..32)
-// + refraction bornee (T057 : Descartes `n1*sin(t1) = n2*sin(t2)`,
+// eps anti-acne + attenuation T051, miss -> fond de scene) + ombres continues
+// (T058 : `shadowTransmittance`, translucide moins sombre qu'opaque,
+// `trans_eff = transparency * 1.5/ior`) + spots orientés (T058 : cône
+// `spotConeFactor` + aveuglement `spotBlindingFactor` sur les manqués) +
+// speculaire Blinn-Phong (T053) + reflexion bornee (T056 : `reflectivity`
+// 0 = mat / 1 = miroir pur, `out = direct*(1-R) + reflechi*R`, `maxDepth`
+// 0..32) + refraction bornee (T057 : Descartes `n1*sin(t1) = n2*sin(t2)`,
 // `eta = frontFace ? 1/ior : ior`, `out = base*(1-T) + transmis*T`,
 // `T = transparency` 0 = opaque / 1 = transmis pur, `ior = 1` = sans
 // deviation, repli miroir en reflexion totale interne),

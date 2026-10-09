@@ -85,6 +85,25 @@ struct DirectionalLightParams {
 static_assert(std::is_trivially_copyable_v<DirectionalLightParams>,
               "DirectionalLightParams doit rester POD (R3)");
 
+struct SpotLightParams {
+	// Spot orienté (T058, *Direct light*, FORMAT §5.4) : `position` (source),
+	// `target` (point visé, requis schéma), `angle` (demi-ouverture 1..90°),
+	// `color`/`intensity`/`attenuation`/`range` comme la ponctuelle (T051).
+	// Le cône est évalué par `lighting::spotConeFactor()` dans `render/` ;
+	// l'aveuglement face caméra par `lighting::spotBlindingFactor()` sur les
+	// rayons manqués. POD (R3, copie par lumière sans alloc).
+	Vec3 position = Vec3(0.0F, 0.0F, 0.0F);
+	Vec3 color = Vec3(1.0F, 1.0F, 1.0F);
+	float intensity = 1.0F;
+	Vec3 target = Vec3(0.0F, 0.0F, 0.0F);
+	float angle = 30.0F;
+	Vec3 attenuation = Vec3(1.0F, 0.0F, 0.0F);
+	float range = 0.0F;
+};
+
+static_assert(std::is_trivially_copyable_v<SpotLightParams>,
+              "SpotLightParams doit rester POD (R3)");
+
 // Sature chaque canal dans [0,1] (NaN/Inf -> 0). `noexcept`, sans allocation.
 [[nodiscard]] Vec3 saturate(Vec3 color) noexcept;
 

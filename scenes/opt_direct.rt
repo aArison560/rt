@@ -1,0 +1,64 @@
+# scenes/opt_direct.rt — lumière directe aveuglante (T058, *Direct light*).
+# Spot orienté vers la caméra/observateur qui aveugle : position (0 1 -2)
+# derrière la scène, cible (0 1 5) = position de la caméra, demi-ouverture 30°,
+# intensité 5 (sature en blanc, voir `lighting::spotConeFactor` +
+# `lighting::spotBlindingFactor` + `render::traceRay` sur les manqués).
+# Au centre de l'image le rayon manqué vise la source dont le cône éclaire
+# l'observateur -> blanc saturé (aveuglement). Sur les côtés (sphère latérale,
+# sol lointain) hors cône -> ambiant seul, silhouettes sombres : le cône est
+# prouvé. Le correcteur tourne la caméra à l'opposé du spot et relance :
+# l'aveuglement disparaît (image sombre).
+# Toute directive existe dans `docs/FORMAT_SCENE.md` §5 (table `src/schema/`, R1).
+scene "opt_direct" {
+    limits {
+        width 320
+        height 240
+        samples 4
+        max_depth 4
+        seed 0
+    }
+    camera {
+        position (0 1 5)
+        target (0 1.5 0)
+        up (0 1 0)
+        fov 50
+    }
+    background {
+        color (0.02 0.02 0.05)
+    }
+    ambient {
+        color (0.06 0.06 0.08)
+        intensity 1.0
+    }
+    lights {
+        light spot "face" {
+            position (0 1 -2)
+            target (0 1 5)
+            angle 30
+            color (1 1 1)
+            intensity 5.0
+        }
+    }
+    objects {
+        object plane "sol" {
+            point (0 -1 0)
+            normal (0 1 0)
+            material {
+                albedo (0.6 0.6 0.6)
+                diffuse 0.8
+                ambient 0.05
+            }
+        }
+        object sphere "lateral" {
+            center (1.5 0 0)
+            radius 0.8
+            material {
+                albedo (0.9 0.1 0.1)
+                diffuse 0.7
+                ambient 0.1
+                specular 0.5
+                shininess 32
+            }
+        }
+    }
+}

@@ -1,20 +1,25 @@
 // Boucle de rendu mono-thread (T032) + multi-objets (T046) + reflexion (T056)
-// + refraction (T057) — implementation sans exception, sans SDL (R6) et sans
-// allocation dans la boucle (R3). Voir `include/rt/render/Renderer.hpp` pour
-// le contrat et `docs/ARCHITECTURE.md` §4 pour le pipeline (camera ->
-// intersection -> framebuffer). T046 branche la recherche d'intersection :
-// tous les objets de la scene (objets directs + groupes aplatis, 4 types
-// coexistant, doublons autorises) sont convertis une fois en
-// `geometry::AObject` (chemin froid, avant la boucle), puis chaque rayon
-// cherche le plus proche (`tri par t`, `tMax` resserre). Hit -> Lambert
-// (T033) avec le materiau de l'objet touche + ambiance + **toutes** les
-// ponctuelles (T052 : multi-spot, ombres par shadow ray `tMin` eps anti-acne,
-// attenuation T051 par `lighting::attenuationFactor`) + speculaire
-// Blinn-Phong (T053 : `specular`, `shininess`, `V = -ray.dir`, sature en
-// blanc) + reflexion bornee (T056 : `reflectivity` 0 = mat / 1 = miroir pur,
+// + refraction (T057) + ombres transparentes et spot aveuglant (T058) —
+// implementation sans exception, sans SDL (R6) et sans allocation dans la
+// boucle (R3). Voir `include/rt/render/Renderer.hpp` pour le contrat et
+// `docs/ARCHITECTURE.md` §4 pour le pipeline (camera -> intersection ->
+// framebuffer). T046 branche la recherche d'intersection : tous les objets de
+// la scene (objets directs + groupes aplatis, 4 types coexistant, doublons
+// autorises) sont convertis une fois en `geometry::AObject` (chemin froid,
+// avant la boucle), puis chaque rayon cherche le plus proche (`tri par t`,
+// `tMax` resserre). Hit -> Lambert (T033) avec le materiau de l'objet touche
+// + ambiance + **toutes** les ponctuelles (T052 : multi-spot, shadow ray
+// `tMin` eps anti-acne, attenuation T051) + directionnelles (T055) + spots
+// orientés (T058 : cône `spotConeFactor`, ombre continue, attenuation) +
+// ombres continues (T058 : `shadowTransmittance`, translucide moins sombre
+// qu'opaque, `trans_eff = transparency * 1.5/ior`) + speculaire Blinn-Phong
+// (T053 : `specular`, `shininess`, `V = -ray.dir`, sature en blanc) +
+// reflexion bornee (T056 : `reflectivity` 0 = mat / 1 = miroir pur,
 // `max_depth` 0..32) + refraction bornee (T057 : Descartes `n1*sin(t1) =
 // n2*sin(t2)`, `eta = frontFace ? 1/ior : ior`, `transparency` 0 = opaque /
-// 1 = transmis pur, repli miroir en reflexion totale interne) ; miss -> fond.
+// 1 = transmis pur, repli miroir en reflexion totale interne) ; miss -> fond
+// ou aveuglement spot (T058 : `spotBlindingFactor`, rayon vers la source dont
+// le cône éclaire l'observateur -> blanc saturé).
 // Progressif T036 : batches externes + `seedFor` absolu + jitter sous-pixel
 // (AA en T120) + dithering deterministe minimal (moyenne -> 0 quand spp
 // grandit, conservé pour hit et miss afin que `spp 64 < spp 1` reste vrai).
@@ -34,6 +39,7 @@
 #include "rt/geometry/Sphere.hpp"
 #include "rt/lighting/DirectionalLight.hpp"
 #include "rt/lighting/PointLight.hpp"
+#include "rt/lighting/SpotLight.hpp"
 #include "rt/render/Camera.hpp"
 #include "rt/render/Framebuffer.hpp"
 #include "rt/scene/Scene.hpp"
@@ -124,16 +130,19 @@ constexpr Real kPrimaryTMin = 0.001F;
 	return out;
 }
 
-// T052 : toutes les lumieres avec position (point/spot traites comme
-// ponctuelles, cone en T058). Ordre du fichier conserve (melange
-// deterministe). Chemin froid : `reserve(lights.size())`, aucune realloc
-// courante. Les directionnelles (sans position) sont collectees en T055
-// (`collectDirectionalLights`, paralleles, pas d'attenuation).
+// T052/T058 : ponctuelles pures (`type point` et `area` traitée comme
+// ponctuelle, ordre du fichier conservé). Les spots (`type spot`) sont
+// collectés à part en T058 (`collectSpotLights`, cône + aveuglement) et les
+// directionnelles en T055. Chemin froid : `reserve(lights.size())`.
 void collectPointLights(const scene::Scene& scene,
                         std::vector<shading::PointLightParams>& out) {
 	out.clear();
 	out.reserve(scene.lights.size());
 	for (const scene::Light& light : scene.lights) {
+		if (light.type == scene::LightType::Spot ||
+		    light.type == scene::LightType::Directional) {
+			continue;
+		}
 		if (!light.hasPosition) {
 			continue;
 		}
@@ -141,6 +150,34 @@ void collectPointLights(const scene::Scene& scene,
 		params.position = light.position;
 		params.color = light.color;
 		params.intensity = light.intensity;
+		params.attenuation = light.attenuation;
+		params.range = light.range;
+		out.push_back(params);
+	}
+}
+
+// T058 : spots (`type spot`, `position` + `target` + `angle` validés en T024 :
+// `position` requise, `target` requise). Cône évalué par
+// `lighting::spotConeFactor()` dans `shadeDirect`, aveuglement par
+// `lighting::spotBlindingFactor()` sur les rayons manqués. Ordre du fichier
+// conservé (mélange déterministe). Chemin froid.
+void collectSpotLights(const scene::Scene& scene,
+                       std::vector<shading::SpotLightParams>& out) {
+	out.clear();
+	out.reserve(scene.lights.size());
+	for (const scene::Light& light : scene.lights) {
+		if (light.type != scene::LightType::Spot) {
+			continue;
+		}
+		if (!light.hasPosition || !light.hasTarget) {
+			continue;
+		}
+		shading::SpotLightParams params;
+		params.position = light.position;
+		params.color = light.color;
+		params.intensity = light.intensity;
+		params.target = light.target;
+		params.angle = light.angle;
 		params.attenuation = light.attenuation;
 		params.range = light.range;
 		out.push_back(params);
@@ -285,46 +322,119 @@ void collectSceneObjects(const scene::Scene& scene,
 	return hit;
 }
 
-// T052 : test d'occlusion pour shadow ray (ARCHITECTURE.md §4.5).
-// `origin` deja decale (`P + N*eps`), `dir` normalisee vers la lumiere,
-// `tMax = dist - eps` (la source elle-meme n'occlut pas). `tMin = eps`
-// (anti-acne) + profondeur bornee par `tMax` : aucun `throw` (R2), aucune
-// allocation (R3, `HitRecord` sur pile). `true` = lumiere coupee.
-[[nodiscard]] bool isOccluded(const std::vector<std::unique_ptr<geometry::AObject>>& objs,
-                              Vec3 origin, Vec3 dir, Real tMax) noexcept {
+// T052/T058 : transmittance d'un shadow ray (ARCHITECTURE.md §4.5).
+// `origin` déjà décalé (`P + N*eps`), `dir` normalisée vers la lumière,
+// `tMax = dist - eps` (la source elle-même n'occlut pas).
+// T052 : binaire (opaque = 0). T058 (*Shadows and transparency*) : continue —
+// chaque occulteur transparent laisse passer une fraction :
+// `trans_eff = clamp(transparency,0,1) * iorFactor` avec
+// `iorFactor = clamp(1.5/ior, 0.5, 1)` (verre dense `ior=3` absorbe ~2× plus
+// que `ior=1.5`, `ior=1` = sans atténuation ior ; Descartes `n1*sin(t1) =
+// n2*sin(t2)` explique la déviation, ici on modèle l'absorption/Fresnel
+// moyenne par ce facteur documenté), `transmit *= trans_eff` sur tout le
+// trajet (8 occulteurs max, boucle bornée, anti-boucle infinie).
+// Opaque (`transparency == 0`) -> 0 immédiat (octet-identique à T052).
+// `tMax <= eps` / dégénéré -> 1 (pas d'ombre, défini). `noexcept`, sans
+// allocation (R2/R3, `HitRecord` sur pile).
+[[nodiscard]] float shadowTransmittance(
+    const std::vector<std::unique_ptr<geometry::AObject>>& objs,
+    const std::vector<shading::MaterialParams>* mats, Vec3 origin, Vec3 dir,
+    Real tMax) noexcept {
 	if (!(tMax > kPrimaryTMin)) {
-		return false;
+		return 1.0F;
+	}
+	if (mats == nullptr) {
+		return 1.0F;
 	}
 	if (!std::isfinite(origin.x) || !std::isfinite(origin.y) || !std::isfinite(origin.z) ||
 	    !std::isfinite(dir.x) || !std::isfinite(dir.y) || !std::isfinite(dir.z) ||
 	    !std::isfinite(tMax)) {
-		return false;
+		return 1.0F;
 	}
 	const Real dirLenSq = dot(dir, dir);
 	if (!std::isfinite(dirLenSq) || dirLenSq <= kEpsilon * kEpsilon) {
-		return false;
+		return 1.0F;
 	}
-	HitRecord tmp;
-	return findClosestHit(objs, Ray(origin, dir), kPrimaryTMin, tMax, tmp);
+	float transmit = 1.0F;
+	Vec3 curOrigin = origin;
+	Real curTMax = tMax;
+	for (int iter = 0; iter < 8; ++iter) {
+		if (!(curTMax > kPrimaryTMin)) {
+			break;
+		}
+		HitRecord rec;
+		if (!findClosestHit(objs, Ray(curOrigin, dir), kPrimaryTMin, curTMax, rec)) {
+			break;
+		}
+		float transp = 0.0F;
+		float ior = 1.5F;
+		if (rec.materialIndex < mats->size()) {
+			const shading::MaterialParams& mat = (*mats)[rec.materialIndex];
+			if (std::isfinite(mat.transparency) && mat.transparency > 0.0F) {
+				transp = mat.transparency > 1.0F ? 1.0F : mat.transparency;
+			}
+			if (std::isfinite(mat.ior) && mat.ior >= 1.0F && mat.ior <= 3.0F) {
+				ior = mat.ior;
+			}
+		}
+		if (!(transp > 0.0F)) {
+			return 0.0F;
+		}
+		float iorFactor = 1.5F / ior;
+		if (!std::isfinite(iorFactor)) {
+			iorFactor = 1.0F;
+		}
+		if (iorFactor > 1.0F) {
+			iorFactor = 1.0F;
+		} else if (iorFactor < 0.5F) {
+			iorFactor = 0.5F;
+		}
+		float eff = transp * iorFactor;
+		if (!(eff > 0.0F)) {
+			return 0.0F;
+		}
+		if (eff > 1.0F) {
+			eff = 1.0F;
+		}
+		transmit *= eff;
+		if (!(transmit > 0.003F)) {
+			return 0.0F;
+		}
+		if (!std::isfinite(rec.t) || !(rec.t > 0.0F) || !std::isfinite(rec.point.x)) {
+			break;
+		}
+		curTMax = curTMax - rec.t - kPrimaryTMin;
+		curOrigin = rec.point + dir * kPrimaryTMin;
+	}
+	if (!std::isfinite(transmit) || transmit < 0.0F) {
+		return 0.0F;
+	}
+	if (transmit > 1.0F) {
+		return 1.0F;
+	}
+	return transmit;
 }
 
-// T056 : contexte de trace (pile uniquement, R3). Pointeurs vers les
+// T056/T058 : contexte de trace (pile uniquement, R3). Pointeurs vers les
 // tableaux du chemin froid (aucune copie par rayon), ambiant + fond par
 // valeur (petits POD), `maxDepth` borne 0..32 (profondeur de recursion).
+// T058 ajoute `spots` (spots orientés, cône + aveuglement).
 struct TraceCtx {
 	const std::vector<std::unique_ptr<geometry::AObject>>* objs = nullptr;
 	const std::vector<shading::MaterialParams>* mats = nullptr;
 	const std::vector<shading::PointLightParams>* points = nullptr;
 	const std::vector<shading::DirectionalLightParams>* dirs = nullptr;
+	const std::vector<shading::SpotLightParams>* spots = nullptr;
 	shading::AmbientParams ambient;
 	Vec3 background;
 	int maxDepth = 4;
 };
 
-// T056 : éclairage direct d'un hit (ambiant + multi-spot T052 avec ombres
-// et attenuation T051 + speculaire Blinn-Phong T053). Extrait tel quel de
-// la boucle T046/T052/T055 : `reflectivity == 0` rend donc l'octet identique
-// a l'ancien chemin (DoD borne basse). `noexcept`, sans allocation (R2/R3).
+// T056-T058 : éclairage direct d'un hit (ambiant + multi-spot T052 avec ombres
+// continues T058 et atténuation T051 + directionnelles T055 + spots T058 avec
+// cône + speculaire Blinn-Phong T053). `reflectivity == 0` + `transparency ==
+// 0` + 0 spot rend donc l'octet identique à l'ancien chemin (DoD bornes).
+// `noexcept`, sans allocation (R2/R3).
 [[nodiscard]] Vec3 shadeDirect(const HitRecord& rec, Vec3 viewDir, const TraceCtx& ctx,
                                const shading::MaterialParams& mat) noexcept {
 	shading::PointLightParams zeroLight;
@@ -356,11 +466,12 @@ struct TraceCtx {
 		}
 		const Vec3 lightDir = toLight / dist;
 		const Real tMax = static_cast<Real>(dist) - kPrimaryTMin;
-		if (isOccluded(*ctx.objs, shadowOrigin, lightDir, tMax)) {
+		const float vis = shadowTransmittance(*ctx.objs, ctx.mats, shadowOrigin, lightDir, tMax);
+		if (!(vis > 0.0F) || !std::isfinite(vis)) {
 			continue;
 		}
 		shading::PointLightParams effLight = light;
-		effLight.intensity = light.intensity * att;
+		effLight.intensity = light.intensity * att * vis;
 		total += shading::shadeLambert(matNoAmb, rec.normal, rec.point, effLight,
 		                               ctx.ambient);
 		total += shading::specularTerm(rec.normal, viewDir, lightDir, mat,
@@ -374,16 +485,70 @@ struct TraceCtx {
 		if (!std::isfinite(dirLight.intensity) || !(dirLight.intensity > 0.0F)) {
 			continue;
 		}
-		if (isOccluded(*ctx.objs, shadowOrigin, lightDir, kInfinity)) {
+		const float vis =
+		    shadowTransmittance(*ctx.objs, ctx.mats, shadowOrigin, lightDir, kInfinity);
+		if (!(vis > 0.0F) || !std::isfinite(vis)) {
 			continue;
 		}
 		shading::AmbientParams nullAmbient;
 		nullAmbient.color = Vec3{};
 		nullAmbient.intensity = 0.0F;
-		total += shading::shadeLambertDirectional(matNoAmb, rec.normal, dirLight,
+		shading::DirectionalLightParams effDir = dirLight;
+		effDir.intensity = dirLight.intensity * vis;
+		total += shading::shadeLambertDirectional(matNoAmb, rec.normal, effDir,
 		                                          nullAmbient);
-		total += shading::specularTerm(rec.normal, viewDir, lightDir, mat,
-		                               dirLight.color, dirLight.intensity);
+		total += shading::specularTerm(rec.normal, viewDir, lightDir, mat, effDir.color,
+		                               effDir.intensity);
+	}
+	// T058 : spots orientés (cône `spotConeFactor` + ombre continue + atténuation).
+	// Hors cône (`cone == 0`) -> aucune contribution (défini, pas de fuite).
+	for (const shading::SpotLightParams& spot : *ctx.spots) {
+		const Vec3 toLight = spot.position - rec.point;
+		if (!std::isfinite(toLight.x) || !std::isfinite(toLight.y) ||
+		    !std::isfinite(toLight.z)) {
+			continue;
+		}
+		const Real distSq = dot(toLight, toLight);
+		if (!std::isfinite(distSq) || distSq <= kEpsilon * kEpsilon) {
+			continue;
+		}
+		const float dist = static_cast<float>(length(toLight));
+		if (!std::isfinite(dist) || dist <= kPrimaryTMin) {
+			continue;
+		}
+		const float cone =
+		    lighting::spotConeFactor(rec.point, spot.position, spot.target, spot.angle);
+		if (!(cone > 0.0F) || !std::isfinite(cone)) {
+			continue;
+		}
+		const float att =
+		    lighting::attenuationFactor(spot.attenuation, dist, spot.range);
+		if (!(att > 0.0F) || !std::isfinite(att)) {
+			continue;
+		}
+		const Vec3 lightDir = toLight / dist;
+		const Real tMax = static_cast<Real>(dist) - kPrimaryTMin;
+		const float vis = shadowTransmittance(*ctx.objs, ctx.mats, shadowOrigin, lightDir, tMax);
+		if (!(vis > 0.0F) || !std::isfinite(vis)) {
+			continue;
+		}
+		if (!std::isfinite(spot.intensity) || !(spot.intensity > 0.0F)) {
+			continue;
+		}
+		const float effIntensity = spot.intensity * att * cone * vis;
+		if (!(effIntensity > 0.0F) || !std::isfinite(effIntensity)) {
+			continue;
+		}
+		shading::PointLightParams effLight;
+		effLight.position = spot.position;
+		effLight.color = spot.color;
+		effLight.intensity = effIntensity;
+		effLight.attenuation = Vec3(1.0F, 0.0F, 0.0F);
+		effLight.range = 0.0F;
+		total += shading::shadeLambert(matNoAmb, rec.normal, rec.point, effLight,
+		                               ctx.ambient);
+		total += shading::specularTerm(rec.normal, viewDir, lightDir, mat, effLight.color,
+		                               effLight.intensity);
 	}
 	return shading::saturate(total);
 }
@@ -412,11 +577,44 @@ struct TraceCtx {
 // repli miroir (100 % reflechi, `transmis = reflechi` ou trace du miroir si
 // `R = 0`, jamais de trou noir ni de NaN). Degeneres (normale nulle,
 // direction nulle/NaN, `depth >= maxDepth`) -> `direct`/`base` seul, defini.
-// `noexcept`, sans allocation (R2/R3, `HitRecord` sur pile). Les ombres
-// restent binaires (objets transparents = occultants, T058 affinera).
+// `noexcept`, sans allocation (R2/R3, `HitRecord` sur pile). T058 : ombres
+// continues (`shadowTransmittance`, translucide = moins sombre qu'opaque,
+// proportionnel à `transparency` × `1.5/ior`) + spots orientés (cône dans
+// `shadeDirect`, aveuglement sur les manqués ci-dessous).
 [[nodiscard]] Vec3 traceRay(const Ray& ray, int depth, const TraceCtx& ctx) noexcept {
 	HitRecord rec;
 	if (!findClosestHit(*ctx.objs, ray, kPrimaryTMin, kInfinity, rec)) {
+		// T058 (*Direct light*) : spot face à l'observateur qui aveugle.
+		// Le rayon manqué qui vise une source dont le cône éclaire
+		// l'observateur sature en blanc (mélange fond + source selon
+		// `spotBlindingFactor`, centre = 1). Sans spot : fond seul
+		// (octet-identique à T052-T057). `noexcept`, sans allocation.
+		float bestBlind = 0.0F;
+		Vec3 blindColor{};
+		for (const shading::SpotLightParams& spot : *ctx.spots) {
+			if (!std::isfinite(spot.intensity) || !(spot.intensity > 0.0F)) {
+				continue;
+			}
+			const float f = lighting::spotBlindingFactor(ray.origin, ray.direction,
+			                                              spot.position, spot.target,
+			                                              spot.angle);
+			if (!(f > 0.0F) || !std::isfinite(f)) {
+				continue;
+			}
+			if (f > bestBlind) {
+				bestBlind = f > 1.0F ? 1.0F : f;
+				const float boost = spot.intensity > 1.0F ? spot.intensity : 1.0F;
+				blindColor = Vec3(spot.color.x * boost, spot.color.y * boost,
+				                  spot.color.z * boost);
+			}
+		}
+		if (bestBlind > 0.0F) {
+			const float inv = 1.0F - bestBlind;
+			const Vec3 mixed = Vec3(ctx.background.x * inv + blindColor.x * bestBlind,
+			                        ctx.background.y * inv + blindColor.y * bestBlind,
+			                        ctx.background.z * inv + blindColor.z * bestBlind);
+			return shading::saturate(mixed);
+		}
 		return ctx.background;
 	}
 	shading::MaterialParams mat;
@@ -551,6 +749,8 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	collectPointLights(scene, pointLights);
 	std::vector<shading::DirectionalLightParams> dirLights;
 	collectDirectionalLights(scene, dirLights);
+	std::vector<shading::SpotLightParams> spotLights;
+	collectSpotLights(scene, spotLights);
 	const shading::AmbientParams ambient = toAmbientParams(scene);
 	// Boucle chaude : registres + pile uniquement (R3), batches externes (T036).
 	// Chaque echantillon `s` utilise `rngFor(x, y, s, seed)` (coordonnees
@@ -561,9 +761,10 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	// (1 appel par batch, pas par pixel : hors hot path fin).
 	// T056 : l'eclairage passe par `traceRay()` (direct + reflexion bornee
 	// par `maxDepth`, `reflectivity` 0 = mat / 1 = miroir pur).
+	// T058 : + ombres continues + spots (cône + aveuglement).
 	const auto sceneSeed = static_cast<std::uint32_t>(params.seed);
-	const TraceCtx traceCtx{&worldObjs, &worldMats, &pointLights, &dirLights, ambient,
-	                        scene.background.color, params.maxDepth};
+	const TraceCtx traceCtx{&worldObjs, &worldMats, &pointLights, &dirLights, &spotLights,
+	                        ambient, scene.background.color, params.maxDepth};
 	for (int s = 0; s < params.spp; ++s) {
 		for (int y = 0; y < params.height; ++y) {
 			for (int x = 0; x < params.width; ++x) {
