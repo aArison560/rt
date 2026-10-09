@@ -46,6 +46,7 @@
 #include "rt/render/Framebuffer.hpp"
 #include "rt/io/Texture.hpp"
 #include "rt/scene/Scene.hpp"
+#include "rt/shading/Pattern.hpp"
 #include "rt/sched/ThreadPool.hpp"
 #include "rt/shading/Material.hpp"
 
@@ -130,6 +131,13 @@ constexpr Real kPrimaryTMin = 0.001F;
 	out.hasPattern = src.pattern.present;
 	out.texScale = src.texture.scale;
 	out.texOffset = src.texture.offset;
+	// T105 : `pattern.type` (schema `sine|checker|perlin`) -> kind POD.
+	// `present == false` -> 0 (`None`), evalue dans `traceRay` (damier
+	// maintenant, `sine`/`perlin` en T106-T107 laissent l'albedo inchange).
+	out.patternKind =
+	    static_cast<int>(shading::patternKindFrom(src.pattern.type.c_str(), src.pattern.present));
+	out.patternScale = src.pattern.scale;
+	out.patternFrequency = src.pattern.frequency;
 	return out;
 }
 
@@ -695,6 +703,14 @@ struct TraceCtx {
 			mat.albedo =
 			    io::sampleTexture(*tex, rec.uv.x * sx + ox, rec.uv.y * sy + oy);
 		}
+	}
+	// T105 : damier procedural sur l'albedo courant (texel T103 ou albedo
+	// fichier). `kind == 1` (`checker`) : alternance sombre/clair en UV
+	// objet (espace objet ; l'option monde = UV derivee position, future).
+	// `sine`/`perlin` (T106-T107) : ignores ici (repli albedo inchange).
+	if (mat.patternKind == static_cast<int>(shading::PatternKind::Checker)) {
+		mat.albedo = shading::checkerAlbedo(mat.albedo, rec.uv, mat.patternScale,
+		                                    mat.patternFrequency);
 	}
 	const Vec3 viewDir = ray.direction * -1.0F;
 	const Vec3 direct = shadeDirect(rec, viewDir, ctx, mat);

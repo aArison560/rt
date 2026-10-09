@@ -56,6 +56,14 @@ struct MaterialParams {
 	// Defauts : echelle (1,1), decalage (0,0) = UV bruts (T103).
 	Vec3 texScale = Vec3(1.0F, 1.0F, 0.0F);
 	Vec3 texOffset = Vec3(0.0F, 0.0F, 0.0F);
+	// Motif procedural (T105-T107, *Disruptions*) : kind depuis
+	// `scene::PatternRef.type` (`checker`/`sine`/`perlin`), `scale` et
+	// `frequency` (> 0, bornes R1). `None` = pas de motif. Evalue dans
+	// `render/` apres la texture (compose : damier sur texel ou albedo).
+	// Toujours POD (R3).
+	int patternKind = 0;
+	float patternScale = 1.0F;
+	float patternFrequency = 1.0F;
 };
 
 static_assert(std::is_trivially_copyable_v<MaterialParams>,

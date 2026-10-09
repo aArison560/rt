@@ -402,6 +402,10 @@ color = material.texture->sample(fract(u), fract(v));   // répétition tiling
   **Perlin + damier + sinus** pour prendre 4 points.
 - **Effort** : 2–3 j pour 4 points.
 - **Preuve** : `opt_disruptions.rt` avec 4 objets côte à côte montrant chacun un pattern.
+- **État (T105)** : `shading/Pattern.{hpp,cpp}` — `checkerAlbedo()` (espace UV objet, parité
+  `(xi+yi)&1` robuste aux négatifs, `scale*frequency`, sombre = `*0.15`, `noexcept` R3) +
+  `render/` (après texture, composable) ; `scenes/opt_checker.rt` (plan ×4 + sphère ×6) ;
+  tests `tests/unit/test_pattern.cpp` (`[t105]` : alternance + taille + scène plan/sphère).
 
 ---
 
