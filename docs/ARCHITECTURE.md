@@ -566,6 +566,18 @@ outils ») imposent une vraie surface d'interaction.
   réduire 20–40 % les traversées.
 - Utiliser `intersectAny()` (ombres) et `intersectClosest()` (pixels).
 
+> Implémenté (T060) : `include/rt/accel/Bvh.hpp` + `src/accel/Bvh.cpp` —
+> `rt::accel::Bvh` (construction par médiane sur l'axe le plus long,
+> `nth_element` sans allocation, feuilles `<= kMaxLeaf = 4`, profondeur
+> bornée `kMaxDepth = 32`) ; `BvhNode` compact POD 32 o (`AABB` 24 o +
+> 2 × 32 bits, encodage feuille `kLeafBit`, `static_assert(sizeof == 32)`) ;
+> buffer préalloué `reserve(2N)` (**zéro `new` par nœud**, R3), `build()`
+> → `Status` (jamais de `throw`, R2) ; `worldBounds()` = 8 coins de
+> `localBounds()` par `objectToWorld` (approche A, T045). Mesuré : 1000
+> sphères en grille → 511 nœuds (<= 2N-1 = 1999) en ~0,3 ms (< 50 ms).
+> Tests : `tests/unit/test_bvh.cpp` (vide, singleton, DoD 1000, transform,
+> nul refusé).
+
 ### 8.2 Multithreading (item *Technical effects*)
 
 - `ThreadPool` réutilisable (`hardware_concurrency()` workers), évite le coût de

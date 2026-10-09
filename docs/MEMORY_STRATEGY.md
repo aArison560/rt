@@ -160,7 +160,7 @@ filet de sécurité → tester avec une scène volontairement dégénérée.
 | Framebuffer (T030) | `W × H × 20` = display `W×H×4` (RGBA8) + accum `W×H×12` (Vec3) + compteurs `W×H×4` | 320×240 → **1,5 Mo**, 640×480 → **6,1 Mo**, 1920×1080 → display **8 Mo**, total **~41 Mo** ; `sizeof(Rgba8) = 4`, `sizeof(Framebuffer) = 80` (2 ints + 3 vectors) ; `init()` seul alloue (chemin froid), `clear`/`addSample`/`present` sans realloc (R3), persistant entre frames (R4) |
 | Trames de travail (par thread) | `nthreads × (rayons + HitRecords)` | arena de 1–4 Mo par thread |
 | Scène | `maxObjects × sizeof(AObject)` + lumières | capacité déclarée dans le fichier |
-| BVH | `2 × maxObjects × sizeof(BVNode)` | reconstruite uniquement quand `objectVersion` change |
+| BVH | `2 × maxObjects × sizeof(BVNode)` | reconstruite uniquement quand `objectVersion` change (T060 : `BvhNode` = 32 o, `static_assert`, 1000 objets → 511 nœuds ≈ 16 Ko, `reserve(2N)` unique, zéro `new` par nœud) |
 | Cache de textures | `Σ (w × h × 3)` | **poinsons partagés `shared_ptr`**, sinon fuite |
 | File de tuiles | `nTuiles × sizeof(Tuile)` | `static_assert` sur `sizeof(Tuile)` |
 
