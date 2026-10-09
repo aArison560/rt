@@ -7,7 +7,7 @@
 ## Régénérer
 
 ```bash
-sh scripts/render_all.sh   # 14/14 images en ~7 s, sortie 0 si tout rend
+sh scripts/render_all.sh   # 16/16 images en ~7 s, sortie 0 si tout rend
 ```
 
 Le script supprime d'abord les anciens `*.png` (**depuis zéro**), rend chaque
@@ -20,6 +20,8 @@ requis, T035), puis affiche le résumé (`ok/total`, durée). Tout échec → so
 |-------|--------------|----------------------------------|
 | `default.png` | `scenes/default.rt` | 320×240, spp 4 |
 | `fig_vi1_base.png` | `scenes/fig_vi1_base.rt` | 320×240, spp 4 (M3/M4, T048) |
+| `fig_vi1.png` | `scenes/fig_vi1.rt` | 320×240, spp 4 (4 types, 2 spots, speculaire, T059, figure VI.1) |
+| `fig_vi3.png` | `scenes/fig_vi3.rt` | 320×240, spp 4 (melange d'ombres 2 spots, T059, figure VI.3) |
 | `opt_parallel.png` | `scenes/opt_parallel.rt` | 320×240, spp 4 (soleil directionnel, T055) |
 | `opt_glass.png` | `scenes/opt_glass.rt` | 320×240, spp 4 (verre `transparency 0.9 ior 1.5` + opaque, T057) |
 | `opt_transparent_shadow.png` | `scenes/opt_transparent_shadow.rt` | 320×240, spp 4 (ombre opaque noire + ombre verre `0.8/1.5` éclaircie, T058) |

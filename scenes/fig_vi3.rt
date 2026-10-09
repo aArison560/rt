@@ -1,0 +1,69 @@
+# scenes/fig_vi3.rt — melange d'ombres (T059, figure VI.3 du sujet).
+# 1 sphere occultrice sur un sol clair + 2 spots opposes ((4 5 3) et (-4 5 3)) :
+# chaque spot projette l'ombre de la sphere d'un cote different, la zone ou
+# les 2 sont bloquees (ombre cumulee) est plus sombre que les penombres
+# (1 bloque sur 2), elles-memes plus sombres que le plein eclairage.
+# Camera (0 4 7) -> (0 0 0) : meme cadrage que le test T052 pour voir les 2
+# zones. Toute directive existe dans `docs/FORMAT_SCENE.md` §5 (R1).
+scene "fig_vi3" {
+    limits {
+        width 320
+        height 240
+        samples 4
+        max_depth 4
+        seed 0
+    }
+    camera {
+        position (0 4 7)
+        target (0 0 0)
+        up (0 1 0)
+        fov 50
+    }
+    background {
+        color (0.02 0.02 0.05)
+    }
+    ambient {
+        color (0.06 0.06 0.08)
+        intensity 1.0
+    }
+    lights {
+        light spot "gauche" {
+            position (4 5 3)
+            target (0 0 0)
+            angle 40
+            color (1 1 1)
+            intensity 1.0
+        }
+        light spot "droite" {
+            position (-4 5 3)
+            target (0 0 0)
+            angle 40
+            color (1 1 1)
+            intensity 1.0
+        }
+    }
+    objects {
+        object plane "sol" {
+            point (0 -1 0)
+            normal (0 1 0)
+            material {
+                albedo (0.7 0.7 0.7)
+                diffuse 0.8
+                ambient 0.05
+                specular 0.2
+                shininess 16
+            }
+        }
+        object sphere "occultrice" {
+            center (0 0 0)
+            radius 0.8
+            material {
+                albedo (0.8 0.2 0.2)
+                diffuse 0.7
+                ambient 0.1
+                specular 0.5
+                shininess 32
+            }
+        }
+    }
+}

@@ -1,0 +1,3 @@
+96cf24b42daaf6c54c662800b9c9e89f4559ffad62b58540c6d3988b3567221e  tests/golden/fig_vi1.rgba
+9469879902661bee99c75d8f4311364ad15780f24c878611ebbdbbb965c0d1fb  tests/golden/fig_vi1_base.rgba
+8183a1215b75eebbf61411cccde2b18360aaed3582fd7d6ffa7bda11751c6f30  tests/golden/fig_vi3.rgba
