@@ -7,6 +7,7 @@
 
 #include "rt/ui/Panel.hpp"
 
+#include <cmath>
 #include <cstring>
 #include <new>
 
@@ -125,6 +126,36 @@ bool Panel::setFirstAlbedo(Vec3 albedo) noexcept {
 	return true;
 }
 
+bool Panel::setFirstObjectX(float x) noexcept {
+	if (scene_ == nullptr || scene_->objects.empty()) {
+		return false;
+	}
+	if (!std::isfinite(x) || x < -100.0F || x > 100.0F) {
+		return false;
+	}
+	scene_->objects[0].center.x = x;
+	scene_->objects[0].point.x = x;
+	scene_->touchObjects();
+	return true;
+}
+
+bool Panel::setFirstTextureScale(float scale) noexcept {
+	if (scene_ == nullptr || scene_->objects.empty()) {
+		return false;
+	}
+	if (!std::isfinite(scale) || scale < 0.25F || scale > 8.0F) {
+		return false;
+	}
+	auto& texture = scene_->objects[0].material.texture;
+	if (!texture.present || texture.file.empty()) {
+		return false;
+	}
+	texture.scale = Vec3(scale, scale, 0.0F);
+	scene_->sceneDirty = true;
+	scene_->displayDirty = true;
+	return true;
+}
+
 void Panel::frame() noexcept {
 	if (ctx_ == nullptr || scene_ == nullptr) {
 		return;
@@ -181,8 +212,16 @@ void Panel::frame() noexcept {
 		// Sliders minimaux (FOV + ambiance) branchés sur la scene.
 		static float fovSlider = 60.0F;
 		static float ambSlider = 1.0F;
+		static float objXSlider = 0.0F;
+		static float texScaleSlider = 1.0F;
 		fovSlider = scene_->camera.fov;
 		ambSlider = scene_->ambient.intensity;
+		if (!scene_->objects.empty()) {
+			objXSlider = scene_->objects[0].center.x;
+			if (scene_->objects[0].material.texture.present) {
+				texScaleSlider = scene_->objects[0].material.texture.scale.x;
+			}
+		}
 		mu_label(ctx, "fov");
 		if (mu_slider_ex(ctx, &fovSlider, kMinFov, kMaxFov, 1.0F, "%.0f", MU_OPT_ALIGNCENTER) != 0) {
 			setCameraFov(fovSlider);
@@ -190,6 +229,17 @@ void Panel::frame() noexcept {
 		mu_label(ctx, "ambient");
 		if (mu_slider_ex(ctx, &ambSlider, 0.0F, 5.0F, 0.1F, "%.1f", MU_OPT_ALIGNCENTER) != 0) {
 			setAmbientIntensity(ambSlider);
+		}
+		// T109 (*Environment 3*) : objet et texture en direct (1er objet).
+		// Chaque edition leve R5 -> appercu 1 spp immediat puis affinage
+		// (machine `Interactive`, T076), sans relancer le programme.
+		mu_label(ctx, "obj.x");
+		if (mu_slider_ex(ctx, &objXSlider, -5.0F, 5.0F, 0.1F, "%.1f", MU_OPT_ALIGNCENTER) != 0) {
+			setFirstObjectX(objXSlider);
+		}
+		mu_label(ctx, "tex.scale");
+		if (mu_slider_ex(ctx, &texScaleSlider, 0.25F, 8.0F, 0.25F, "%.2f", MU_OPT_ALIGNCENTER) != 0) {
+			setFirstTextureScale(texScaleSlider);
 		}
 		mu_end_window(ctx);
 	}

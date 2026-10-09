@@ -41,6 +41,15 @@ class Panel {
 	bool setAmbientIntensity(float intensity) noexcept;
 	bool setCameraFov(float fov) noexcept;
 	bool setFirstAlbedo(Vec3 albedo) noexcept;
+	// Deplacement live du 1er objet (T109, *Environment 3*) : `x` absolu
+	// applique a `center.x` + `point.x` (couvre sphere/cylindre/cone et
+	// plan), `touchObjects()` (version++ -> BVH invalidee, R5). Sans
+	// objet -> faux.
+	bool setFirstObjectX(float x) noexcept;
+	// Echelle de texture live du 1er objet (T109) : `s` -> `scale (s s)`,
+	// fanions R5 seuls (pas de version++ : la BVH est inchangee).
+	// Sans objet ou sans texture -> faux (jamais de crash).
+	bool setFirstTextureScale(float scale) noexcept;
 
 	// Session microui (logique immediate, sans SDL ici) : construit une
 	// fenetre avec sliders/couleurs et boutons (chargement/lancement geres

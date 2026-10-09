@@ -582,7 +582,7 @@ montage tile_*.png -tile 2x1 final.png                # montage
 |---|---------|------|--------|--------|
 | 1 | Interface de synthèse : message de chargement + **barre de progression** | ✔ (T108) | callback `onProgress(done,total)` → barre microui + log | 0,5 j |
 | 2 | « Jolie interface » avec **chargement de fichier** et **contrôle du rendu** | △ | microui ✔ (settings, création/édition) ; ajouter **Load/Save** et toggle shadows/reflections | 1 j |
-| 3 | Interagir avec la scène **sans relancer** | △ ✔ | sliders → `scene` modifié → re-render ; démo en direct | à valider |
+| 3 | Interagir avec la scène **sans relancer** | ✔ (T109) | sliders → `scene` modifié → re-render ; démo en direct | à valider |
 | 4 | Rendu **automatique avec modifications entre les rendus** | ✖ | script shell (voir ci-dessous) | 0,25 j |
 | 5 | Rendu **automatique d'objets générés** (tore de sphères, hélice) | ✖ | générateur de scène | 0,5 j |
 
@@ -607,6 +607,10 @@ python3 scripts/gen_scene.py helix --turns 4 --out scenes/gen_helice.rt
   dans `frame()` (microui, sans alloc) ; `runWindowed` branche `onProgress` (panneau + stderr
   `[window] progress:`) ; headless imprime déjà `progress: D/N (%, eta)` (T036, vérifié sur
   `perf_many.rt` 160×120 spp4 : 1/4 → 4/4) ; test `tests/unit/test_progress.cpp` (`[t108]`).
+- **État (T109)** : `Panel::setFirstObjectX` (BVH++ via `touchObjects`) +
+  `setFirstTextureScale` (R5 seuls, BVH intacte) + sliders `obj.x`/`tex.scale` dans `frame()` ;
+  `scenes/live.rt` + protocole 5 gestes `docs/preuves/live.md` ; test
+  `tests/unit/test_live.cpp` (`[t109]` : 4 éditions lèvent R5 + machine preview→full).
 
 ---
 

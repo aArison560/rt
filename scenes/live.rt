@@ -1,0 +1,59 @@
+# scenes/live.rt — demonstration live (T109, *Environment 3*).
+# Petite scene textur + damier, faite pour etre editee SANS relancer :
+# camera (souris/clavier), objet (slider obj.x), couleurs (sliders),
+# texture (slider tex.scale). Chaque edition -> `sceneDirty` -> appercu
+# 1 spp immediat -> affinage (T076). Protocole : `docs/preuves/live.md`.
+scene "live" {
+    limits {
+        width 320
+        height 240
+        samples 4
+        max_depth 2
+        seed 16
+    }
+    camera {
+        position (0 2.5 9)
+        target (0 1 0)
+        up (0 1 0)
+        fov 55
+    }
+    background {
+        color (0.02 0.02 0.05)
+    }
+    ambient {
+        color (0.25 0.25 0.27)
+        intensity 1.0
+    }
+    lights {
+        light point "key" {
+            position (4 6 4)
+            color (1 1 1)
+            intensity 1.2
+        }
+    }
+    objects {
+        object sphere "boule" {
+            center (0 1.2 0)
+            radius 1.2
+            material {
+                albedo (0.9 0.4 0.3)
+                texture "textures/checker.png" {
+                    scale 2 2
+                    offset 0 0
+                }
+            }
+        }
+        object plane "sol" {
+            point (0 0 0)
+            normal (0 1 0)
+            material {
+                albedo (0.5 0.5 0.55)
+                pattern {
+                    type checker
+                    scale 4
+                    frequency 1
+                }
+            }
+        }
+    }
+}
