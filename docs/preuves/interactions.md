@@ -38,6 +38,22 @@ make re && make test   # vert
 
 ## Traçabilité T079
 
-- Auteur du protocole : session P7 (ce fichier).
+- Auteur du protocole : session P7 (ce fichier, T078).
 - Rejeu complet : à faire par un second membre avant soutenance (noter date +
   nom au journal, DoD T079).
+
+## Exécution 2026-10-09 (T079, agent)
+
+Rejeu automatisable vert (pas de crash, codes attendus) :
+
+- `[controls]` 36 assertions / 4 cas, `[mouse]` 21/2, `[panel]` 17/3,
+  `[screenshot]` 11/3, `[edges]` 18/4, `[expose]` 10/1 : tous verts.
+- Fichier invalide + `--window` : `garbage.rt:5:1` code 1, pas de fenêtre.
+- Sans écran + `--window` : `no DISPLAY...` code 1.
+- Headless `--out` : code 0, PNG valide.
+- Expose fenêtré (`timeout ... --window`, DISPLAY=:1) : `[expose] blit in
+  ~2-3 ms` vs rendu ~425 ms (voir `expose.md`), fermeture par `pollQuit`.
+
+Gestes manuels (drag, molette, slider, `P`, resize souris, quit en croix) :
+logique testée + code revu (compteurs, fanions R5, RAII) ; rejeu humain
+complet recommandé avant soutenance par un second membre (DoD strict).
