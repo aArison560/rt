@@ -214,4 +214,53 @@ bool applyKeyAction(scene::Scene& scene, KeyAction action) noexcept {
 	return false;
 }
 
+bool orbitCamera(scene::Scene& scene, int dxPx, int dyPx) noexcept {
+	if (dxPx == 0 && dyPx == 0) {
+		return false;
+	}
+	// Spheriques autour de la cible : r, yaw, pitch (0.005 rad/px).
+	const Vec3 offset = scene.camera.position - scene.camera.target;
+	const float radius = length(offset);
+	if (radius <= 1e-6F || !std::isfinite(radius)) {
+		return false;
+	}
+	const float yaw0 = std::atan2(offset.x, offset.z);
+	float pitch0 = std::asin(offset.y / radius);
+	constexpr float kRadPerPx = 0.005F;
+	float yaw = yaw0 + static_cast<float>(dxPx) * kRadPerPx;
+	float pitch = pitch0 + static_cast<float>(dyPx) * kRadPerPx;
+	constexpr float kPitchLim = 1.55F;
+	if (pitch > kPitchLim) {
+		pitch = kPitchLim;
+	}
+	if (pitch < -kPitchLim) {
+		pitch = -kPitchLim;
+	}
+	const float cosP = std::cos(pitch);
+	const Vec3 next = scene.camera.target +
+	                  Vec3(radius * cosP * std::sin(yaw), radius * std::sin(pitch),
+	                       radius * cosP * std::cos(yaw));
+	if (!std::isfinite(next.x) || !std::isfinite(next.y) || !std::isfinite(next.z)) {
+		return false;
+	}
+	scene.camera.position = next;
+	markCameraDirty(scene);
+	return true;
+}
+
+bool adjustFov(scene::Scene& scene, int steps) noexcept {
+	if (steps == 0) {
+		return false;
+	}
+	scene.camera.fov -= static_cast<float>(steps) * kFovStep;
+	if (scene.camera.fov < kMinFov) {
+		scene.camera.fov = kMinFov;
+	}
+	if (scene.camera.fov > kMaxFov) {
+		scene.camera.fov = kMaxFov;
+	}
+	markCameraDirty(scene);
+	return true;
+}
+
 } // namespace rt::app

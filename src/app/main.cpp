@@ -190,6 +190,18 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 				changed = true;
 			}
 		}
+		// T074 : souris (orbite + molette FOV), en direct, meme fanions R5.
+		int mdx = 0;
+		int mdy = 0;
+		int mwheel = 0;
+		if (window.pollMouse(mdx, mdy, mwheel)) {
+			if ((mdx != 0 || mdy != 0) && rt::app::orbitCamera(scene, mdx, mdy)) {
+				changed = true;
+			}
+			if (mwheel != 0 && rt::app::adjustFov(scene, mwheel)) {
+				changed = true;
+			}
+		}
 		if (changed) {
 			rt::render::RenderParams params{.width = width,
 			                                .height = height,

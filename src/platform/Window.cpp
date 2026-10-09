@@ -95,6 +95,10 @@ Status Window::init(int width, int height, const char* title) {
 	open_ = true;
 	quitSeen_ = false;
 	keyCount_ = 0;
+	dragging_ = false;
+	accumDx_ = 0;
+	accumDy_ = 0;
+	accumWheel_ = 0;
 	stats_ = WindowStats{};
 	return Status::ok();
 }
@@ -119,6 +123,10 @@ void Window::shutdown() noexcept {
 	open_ = false;
 	quitSeen_ = false;
 	keyCount_ = 0;
+	dragging_ = false;
+	accumDx_ = 0;
+	accumDy_ = 0;
+	accumWheel_ = 0;
 	width_ = 0;
 	height_ = 0;
 	texWidth_ = 0;
@@ -238,8 +246,36 @@ void Window::pumpEvents() noexcept {
 			if (keyCount_ < kKeyQueue) {
 				keyQueue_[keyCount_++] = static_cast<int>(ev.key.keysym.sym);
 			}
+		} else if (ev.type == SDL_MOUSEBUTTONDOWN && ev.button.button == SDL_BUTTON_LEFT) {
+			dragging_ = true;
+		} else if (ev.type == SDL_MOUSEBUTTONUP && ev.button.button == SDL_BUTTON_LEFT) {
+			dragging_ = false;
+		} else if (ev.type == SDL_MOUSEMOTION) {
+			if (dragging_) {
+				accumDx_ += static_cast<int>(ev.motion.xrel);
+				accumDy_ += static_cast<int>(ev.motion.yrel);
+			}
+		} else if (ev.type == SDL_MOUSEWHEEL) {
+			accumWheel_ += static_cast<int>(ev.wheel.y);
 		}
 	}
+}
+
+bool Window::pollMouse(int& dx, int& dy, int& wheel) noexcept {
+	dx = 0;
+	dy = 0;
+	wheel = 0;
+	if (!open_) {
+		return false;
+	}
+	pumpEvents();
+	dx = accumDx_;
+	dy = accumDy_;
+	wheel = accumWheel_;
+	accumDx_ = 0;
+	accumDy_ = 0;
+	accumWheel_ = 0;
+	return (dx != 0 || dy != 0 || wheel != 0);
 }
 
 } // namespace rt::platform

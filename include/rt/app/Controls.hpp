@@ -44,4 +44,14 @@ enum class KeyAction : std::uint8_t {
 // `scene` nulle -> faux (documente, jamais de crash).
 bool applyKeyAction(scene::Scene& scene, KeyAction action) noexcept;
 
+// Orbite souris (T074, M5) : `dxPx`/`dyPx` pixels glissés (bouton gauche)
+// tournent la camera autour de sa cible (yaw/pitch, 0.005 rad/px), sans
+// toucher aux objets/lumieres (rappel image1/image2). Retourne vrai si
+// la camera a bougé (toujours vrai sauf pixels nuls/dégénérés).
+bool orbitCamera(scene::Scene& scene, int dxPx, int dyPx) noexcept;
+
+// Molette (T074) : `steps` crans (positif = zoom = FOV-5°/cran, 10..120).
+// Retourne vrai si le FOV a change.
+bool adjustFov(scene::Scene& scene, int steps) noexcept;
+
 } // namespace rt::app

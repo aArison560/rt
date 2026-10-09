@@ -566,6 +566,14 @@ Pour **prouver** les options en soutenance, le format doit piloter au moins :
 > (re-trace + reblit seulement si change, `[keys]` loggé). Touches dans
 > `README.md`. Tests : `tests/unit/test_controls.cpp` (inconnu sans effet,
 > aller/retour, FOV, lumières, bornes).
+>
+> Implémenté (T074, M5) : `orbitCamera(dx,dy)` (sphériques 0.005 rad/px autour
+> de la cible, pitch ±1.55, cible fixe, objets/lumières/FOV intacts) +
+> `adjustFov(steps)` (molette, ±5°/cran, 10..120) + `Window::pollMouse`
+> (glisser gauche accumulé, molette, relâchement propre) branchés dans
+> `runWindowed` (mêmes fanions R5, re-trace si change). Tests :
+> `tests/unit/test_mouse.cpp` (orbite visible, scène sauf caméra intacte,
+> FOV direct + bornes).
 
 ---
 

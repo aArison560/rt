@@ -61,6 +61,11 @@ class Window {
 	// touches ; `pollKey` en rend une (code `SDL_Keycode` brut, 0 si vide).
 	// Aucun acces scene/moteur ici, la traduction vit dans `app/Controls`.
 	[[nodiscard]] bool pollKey(int& outSdlKey) noexcept;
+	// Souris (T074) : glisser bouton gauche = `dx`/`dy` accumulés (pixels),
+	// molette = `wheel` crans (SDL y). Retourne vrai si mouvement depuis le
+	// dernier appel (remet à zéro). Relâchement propre, curseur recapturé
+	// (pas de mode relatif, pas de piège).
+	[[nodiscard]] bool pollMouse(int& dx, int& dy, int& wheel) noexcept;
 
   private:
 	void pumpEvents() noexcept;
@@ -76,6 +81,10 @@ class Window {
 	static constexpr int kKeyQueue = 32;
 	int keyQueue_[kKeyQueue] = {};
 	int keyCount_ = 0;
+	bool dragging_ = false;
+	int accumDx_ = 0;
+	int accumDy_ = 0;
+	int accumWheel_ = 0;
 	WindowStats stats_;
 };
 
