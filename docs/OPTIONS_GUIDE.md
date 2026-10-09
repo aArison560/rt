@@ -353,6 +353,11 @@ color = material.texture->sample(fract(u), fract(v));   // répétition tiling
 - **Effort** : 1–1,5 j.
 - **Preuve** : `opt_textures.rt` avec les 4 primitives texturées, puis changer `scale 1 → 8`
   devant le correcteur.
+- **État (T102)** : `include/rt/io/Texture.hpp` + `src/io/Texture.cpp` — `TextureCache`
+  (`map` + `shared_ptr`, RAII, `clear()`), PNG via libpng + JPEG via libjpeg (magie, pas
+  l'extension), absent → `IoError` avec chemin complet, `maxBytes` → `LimitExceeded` ;
+  `textures/checker.png` (64×64) + `textures/gradient.jpg` (64×64) ; tests
+  `tests/unit/test_texture.cpp` (`[t102]`, 3 cas : charge, partage, erreurs).
 
 ### 5.2 More texture applications — 0…5 points
 
