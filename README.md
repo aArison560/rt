@@ -78,6 +78,25 @@ Exemples :
 ./rt tests/cases/valid/minimal.rt --tile 1/4 --spp 16 --seed 42 --out /tmp/t1.png
 ```
 
+## Scènes (T086, M8)
+
+| Scène | Contenu |
+|-------|---------|
+| `scenes/fig_vi1.rt` | obligatoire 1 (figure VI.1) : 4 formes, 2 spots, ombres, brillance |
+| `scenes/fig_vi2.rt` | obligatoire 2 : copie de `fig_vi1.rt`, seule `camera` diffère (T081) |
+| `scenes/fig_vi3.rt` | obligatoire 3 (figure VI.3) : mélange d'ombres multi-spots |
+| `scenes/fig_vi1_base.rt` | base géométrique M3/M4 (même cadrage, lumières ponctuelles) |
+| `scenes/default.rt` | scène simple de repli (fallback `--help`/`--window`) |
+| `scenes/opt_*.rt` | une scène par option (`parallel`, `glass`, `direct`, `transparent_shadow`) |
+| `scenes/perf_many.rt` | 100 sphères + sol (benchs BVH/threads) |
+
+```bash
+sh scripts/render_all.sh   # rend TOUTES les scènes en headless -> docs/preuves/
+```
+
+Le format est documenté dans `docs/FORMAT_SCENE.md` (« écrire une scène en
+10 minutes ») ; chaque directive vient de la table unique `src/schema/` (R1).
+
 La batterie de qualité (`sh scripts/quality.sh`) résume ses 5 étapes en ✔/✖ et ne
 rend 0 que si tout est vert (détail : `docs/OUTILS.md` §3.1).
 
