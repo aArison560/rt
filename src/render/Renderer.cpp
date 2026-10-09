@@ -1,6 +1,6 @@
-// Boucle de rendu mono-thread (T032) + multi-objets (T046) — implementation
-// sans exception, sans SDL (R6) et sans allocation dans la boucle (R3).
-// Voir `include/rt/render/Renderer.hpp` pour le contrat et
+// Boucle de rendu mono-thread (T032) + multi-objets (T046) + reflexion (T056)
+// — implementation sans exception, sans SDL (R6) et sans allocation dans
+// la boucle (R3). Voir `include/rt/render/Renderer.hpp` pour le contrat et
 // `docs/ARCHITECTURE.md` §4 pour le pipeline (camera -> intersection ->
 // framebuffer). T046 branche la recherche d'intersection : tous les objets
 // de la scene (objets directs + groupes aplatis, 4 types coexistant,
@@ -10,7 +10,8 @@
 // l'objet touche + ambiance + **toutes** les ponctuelles (T052 : multi-spot,
 // ombres par shadow ray `tMin` eps anti-acne, attenuation T051 par
 // `lighting::attenuationFactor`) + speculaire Blinn-Phong (T053 : `specular`,
-// `shininess`, `V = -ray.dir`, sature en blanc) ; miss -> fond.
+// `shininess`, `V = -ray.dir`, sature en blanc) + reflexion bornee (T056 :
+// `reflectivity` 0 = mat / 1 = miroir pur, `max_depth` 0..32) ; miss -> fond.
 // Progressif T036 : batches externes + `seedFor` absolu + jitter sous-pixel
 // (AA en T120) + dithering deterministe minimal (moyenne -> 0 quand spp
 // grandit, conservé pour hit et miss afin que `spp 64 < spp 1` reste vrai).
@@ -56,11 +57,8 @@ constexpr float kDitherAmp = 0.06F;
 constexpr Real kPrimaryTMin = 0.001F;
 // T052 : `tMin` des rayons d'ombre (meme epsilon, anti-acne) et decalage
 // `P + N*eps` (evite l'auto-intersection, pas de bandes).
-
-// Miss -> fond de scene (T032). Aucune allocation, `noexcept`.
-[[nodiscard]] Vec3 shadeMiss(const scene::Scene& scene) noexcept {
-	return scene.background.color;
-}
+// (T056 : le miss -> fond est retourne directement par `traceRay()`
+// via `ctx.background`, sans fonction dediee.)
 
 // T046 : `scene::Transform` (ops dans l'ordre d'ecriture, repetables) ->
 // `rt::Transform` monde. Ordre : le 1er op s'applique en 1er, donc
@@ -307,6 +305,143 @@ void collectSceneObjects(const scene::Scene& scene,
 	return findClosestHit(objs, Ray(origin, dir), kPrimaryTMin, tMax, tmp);
 }
 
+// T056 : contexte de trace (pile uniquement, R3). Pointeurs vers les
+// tableaux du chemin froid (aucune copie par rayon), ambiant + fond par
+// valeur (petits POD), `maxDepth` borne 0..32 (profondeur de recursion).
+struct TraceCtx {
+	const std::vector<std::unique_ptr<geometry::AObject>>* objs = nullptr;
+	const std::vector<shading::MaterialParams>* mats = nullptr;
+	const std::vector<shading::PointLightParams>* points = nullptr;
+	const std::vector<shading::DirectionalLightParams>* dirs = nullptr;
+	shading::AmbientParams ambient;
+	Vec3 background;
+	int maxDepth = 4;
+};
+
+// T056 : éclairage direct d'un hit (ambiant + multi-spot T052 avec ombres
+// et attenuation T051 + speculaire Blinn-Phong T053). Extrait tel quel de
+// la boucle T046/T052/T055 : `reflectivity == 0` rend donc l'octet identique
+// a l'ancien chemin (DoD borne basse). `noexcept`, sans allocation (R2/R3).
+[[nodiscard]] Vec3 shadeDirect(const HitRecord& rec, Vec3 viewDir, const TraceCtx& ctx,
+                               const shading::MaterialParams& mat) noexcept {
+	shading::PointLightParams zeroLight;
+	zeroLight.intensity = 0.0F;
+	Vec3 total = shading::shadeLambert(mat, rec.normal, rec.point, zeroLight, ctx.ambient);
+	shading::MaterialParams matNoAmb = mat;
+	matNoAmb.ambient = 0.0F;
+	const Vec3 unitN = normalize(rec.normal);
+	const Vec3 shadowOrigin =
+	    nearZero(unitN) ? rec.point : rec.point + unitN * kPrimaryTMin;
+	for (const shading::PointLightParams& light : *ctx.points) {
+		const Vec3 toLight = light.position - rec.point;
+		if (!std::isfinite(toLight.x) || !std::isfinite(toLight.y) ||
+		    !std::isfinite(toLight.z)) {
+			continue;
+		}
+		const Real distSq = dot(toLight, toLight);
+		if (!std::isfinite(distSq) || distSq <= kEpsilon * kEpsilon) {
+			continue;
+		}
+		const float dist = static_cast<float>(length(toLight));
+		if (!std::isfinite(dist) || dist <= kPrimaryTMin) {
+			continue;
+		}
+		const float att =
+		    lighting::attenuationFactor(light.attenuation, dist, light.range);
+		if (!(att > 0.0F) || !std::isfinite(att)) {
+			continue;
+		}
+		const Vec3 lightDir = toLight / dist;
+		const Real tMax = static_cast<Real>(dist) - kPrimaryTMin;
+		if (isOccluded(*ctx.objs, shadowOrigin, lightDir, tMax)) {
+			continue;
+		}
+		shading::PointLightParams effLight = light;
+		effLight.intensity = light.intensity * att;
+		total += shading::shadeLambert(matNoAmb, rec.normal, rec.point, effLight,
+		                               ctx.ambient);
+		total += shading::specularTerm(rec.normal, viewDir, lightDir, mat,
+		                               effLight.color, effLight.intensity);
+	}
+	for (const shading::DirectionalLightParams& dirLight : *ctx.dirs) {
+		const Vec3 lightDir = lighting::toLightDir(dirLight.direction);
+		if (nearZero(lightDir)) {
+			continue;
+		}
+		if (!std::isfinite(dirLight.intensity) || !(dirLight.intensity > 0.0F)) {
+			continue;
+		}
+		if (isOccluded(*ctx.objs, shadowOrigin, lightDir, kInfinity)) {
+			continue;
+		}
+		shading::AmbientParams nullAmbient;
+		nullAmbient.color = Vec3{};
+		nullAmbient.intensity = 0.0F;
+		total += shading::shadeLambertDirectional(matNoAmb, rec.normal, dirLight,
+		                                          nullAmbient);
+		total += shading::specularTerm(rec.normal, viewDir, lightDir, mat,
+		                               dirLight.color, dirLight.intensity);
+	}
+	return shading::saturate(total);
+}
+
+// T056 : trace un rayon avec reflexion bornee (SPECIFICATIONS §5.2 F,
+// ARCHITECTURE.md §4.6). `depth` = generation (0 = primaire) ;
+// `maxDepth` = nombre max de rebonds (0 = direct seul, jamais de boucle
+// infinie : chaque rebond incremente `depth`, pile bornee 0..32).
+// Formule : `out = saturate(direct * (1 - R) + reflechi * R)` avec
+// `R = clamp(reflectivity, 0, 1)` (NaN -> 0), `reflechi = trace(P+N*eps,
+// reflect(D, N), depth+1)`. `R = 0` -> direct seul (octet identique),
+// `R = 1` -> miroir pur (aucune part diffuse). Degeneres (normale nulle,
+// reflexion nulle/NaN, `depth >= maxDepth`) -> direct seul, defini.
+// `noexcept`, sans allocation (R2/R3, `HitRecord` sur pile).
+[[nodiscard]] Vec3 traceRay(const Ray& ray, int depth, const TraceCtx& ctx) noexcept {
+	HitRecord rec;
+	if (!findClosestHit(*ctx.objs, ray, kPrimaryTMin, kInfinity, rec)) {
+		return ctx.background;
+	}
+	shading::MaterialParams mat;
+	if (rec.materialIndex < ctx.mats->size()) {
+		mat = (*ctx.mats)[rec.materialIndex];
+	}
+	const Vec3 viewDir = ray.direction * -1.0F;
+	const Vec3 direct = shadeDirect(rec, viewDir, ctx, mat);
+	float refl = 0.0F;
+	if (std::isfinite(mat.reflectivity) && mat.reflectivity > 0.0F) {
+		refl = mat.reflectivity > 1.0F ? 1.0F : mat.reflectivity;
+	}
+	if (!(refl > 0.0F) || depth >= ctx.maxDepth) {
+		return direct;
+	}
+	const Vec3 unitN = normalize(rec.normal);
+	if (nearZero(unitN)) {
+		return direct;
+	}
+	if (!std::isfinite(unitN.x) || !std::isfinite(unitN.y) || !std::isfinite(unitN.z)) {
+		return direct;
+	}
+	// Reflexion miroir : R = D - 2*(D.N)*N (`Vec3::reflect`, N unitaire).
+	const Vec3 reflDir = reflect(ray.direction, unitN);
+	if (nearZero(reflDir)) {
+		return direct;
+	}
+	if (!std::isfinite(reflDir.x) || !std::isfinite(reflDir.y) ||
+	    !std::isfinite(reflDir.z)) {
+		return direct;
+	}
+	const Vec3 unitR = normalize(reflDir);
+	if (nearZero(unitR)) {
+		return direct;
+	}
+	const Vec3 origin = rec.point + unitN * kPrimaryTMin;
+	const Vec3 reflected = traceRay(Ray(origin, unitR), depth + 1, ctx);
+	const float inv = 1.0F - refl;
+	const Vec3 blended =
+	    Vec3(direct.x * inv + reflected.x * refl, direct.y * inv + reflected.y * refl,
+	         direct.z * inv + reflected.z * refl);
+	return shading::saturate(blended);
+}
+
 } // namespace
 
 Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& params) {
@@ -356,114 +491,18 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	// pixels, octet par octet, que ce soit en plein ou par tuile/bande
 	// (couture impossible). `onProgress(s+1, spp)` apres chaque batch
 	// (1 appel par batch, pas par pixel : hors hot path fin).
+	// T056 : l'eclairage passe par `traceRay()` (direct + reflexion bornee
+	// par `maxDepth`, `reflectivity` 0 = mat / 1 = miroir pur).
 	const auto sceneSeed = static_cast<std::uint32_t>(params.seed);
+	const TraceCtx traceCtx{&worldObjs, &worldMats, &pointLights, &dirLights, ambient,
+	                        scene.background.color, params.maxDepth};
 	for (int s = 0; s < params.spp; ++s) {
 		for (int y = 0; y < params.height; ++y) {
 			for (int x = 0; x < params.width; ++x) {
 				Rng rng = rngFor(x, y, s, sceneSeed);
 				const Vec2 jitter(rng.nextFloat() - 0.5F, rng.nextFloat() - 0.5F);
 				const Ray ray = camera.rayForPixel(x, y, jitter);
-				HitRecord rec;
-				Vec3 color;
-				if (findClosestHit(worldObjs, ray, kPrimaryTMin, kInfinity, rec)) {
-					shading::MaterialParams mat;
-					if (rec.materialIndex < worldMats.size()) {
-						mat = worldMats[rec.materialIndex];
-					}
-					// T052 : multi-spot + ombres (SPECIFICATIONS §3.2 d, figure
-					// VI.3 anticipee : luminosites melangees, ombres assombries
-					// selon le nombre de sources bloquees).
-					// Ambiant une fois (lumiere d'intensite 0 = ambiant seul,
-					// defini), puis un diffus par source non occultee
-					// (`materiau.ambient = 0` pour ne pas recompter l'ambiant) :
-					// `total = saturate(ambiant + sum diffus_i + sum spec_i)`.
-					// Mono-lumiere sans ombre == `shadeLambert()` historique +
-					// speculaire T053 (meme formule, meme `saturate` final).
-					// Chaque `diffus_i`/`spec_i` applique l'attenuation T051
-					// (`intensity * att`, registres, R3). Speculaire T053 :
-					// Blinn-Phong (`specular`, `shininess`, sature en blanc),
-					// `V = -ray.dir` (Camera normalise), `L` vers la source,
-					// ajoute seulement si non occultee (ombres T052).
-					// Shadow ray : `origine = P + N*eps` (anti-acne), `dir`
-					// vers la source, `tMax = dist - eps` (profondeur bornee) ;
-					// `occultee` -> contribution 0 de cette source.
-					shading::PointLightParams zeroLight;
-					zeroLight.intensity = 0.0F;
-					Vec3 total =
-					    shading::shadeLambert(mat, rec.normal, rec.point, zeroLight, ambient);
-					shading::MaterialParams matNoAmb = mat;
-					matNoAmb.ambient = 0.0F;
-					const Vec3 unitN = normalize(rec.normal);
-					const Vec3 shadowOrigin =
-					    nearZero(unitN) ? rec.point : rec.point + unitN * kPrimaryTMin;
-					// T053 : direction vers l'oeil (rayon normalise par Camera).
-					const Vec3 viewDir = ray.direction * -1.0F;
-					for (const shading::PointLightParams& light : pointLights) {
-						const Vec3 toLight = light.position - rec.point;
-						if (!std::isfinite(toLight.x) || !std::isfinite(toLight.y) ||
-						    !std::isfinite(toLight.z)) {
-							continue;
-						}
-						const Real distSq = dot(toLight, toLight);
-						if (!std::isfinite(distSq) ||
-						    distSq <= kEpsilon * kEpsilon) {
-							continue;
-						}
-						const float dist = static_cast<float>(length(toLight));
-						if (!std::isfinite(dist) || dist <= kPrimaryTMin) {
-							continue;
-						}
-						const float att = lighting::attenuationFactor(
-						    light.attenuation, dist, light.range);
-						if (!(att > 0.0F) || !std::isfinite(att)) {
-							continue;
-						}
-						const Vec3 lightDir = toLight / dist;
-						const Real tMax =
-						    static_cast<Real>(dist) - kPrimaryTMin;
-						if (isOccluded(worldObjs, shadowOrigin, lightDir, tMax)) {
-							continue;
-						}
-						shading::PointLightParams effLight = light;
-						effLight.intensity = light.intensity * att;
-						total += shading::shadeLambert(matNoAmb, rec.normal, rec.point,
-						                               effLight, ambient);
-						// T053 : reflet Blinn-Phong (sature en blanc, SPEC §3.2 d).
-						total += shading::specularTerm(rec.normal, viewDir, lightDir, mat,
-						                               effLight.color, effLight.intensity);
-					}
-					// T055 : directionnelles paralleles (soleil, SPEC §5.2 E).
-					// `L` constante par lumiere (independante de la position,
-					// pas d'attenuation), memes ombres (paralleles) avec
-					// `tMax` infini (source a l'infini). Ordre du fichier.
-					// Diffus via `shadeLambertDirectional()` (matNoAmb pour ne
-					// pas recompter l'ambiant) + speculaire Blinn-Phong T053.
-					for (const shading::DirectionalLightParams& dirLight : dirLights) {
-						const Vec3 lightDir = lighting::toLightDir(dirLight.direction);
-						if (nearZero(lightDir)) {
-							continue;
-						}
-						if (!std::isfinite(dirLight.intensity) ||
-						    !(dirLight.intensity > 0.0F)) {
-							continue;
-						}
-						if (isOccluded(worldObjs, shadowOrigin, lightDir, kInfinity)) {
-							continue;
-						}
-						// Diffus seul (ambiant deja compte) : `matNoAmb`
-						// (ambient=0) + ambiant nul -> que du diffus.
-						shading::AmbientParams nullAmbient;
-						nullAmbient.color = Vec3{};
-						nullAmbient.intensity = 0.0F;
-						total += shading::shadeLambertDirectional(matNoAmb, rec.normal,
-						                                          dirLight, nullAmbient);
-						total += shading::specularTerm(rec.normal, viewDir, lightDir, mat,
-						                               dirLight.color, dirLight.intensity);
-					}
-					color = shading::saturate(total);
-				} else {
-					color = shadeMiss(scene);
-				}
+				Vec3 color = traceRay(ray, 0, traceCtx);
 				color.x += (rng.nextFloat() - 0.5F) * kDitherAmp;
 				color.y += (rng.nextFloat() - 0.5F) * kDitherAmp;
 				color.z += (rng.nextFloat() - 0.5F) * kDitherAmp;

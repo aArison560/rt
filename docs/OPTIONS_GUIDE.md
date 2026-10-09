@@ -259,6 +259,13 @@ Ordre recommandé (ROI décroissant). Les détails sont dans les sections suivan
   - Oublier le *bias* → acné et *self-intersection*.
   - Récursion non bornée → explosion de temps (déjà : `maxRecursionDepth`).
 
+> Implémenté (T056, sous-critères 1–2) : réflexion pilotée par
+> `material { reflectivity/reflect 0..1 }` (schéma R1, validé T024) +
+> `limits { max_depth }` (défaut 4, 0..16 schéma / 0..32 moteur) via
+> `render::traceRay()` (`out = direct*(1-R) + réfléchi*R`, `R=0` = mat
+> identique au sans-miroir, `R=1` = miroir pur). Tests :
+> `tests/unit/test_reflection.cpp` (4 cas, DoD bornes + profondeur bornée).
+
 ### 4.2 Shadows and transparency — ☐ Oui/Non
 
 **Critère** : l'ombre est **plus ou moins assombrie** selon la transparence de l'objet.

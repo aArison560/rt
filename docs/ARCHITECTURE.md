@@ -349,6 +349,17 @@ if (dir.refract(N, ratio, T))                     // Snell/Descartes
   ⚠ audit statique : `material` n'expose aujourd'hui que `reflect` (+`roughness`) ;
   `transparency` et `ior` **ne sont pas lisibles depuis le fichier** → à ajouter (voir §5).
 
+> Implémenté (T056, réflexion 1–2/5) : `rt::render::traceRay()` récursif
+> (`src/render/Renderer.cpp`) — `R = reflect(D, N)` (`Vec3::reflect`, N
+> normalisée), origine `P + N*eps` (anti-acné), `out = saturate(direct*(1-R)
+> + réfléchi*R)` avec `R = clamp(reflectivity, 0, 1)` (schéma R1, alias
+> `reflect`, `0 = mat` / `1 = miroir pur`), `depth >= maxDepth` (`limits
+> { max_depth }` → `RenderParams::maxDepth`, 0..32, défaut 4) → direct seul.
+> `noexcept`, sans allocation (R2/R3). Tests :
+> `tests/unit/test_reflection.cpp` (R=0 identique octet par octet, R=1 =
+> fond réfléchi net, 2 plans face à face terminent en `max_depth` 8/16,
+> R=0.5 = moyenne à 0.05 près).
+
 ### 4.7 Textures et UV
 
 - Générer `(u,v)` par primitive : sphère (sphériques), plan (planaires), cylindre/cône
