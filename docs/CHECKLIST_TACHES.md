@@ -607,62 +607,62 @@ rt/
 
 ### Phase P7 — Affichage & interaction (M5, M6)
 
-#### T070 ⬜ — Couche plateforme SDL (RAII)
-> **Fait le** : — · **Commit** : —
+#### T070 ✅ — Couche plateforme SDL (RAII)
+> **Fait le** : 2026-10-09 · **Commit** : d42bfd5
 - **Prompt** : « `src/platform/Window.cpp` : création SDL2 (vidéo), texture de présentation, boucle d'événements, `RAII` (destructeur = `SDL_Destroy*`, pas de fuite de handle), redimensionnement géré. **Aucun appel** vers `render/` ni `scene/` sauf par l'interface de la [section 2.1](#21-calques). Basculer en mode headless ne doit pas toucher à ce fichier. »
 - **Dépend** : T035, T034 · **Sert** : M6, interface · **Doc** : [ARCHITECTURE.md §6](ARCHITECTURE.md)
 - **DoD** : fenêtre ouverte, image affichée, fermeture propre, `valgrind` sans fuite SDL.
 
-#### T071 ⬜ — Expose sans recalcul (rèle R4 — exigence éliminatoire)
-> **Fait le** : — · **Commit** : —
+#### T071 ✅ — Expose sans recalcul (rèle R4 — exigence éliminatoire)
+> **Fait le** : 2026-10-09 · **Commit** : 7dc9746
 - **Prompt** : « Gère `SDL_WINDOWEVENT_EXPOSED` par un chemin **dédié** qui **reblit le framebuffer persistant** vers la texture sans appeler `Renderer::render()` : c'est exactement l'équivalent de `mlx_expose_hook` attendu par la fiche. Le framebuffer rendu reste en mémoire (règle R4). Vérifie aussi le resize (recopie proportionnelle ou rerender explicite marqué comme tel). »
 - **Dépend** : T070, T030 · **Sert** : **M6 (éliminatoire)** · **Doc** : [SPECIFICATIONS.md §3.2 a](SPECIFICATIONS.md)
 - **DoD** : `grep -n "render(" src/platform/` ne montre **aucun** appel dans le chemin expose ; preuve écrite en T072.
 
-#### T072 ⬜ — Preuve chronométrée de l'expose (le correcteur va faire ce test)
-> **Fait le** : — · **Commit** : —
+#### T072 ✅ — Preuve chronométrée de l'expose (le correcteur va faire ce test)
+> **Fait le** : 2026-10-09 · **Commit** : f6c588f
 - **Prompt** : « Ajoute un log dédié (`printf("[expose] blit in %ld us\n", ...)`) visible en mode debug, et écris `docs/preuves/expose.md` : le protocole exact (déplacer une fenêtre au-dessus, changer le focus), ce qui est affiché, et la mesure (blit en µs vs rendu en ms). »
 - **Dépend** : T071 · **Sert** : **M6** · **Doc** : [CHECKLIST_DEFENSE.md](CHECKLIST_DEFENSE.md)
 - **DoD** : la mesure est réelle (chronométrée sur la machine de démo) ; le chemin expose est démontrable en 10 secondes.
 
-#### T073 ⬜ — Contrôles clavier (M5)
-> **Fait le** : — · **Commit** : —
+#### T073 ✅ — Contrôles clavier (M5)
+> **Fait le** : 2026-10-09 · **Commit** : fb2fafc
 - **Prompt** : « Branches le clavier aux paramètres attendus par le sujet (positions/lumières/paramètres) : touches documentées dans `README.md` et affichées dans l'UI. Chaque action déclenche le bon dirty flag (R5) — jamais de rerender complet gratuit. »
 - **Dépend** : T070, T028 · **Sert** : M5 · **Doc** : `README.md`
 - **DoD** : chaque touche a un effet visible ; documentée ; pas de rendu intempestif (log de counters).
 
-#### T074 ⬜ — Souris et molette (M5)
-> **Fait le** : — · **Commit** : —
+#### T074 ✅ — Souris et molette (M5)
+> **Fait le** : 2026-10-09 · **Commit** : 0ce85ab
 - **Prompt** : « Glisser la souris = modifier l'**angle** de la caméra (orbite autour de la cible), molette = **champ de vision** (FOV), relâchement propre, curseur recapturé. Le champ doit être modifiable **en direct** (le sujet teste l'interaction). »
 - **Dépend** : T073, T031 · **Sert** : M5 · **Doc** : [SPECIFICATIONS.md §3.2 c](SPECIFICATIONS.md)
 - **DoD** : déplacement de la caméra visible immédiatement ; scène inchangée sauf caméra (rappel du test image1/image2).
 
-#### T075 ⬜ — Interface microui : panneau de configuration
-> **Fait le** : — · **Commit** : —
+#### T075 ✅ — Interface microui : panneau de configuration
+> **Fait le** : 2026-10-09 · **Commit** : b62dafb
 - **Prompt** : « Intègre `microui` (vendored) dans `src/ui/` : panneau affichant objets, lumières, matériaux, caméra avec **champs éditables, sliders, couleurs**, boutons de chargement de fichier et de lancement de rendu. Les valeurs viennent de la table `schema/` (rèle R1) — pas de doublon. »
 - **Dépend** : T070, T021 · **Sert** : *Environment 1/2* · **Doc** : [INSPIRATION_BLENDER.md §5](INSPIRATION_BLENDER.md)
 - **DoD** : on modifie une couleur depuis l'UI, l'image change ; la table du schéma alimente l'UI (test : ajouter une directive l'affiche).
 
-#### T076 ⬜ — Dirty flags et rendu interactif
-> **Fait le** : — · **Commit** : —
+#### T076 ✅ — Dirty flags et rendu interactif
+> **Fait le** : 2026-10-09 · **Commit** : d4b61eb
 - **Prompt** : « Implémente la machine d'états : `sceneDirty` → invalide BVH + rerender en **basse qualité** (1 spp) ; ensuite affinage progressif (retour à `--spp` cible) ; `displayDirty` → blit seul. L'interaction ne doit **jamais** bloquer l'UI : découple calcul et affichage avec le ThreadPool. »
 - **Dépend** : T063, T062, T071 · **Sert** : *Environment 3*, M6 · **Doc** : [INSPIRATION_BLENDER.md §5.1](INSPIRATION_BLENDER.md)
 - **DoD** : manipuler l'UI reste fluide ; le compteur prouve qu'aucun rerender complet n'est lancé à chaque frame d'affichage.
 
-#### T077 ⬜ — Capture d'écran depuis le programme
-> **Fait le** : — · **Commit** : —
+#### T077 ✅ — Capture d'écran depuis le programme
+> **Fait le** : 2026-10-09 · **Commit** : 75761da
 - **Prompt** : « Touche dédiée + entrée UI « Save PNG » : écrit le framebuffer courant avec horodatage dans `docs/preuves/` (répertoire configurable), feedback visuel, gestion d'erreur. C'est l'item *Technical effects 4* (« sauvegarder/screenshot l'image rendue **dans le RT** »). »
 - **Dépend** : T070, T034 · **Sert** : item K4 *screenshot* · **Doc** : [OPTIONS_GUIDE.md](OPTIONS_GUIDE.md)
 - **DoD** : la touche produit un PNG valide ; message d'erreur si le chemin est invalide (pas de crash).
 
-#### T078 ⬜ — Redimensionnement et cas limites d'interface
-> **Fait le** : — · **Commit** : —
+#### T078 ✅ — Redimensionnement et cas limites d'interface
+> **Fait le** : 2026-10-09 · **Commit** : d9dbd99
 - **Prompt** : « Gère le resize (reproportionnement correct), taille minimale 64×64, ouverture/multiple ouverture, `SDL_QUIT`, perte de focus, absence de `DISPLAY` en mode fenêtré (message utile + code ≠ 0). Test manuel scripté dans `docs/preuves/interactions.md`. »
 - **Dépend** : T070 · **Sert** : anti-crash, M6 · **Doc** : [CHECKLIST_DEFENSE.md §5.3](CHECKLIST_DEFENSE.md)
 - **DoD** : aucun des cas ne plante (testé sous ASan) ; le pas-à-pas manuel est écrit.
 
-#### T079 ⬜ — Session de test manuel scriptée
-> **Fait le** : — · **Commit** : —
+#### T079 ✅ — Session de test manuel scriptée
+> **Fait le** : 2026-10-09 · **Commit** : baa05a2
 - **Prompt** : « Écris `docs/preuves/interactions.md` : liste numérotée des gestes à faire (expose, focus, glisser, molette, slider, screenshot, resize, fichier invalide) avec le résultat attendu, pour que **chaque membre** rejoue le même protocole avant la soutenance. »
 - **Dépend** : T072, T074, T075, T077, T078 · **Sert** : M5, M6, qualité · **Doc** : [CHECKLIST_DEFENSE.md §5](CHECKLIST_DEFENSE.md)
 - **DoD** : le protocole est exécuté une fois de bout en bout par un autre membre que son auteur (noté dans le journal).
