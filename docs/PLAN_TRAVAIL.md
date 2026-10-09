@@ -361,3 +361,54 @@ crédible et objective :
 > partie obligatoire d'abord (portes de qualité), puis les options par gain de points. Les
 > conflits sont arbitrés immédiatement, et chaque fonctionnalité livrée est prouvée par une
 > scène versionnée. »
+
+## 11. Point d'organisation J2 (T089, 2026-10-09)
+
+### Avancement reel
+
+- **P0–P8 termines a 100 %** : T000–T079 + T080–T088 ✅, tag `v1-mandatory`
+  pose sur un depot vert (247 cas / 279218 assertions + 20/20 `run_cases`,
+  valgrind 0 erreur, fuzz 400 fichiers 0 crash).
+- Portes J0 (cadrage, ADR-001), J1 (squelette : `make re && make test`
+  verts, CI verte), J2 (obligatoire : 3 scenes VI.1/VI.2/VI.3 + 4 controles
+  correcteur `Yes` dans `docs/preuves/protocole_correcteur.md`) : **franchies**.
+- Repartition constatee : noyau `base` + qualite (P0–P1), scene/schema (P2),
+  rendu/geometrie/lumieres (P3–P5), perf/affichage (P6–P7), gel (P8) —
+  chaque phase tracee dans `docs/JOURNAL.md` (1 ligne par session, 50+
+  sessions) avec ses commits.
+
+### Revues realisees
+
+- Regle appliquee : **1 relecteur minimum**, aucun auto-merge, aucun `wip`
+  en fin de session (AGENTS.md « Revue de code », 4 cases : tests, 0 warning
+  + lint, style, doc).
+- Preuve : historique `git log` (1 commit par tache, messages avec DoD et
+  chiffres), revues P9–P11 planifiees en T118/T133, quiz croises T166–T168.
+
+### Decisions prises
+
+ADR-001 (7 questions : C++23+Makefile, erreurs par codes R2, format `.rt`
+structure File++, norminette N/A, calques §2.1, branches `dev`/`main`,
+repartition Dev A/B/C) + points ouverts §4 tranches (#1 author, #2 norme) +
+gel `v1-mandatory` (aucune regression de l'obligatoire, §6.2).
+
+### Planning restant P9–P12
+
+P9 options priorite 1 (T100–T119, File++/groupes/textures/cluster),
+P10 priorite 2 (T120–T134), P11 exotiques (T140–T154, reordonnees en T134
+selon le rapport points/heure), P12 soutenance (T160–T169, 2 repetitions).
+`TACHES_PAR_SESSION = 10` : une phase par session environ.
+
+### Argumentaire *Group organization* (2 minutes, a repeter)
+
+> « Nous sommes 3 avec des perimetres ecrits (M1 maths/camera, M2 geometrie/
+> scene, M3 rendu/lumieres/plateforme, PLAN_TRAVAIL §2) et recouvrement
+> systematique auteur + relecteur. Preuves : 50+ lignes de journal datees
+> avec commits, backlog `CHECKLIST_TACHES.md` (141 taches, statuts ⬜/✅/⛔,
+> aucune tache sautee), 1 commit par avancement avec DoD execute (jamais
+> suppose), CI + `make quality` verts a chaque jalon, tag `v1-mandatory`
+> avec regle de non-regression. Reunions : kick-off, point quotidien
+> asynchrone, revue vendredi avec demo visible. Conflits : arbitrage
+> immediat, frontieres de fusion §2.1 (pull request hors perimetre).
+> Chaque fonctionnalite est prouvee par une scene versionnee regenerable
+> par script — jamais une image fabriquee. »
