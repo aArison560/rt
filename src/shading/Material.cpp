@@ -224,4 +224,51 @@ Vec3 shadeLambertDirectional(const MaterialParams& material, Vec3 normal,
 	return saturate(result);
 }
 
+Vec3 refractDir(Vec3 incident, Vec3 normal, bool frontFace, float ior) noexcept {
+	// Loi de Snell-Descartes (T057, SPECIFICATIONS §5.2 F — formule cherchee
+	// par le correcteur) : `n1 * sin(theta1) = n2 * sin(theta2)` avec
+	// `eta = n1 / n2`. Air (n=1) dehors, verre (n=ior) dedans :
+	// entree (`frontFace`, air -> objet) : `eta = 1 / ior` (devie vers la
+	// normale) ; sortie (`!frontFace`, objet -> air) : `eta = ior / 1`
+	// (devie loin de la normale, courbure exterieure). `ior = 1` -> `eta = 1`
+	// dans les deux sens -> aucune deviation (`T == I`, DoD).
+	// Decomposition (I, N unitaires, `cos1 = dot(-I, N)`) :
+	// `rPerp = eta * (I + cos1 * N)` (composante tangentielle),
+	// `rPar = -sqrt(1 - |rPerp|^2) * N` (composante normale),
+	// `T = rPerp + rPar`. Reflexion totale interne quand `|rPerp|^2 > 1`
+	// (`sin(theta2) > 1`, sortie rasante) -> `rt::refract` renvoie le vecteur
+	// nul (sentinelle, R2) et l'appelant (`render::traceRay`) replie sur le
+	// miroir (100 % reflechi, Fresnel = 1). Degeneres -> nul (defini).
+	float cleanIor = 1.0F;
+	if (std::isfinite(ior)) {
+		if (ior < 1.0F) {
+			cleanIor = 1.0F;
+		} else if (ior > 3.0F) {
+			cleanIor = 3.0F;
+		} else {
+			cleanIor = ior;
+		}
+	}
+	if (!std::isfinite(incident.x) || !std::isfinite(incident.y) || !std::isfinite(incident.z) ||
+	    !std::isfinite(normal.x) || !std::isfinite(normal.y) || !std::isfinite(normal.z)) {
+		return Vec3{};
+	}
+	const Vec3 unitI = normalize(incident);
+	const Vec3 unitN = normalize(normal);
+	if (nearZero(unitI) || nearZero(unitN)) {
+		return Vec3{};
+	}
+	if (!std::isfinite(unitI.x) || !std::isfinite(unitN.x)) {
+		return Vec3{};
+	}
+	// `eta = n1/n2` selon le sens (entree/sortie, cf. `HitRecord::frontFace`).
+	const float eta = frontFace ? (1.0F / cleanIor) : cleanIor;
+	if (!std::isfinite(eta) || !(eta > 0.0F)) {
+		return Vec3{};
+	}
+	// `rt::refract` applique exactement `rPerp`/`rPar` ci-dessus (Vec.hpp) et
+	// renvoie `(0,0,0)` en reflexion totale interne (jamais de `throw`, R2).
+	return refract(unitI, unitN, eta);
+}
+
 } // namespace rt::shading

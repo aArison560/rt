@@ -1,6 +1,7 @@
 #pragma once
 
-// Boucle de rendu mono-thread (T032) + multi-objets (T046) + reflexion (T056) — sans SDL (R6).
+// Boucle de rendu mono-thread (T032) + multi-objets (T046) + reflexion (T056)
+// + refraction (T057) — sans SDL (R6).
 // `render()` parcourt les pixels, genere le rayon via `Camera` (T031),
 // cherche l'intersection la plus proche parmi tous les objets (T046 : tri
 // par `t`, `tMax` resserre ; objets directs + groupes aplatis, 4 types en
@@ -9,7 +10,11 @@
 // ponctuelles avec position, T052 : multi-spot melange, shadow ray `tMin`
 // eps anti-acne + attenuation T051, miss -> fond de scene) + speculaire
 // Blinn-Phong (T053) + reflexion bornee (T056 : `reflectivity` 0 = mat /
-// 1 = miroir pur, `out = direct*(1-R) + reflechi*R`, `maxDepth` 0..32),
+// 1 = miroir pur, `out = direct*(1-R) + reflechi*R`, `maxDepth` 0..32)
+// + refraction bornee (T057 : Descartes `n1*sin(t1) = n2*sin(t2)`,
+// `eta = frontFace ? 1/ior : ior`, `out = base*(1-T) + transmis*T`,
+// `T = transparency` 0 = opaque / 1 = transmis pur, `ior = 1` = sans
+// deviation, repli miroir en reflexion totale interne),
 // ecrit dans le `Framebuffer` persistant (T030) puis `present()` (tonemapping + gamma 2.2).
 // persistant (T030) puis `present()` (tonemapping + gamma 2.2). Profondeur max bornee
 // (`maxDepth`, utilisee par la reflexion en T056), aucune allocation

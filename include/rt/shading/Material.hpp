@@ -125,4 +125,21 @@ static_assert(std::is_trivially_copyable_v<DirectionalLightParams>,
                                            const DirectionalLightParams& light,
                                            const AmbientParams& ambient) noexcept;
 
+// Direction refractee de Descartes/Snell (T057, *Reflection & transparency*
+// sous-criteres 3-5) : `n1*sin(theta1) = n2*sin(theta2)` (le correcteur
+// cherchera cette formule — voir aussi `src/shading/Material.cpp`).
+// `incident` = direction du rayon incident (vers la surface), `normal` = normale
+// de shading (contre le rayon, `rec.normal`, unitaire), `frontFace` = vrai si
+// le rayon arrive de l'exterieur (air -> objet, `eta = 1/ior`), faux s'il sort
+// (objet -> air, `eta = ior`). `ior` sanitize (`!fini` -> 1, `<1` -> 1, `>3` -> 3,
+// bornes du schema R1, T024) : `ior = 1` -> `eta = 1` -> aucune deviation
+// (`T == I`, DoD). Decompose (base orthonormee, `cos1 = dot(-I, N)`) :
+// `rPerp = eta*(I + cos1*N)`, `rPar = -sqrt(1-|rPerp|^2)*N`, `T = rPerp + rPar`
+// (via `rt::refract`, qui renvoie le vecteur nul si `|rPerp|^2 > 1`, c'est la
+// reflexion totale interne `sin(theta2) > 1`). Nul/NaN (incident/normale
+// degeneree, `ior` degenere) -> vecteur nul (sentinelle, jamais de `throw`,
+// l'appelant replie sur le miroir ou le direct, R2). `noexcept`, sans
+// allocation (R2/R3).
+[[nodiscard]] Vec3 refractDir(Vec3 incident, Vec3 normal, bool frontFace, float ior) noexcept;
+
 } // namespace rt::shading

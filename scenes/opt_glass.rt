@@ -1,0 +1,76 @@
+# scenes/opt_glass.rt — transparence et refraction (T057, *Reflection & transparency* 3-5).
+# Loi de Descartes `n1*sin(t1) = n2*sin(t2)` (`eta = 1/ior` a l'entree,
+# `ior` a la sortie, voir `shading::refractDir` + `render::traceRay`) :
+# sphere de verre (`transparency 0.9, ior 1.5`, on voit a travers, decale par
+# `ior`) + sphere opaque rouge (temoin) + sol gris. Le correcteur modifie
+# `ior` (1.0 = aucune deviation, 1.5 = verre, 1.33 = eau) et relance : le
+# decalage change. `transparency 0` = opaque (octet-identique), `1` = transmis
+# pur, repli miroir en reflexion totale interne (jamais de trou noir).
+# Toute directive existe dans `docs/FORMAT_SCENE.md` §5 (table `src/schema/`, R1).
+scene "opt_glass" {
+    limits {
+        width 320
+        height 240
+        samples 4
+        max_depth 4
+        seed 0
+    }
+    camera {
+        position (0 2 6)
+        target (0 0 0)
+        up (0 1 0)
+        fov 50
+    }
+    background {
+        color (0.02 0.02 0.05)
+    }
+    ambient {
+        color (0.06 0.06 0.08)
+        intensity 1.0
+    }
+    lights {
+        light point "key" {
+            position (3 5 2)
+            color (1 1 1)
+            intensity 0.8
+        }
+        light point "fill" {
+            position (-3 3 2)
+            color (0.4 0.5 1)
+            intensity 0.5
+        }
+    }
+    objects {
+        object plane "sol" {
+            point (0 -1 0)
+            normal (0 1 0)
+            material {
+                albedo (0.5 0.5 0.5)
+                diffuse 0.7
+            }
+        }
+        object sphere "verre" {
+            center (-1.2 0 0)
+            radius 1
+            material {
+                albedo (0.9 0.95 1.0)
+                diffuse 0.3
+                ambient 0.05
+                specular 0.8
+                shininess 64
+                transparency 0.9
+                ior 1.5
+            }
+        }
+        object sphere "opaque" {
+            center (1.2 0 0)
+            radius 1
+            material {
+                albedo (0.9 0.1 0.1)
+                diffuse 0.7
+                specular 0.5
+                shininess 32
+            }
+        }
+    }
+}

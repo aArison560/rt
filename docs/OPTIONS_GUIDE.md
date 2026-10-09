@@ -265,6 +265,16 @@ Ordre recommandé (ROI décroissant). Les détails sont dans les sections suivan
 > `render::traceRay()` (`out = direct*(1-R) + réfléchi*R`, `R=0` = mat
 > identique au sans-miroir, `R=1` = miroir pur). Tests :
 > `tests/unit/test_reflection.cpp` (4 cas, DoD bornes + profondeur bornée).
+>
+> Implémenté (T057, sous-critères 3–5) : réfraction pilotée par
+> `material { transparency 0..1 + ior 1..3 }` (schéma R1, validé T024 dont
+> `transparency > 0` exige `ior > 1`) via `shading::refractDir()` (Descartes
+> `n1*sin(t1) = n2*sin(t2)`, `eta = frontFace ? 1/ior : ior`, `ior = 1` = sans
+> déviation, TIR = sentinelle nulle repliée sur le miroir) + `traceRay()`
+> (`out = base*(1-T) + transmis*T`, `T=0` = opaque identique, `T=1` = transmis
+> pur). Tests : `tests/unit/test_refraction.cpp` (6 cas, DoD `ior` + formule
+> commentée). Preuve : `scenes/opt_glass.rt` (verre `transparency 0.9 ior 1.5`
+> + opaque, `sh scripts/render_all.sh` → `docs/preuves/opt_glass.png`).
 
 ### 4.2 Shadows and transparency — ☐ Oui/Non
 

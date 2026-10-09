@@ -1,17 +1,20 @@
 // Boucle de rendu mono-thread (T032) + multi-objets (T046) + reflexion (T056)
-// — implementation sans exception, sans SDL (R6) et sans allocation dans
-// la boucle (R3). Voir `include/rt/render/Renderer.hpp` pour le contrat et
-// `docs/ARCHITECTURE.md` §4 pour le pipeline (camera -> intersection ->
-// framebuffer). T046 branche la recherche d'intersection : tous les objets
-// de la scene (objets directs + groupes aplatis, 4 types coexistant,
-// doublons autorises) sont convertis une fois en `geometry::AObject`
-// (chemin froid, avant la boucle), puis chaque rayon cherche le plus proche
-// (`tri par t`, `tMax` resserre). Hit -> Lambert (T033) avec le materiau de
-// l'objet touche + ambiance + **toutes** les ponctuelles (T052 : multi-spot,
-// ombres par shadow ray `tMin` eps anti-acne, attenuation T051 par
-// `lighting::attenuationFactor`) + speculaire Blinn-Phong (T053 : `specular`,
-// `shininess`, `V = -ray.dir`, sature en blanc) + reflexion bornee (T056 :
-// `reflectivity` 0 = mat / 1 = miroir pur, `max_depth` 0..32) ; miss -> fond.
+// + refraction (T057) — implementation sans exception, sans SDL (R6) et sans
+// allocation dans la boucle (R3). Voir `include/rt/render/Renderer.hpp` pour
+// le contrat et `docs/ARCHITECTURE.md` §4 pour le pipeline (camera ->
+// intersection -> framebuffer). T046 branche la recherche d'intersection :
+// tous les objets de la scene (objets directs + groupes aplatis, 4 types
+// coexistant, doublons autorises) sont convertis une fois en
+// `geometry::AObject` (chemin froid, avant la boucle), puis chaque rayon
+// cherche le plus proche (`tri par t`, `tMax` resserre). Hit -> Lambert
+// (T033) avec le materiau de l'objet touche + ambiance + **toutes** les
+// ponctuelles (T052 : multi-spot, ombres par shadow ray `tMin` eps anti-acne,
+// attenuation T051 par `lighting::attenuationFactor`) + speculaire
+// Blinn-Phong (T053 : `specular`, `shininess`, `V = -ray.dir`, sature en
+// blanc) + reflexion bornee (T056 : `reflectivity` 0 = mat / 1 = miroir pur,
+// `max_depth` 0..32) + refraction bornee (T057 : Descartes `n1*sin(t1) =
+// n2*sin(t2)`, `eta = frontFace ? 1/ior : ior`, `transparency` 0 = opaque /
+// 1 = transmis pur, repli miroir en reflexion totale interne) ; miss -> fond.
 // Progressif T036 : batches externes + `seedFor` absolu + jitter sous-pixel
 // (AA en T120) + dithering deterministe minimal (moyenne -> 0 quand spp
 // grandit, conservé pour hit et miss afin que `spp 64 < spp 1` reste vrai).
@@ -385,16 +388,32 @@ struct TraceCtx {
 	return shading::saturate(total);
 }
 
-// T056 : trace un rayon avec reflexion bornee (SPECIFICATIONS §5.2 F,
-// ARCHITECTURE.md §4.6). `depth` = generation (0 = primaire) ;
-// `maxDepth` = nombre max de rebonds (0 = direct seul, jamais de boucle
-// infinie : chaque rebond incremente `depth`, pile bornee 0..32).
-// Formule : `out = saturate(direct * (1 - R) + reflechi * R)` avec
-// `R = clamp(reflectivity, 0, 1)` (NaN -> 0), `reflechi = trace(P+N*eps,
-// reflect(D, N), depth+1)`. `R = 0` -> direct seul (octet identique),
-// `R = 1` -> miroir pur (aucune part diffuse). Degeneres (normale nulle,
-// reflexion nulle/NaN, `depth >= maxDepth`) -> direct seul, defini.
-// `noexcept`, sans allocation (R2/R3, `HitRecord` sur pile).
+// T056+T057 : trace un rayon avec reflexion et refraction bornees
+// (SPECIFICATIONS §5.2 F, ARCHITECTURE.md §4.6). `depth` = generation
+// (0 = primaire) ; `maxDepth` = nombre max de rebonds (0 = direct seul,
+// jamais de boucle infinie : chaque rebond incremente `depth`, pile bornee
+// 0..32).
+// Reflexion (T056) : `R = D - 2*(D.N)*N` (`Vec3::reflect`, N unitaire),
+// `reflechi = trace(P+N*eps, reflect(D, N), depth+1)`,
+// `base = saturate(direct*(1-R) + reflechi*R)` avec `R = clamp(reflectivity,
+// 0, 1)` (NaN -> 0). `R = 0` -> direct seul (octet identique), `R = 1` ->
+// miroir pur (aucune part diffuse).
+// Refraction Descartes/Snell (T057, formule cherchee par le correcteur) :
+// `n1*sin(theta1) = n2*sin(theta2)`, `eta = n1/n2 = frontFace ? 1/ior : ior`
+// (entree air->objet : vers la normale ; sortie objet->air : loin de la
+// normale, courbure exterieure), `cos1 = dot(-D, N)`,
+// `rPerp = eta*(D + cos1*N)`, `rPar = -sqrt(1-|rPerp|^2)*N`, `T = rPerp+rPar`
+// (via `shading::refractDir` -> `rt::refract`), origine `P-N*eps` (cote
+// transmis, anti-acne), `transmis = trace(P-N*eps, T, depth+1)`,
+// `out = saturate(base*(1-T2) + transmis*T2)` avec `T2 = clamp(transparency,
+// 0, 1)` (NaN -> 0). `T2 = 0` -> `base` seul (octet identique au chemin T056),
+// `T2 = 1` -> transmis pur. `ior = 1` -> `eta = 1` -> aucune deviation
+// (DoD). Reflexion totale interne (`|rPerp|^2 > 1`, `refractDir` nul) ->
+// repli miroir (100 % reflechi, `transmis = reflechi` ou trace du miroir si
+// `R = 0`, jamais de trou noir ni de NaN). Degeneres (normale nulle,
+// direction nulle/NaN, `depth >= maxDepth`) -> `direct`/`base` seul, defini.
+// `noexcept`, sans allocation (R2/R3, `HitRecord` sur pile). Les ombres
+// restent binaires (objets transparents = occultants, T058 affinera).
 [[nodiscard]] Vec3 traceRay(const Ray& ray, int depth, const TraceCtx& ctx) noexcept {
 	HitRecord rec;
 	if (!findClosestHit(*ctx.objs, ray, kPrimaryTMin, kInfinity, rec)) {
@@ -410,7 +429,14 @@ struct TraceCtx {
 	if (std::isfinite(mat.reflectivity) && mat.reflectivity > 0.0F) {
 		refl = mat.reflectivity > 1.0F ? 1.0F : mat.reflectivity;
 	}
-	if (!(refl > 0.0F) || depth >= ctx.maxDepth) {
+	float trans = 0.0F;
+	if (std::isfinite(mat.transparency) && mat.transparency > 0.0F) {
+		trans = mat.transparency > 1.0F ? 1.0F : mat.transparency;
+	}
+	if (!(refl > 0.0F) && !(trans > 0.0F)) {
+		return direct;
+	}
+	if (depth >= ctx.maxDepth) {
 		return direct;
 	}
 	const Vec3 unitN = normalize(rec.normal);
@@ -420,25 +446,67 @@ struct TraceCtx {
 	if (!std::isfinite(unitN.x) || !std::isfinite(unitN.y) || !std::isfinite(unitN.z)) {
 		return direct;
 	}
-	// Reflexion miroir : R = D - 2*(D.N)*N (`Vec3::reflect`, N unitaire).
-	const Vec3 reflDir = reflect(ray.direction, unitN);
-	if (nearZero(reflDir)) {
-		return direct;
+	// Reflexion (T056, inchangee quand `trans == 0` : octet-identique).
+	Vec3 base = direct;
+	Vec3 reflected{};
+	bool hasReflected = false;
+	if (refl > 0.0F) {
+		// Reflexion miroir : R = D - 2*(D.N)*N (`Vec3::reflect`, N unitaire).
+		const Vec3 reflDir = reflect(ray.direction, unitN);
+		if (!nearZero(reflDir) && std::isfinite(reflDir.x) && std::isfinite(reflDir.y) &&
+		    std::isfinite(reflDir.z)) {
+			const Vec3 unitR = normalize(reflDir);
+			if (!nearZero(unitR)) {
+				const Vec3 origin = rec.point + unitN * kPrimaryTMin;
+				reflected = traceRay(Ray(origin, unitR), depth + 1, ctx);
+				hasReflected = true;
+				const float inv = 1.0F - refl;
+				base = shading::saturate(Vec3(direct.x * inv + reflected.x * refl,
+				                              direct.y * inv + reflected.y * refl,
+				                              direct.z * inv + reflected.z * refl));
+			}
+		}
 	}
-	if (!std::isfinite(reflDir.x) || !std::isfinite(reflDir.y) ||
-	    !std::isfinite(reflDir.z)) {
-		return direct;
+	if (!(trans > 0.0F)) {
+		return base;
 	}
-	const Vec3 unitR = normalize(reflDir);
-	if (nearZero(unitR)) {
-		return direct;
+	// Refraction (T057) : Descartes `n1*sin(t1) = n2*sin(t2)` via
+	// `shading::refractDir` (voir son contrat pour `eta` et la sentinelle
+	// nulle en reflexion totale interne). Origine `P-N*eps` (cote transmis).
+	const Vec3 refrDir = shading::refractDir(ray.direction, unitN, rec.frontFace, mat.ior);
+	Vec3 refracted{};
+	if (nearZero(refrDir) || !std::isfinite(refrDir.x) || !std::isfinite(refrDir.y) ||
+	    !std::isfinite(refrDir.z)) {
+		// Reflexion totale interne (`sin(t2) > 1`, sortie rasante) : le rayon
+		// ne transmet rien, tout est reflechi (Fresnel = 1). Repli miroir
+		// (meme direction que la reflexion) pour ne jamais rendre de trou
+		// noir ni de NaN — l'image reste finie et bornee.
+		if (hasReflected) {
+			refracted = reflected;
+		} else {
+			const Vec3 fallbackDir = reflect(ray.direction, unitN);
+			if (nearZero(fallbackDir) || !std::isfinite(fallbackDir.x)) {
+				return base;
+			}
+			const Vec3 unitF = normalize(fallbackDir);
+			if (nearZero(unitF)) {
+				return base;
+			}
+			const Vec3 originF = rec.point + unitN * kPrimaryTMin;
+			refracted = traceRay(Ray(originF, unitF), depth + 1, ctx);
+		}
+	} else {
+		const Vec3 unitT = normalize(refrDir);
+		if (nearZero(unitT)) {
+			return base;
+		}
+		const Vec3 originT = rec.point - unitN * kPrimaryTMin;
+		refracted = traceRay(Ray(originT, unitT), depth + 1, ctx);
 	}
-	const Vec3 origin = rec.point + unitN * kPrimaryTMin;
-	const Vec3 reflected = traceRay(Ray(origin, unitR), depth + 1, ctx);
-	const float inv = 1.0F - refl;
+	const float invT = 1.0F - trans;
 	const Vec3 blended =
-	    Vec3(direct.x * inv + reflected.x * refl, direct.y * inv + reflected.y * refl,
-	         direct.z * inv + reflected.z * refl);
+	    Vec3(base.x * invT + refracted.x * trans, base.y * invT + refracted.y * trans,
+	         base.z * invT + refracted.z * trans);
 	return shading::saturate(blended);
 }
 

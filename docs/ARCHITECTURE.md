@@ -359,6 +359,19 @@ if (dir.refract(N, ratio, T))                     // Snell/Descartes
 > `tests/unit/test_reflection.cpp` (R=0 identique octet par octet, R=1 =
 > fond réfléchi net, 2 plans face à face terminent en `max_depth` 8/16,
 > R=0.5 = moyenne à 0.05 près).
+>
+> Implémenté (T057, réfraction 3–5/5) : `shading::refractDir()` (`src/shading/Material.cpp`,
+> Descartes `n1*sin(t1) = n2*sin(t2)`, `eta = frontFace ? 1/ior : ior`,
+> `rPerp = eta*(I+cos1*N)`, `rPar = -sqrt(1-|rPerp|^2)*N`, sentinelle nulle en
+> réflexion totale interne) + `traceRay()` étendu (`transmis = trace(P-N*eps, T,
+> depth+1)`, `out = saturate(base*(1-T2) + transmis*T2)`, `T2 = clamp(transparency,
+> 0, 1)`, `T2 = 0` = base seule octet-identique, `T2 = 1` = transmis pur,
+> `ior = 1` = sans déviation, TIR = repli miroir, `depth >= maxDepth` → base).
+> `noexcept`, sans allocation (R2/R3). Tests :
+> `tests/unit/test_refraction.cpp` (6 cas : T=0 identique + `ior` ignoré, `ior = 1`
+> sans déviation unitaire + transmis pur fond, sortie = courbure extérieure
+> `0.75/0.66` + `1.33 vs 1.5` sur plan de fond, T=0.5 = moyenne, TIR nulle +
+> profondeur 0 vs 8). Scène : `scenes/opt_glass.rt` (verre `0.9/1.5` + opaque).
 
 ### 4.7 Textures et UV
 
