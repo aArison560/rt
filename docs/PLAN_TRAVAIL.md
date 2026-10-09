@@ -199,6 +199,19 @@ J1 (squelette)  ──►  J2 (OBLIGATOIRE 100 %)  ──►  J3 (fichiers struc
 scènes de démo et préparation de la soutenance. Ajouter une option au dernier moment est le
 meilleur moyen d'introduire un crash (→ note 0).
 
+### 6.2 Gel de la partie obligatoire (T088, 2026-10-09, tag `v1-mandatory`)
+
+Le depot est vert (`make re`, `make test` 247 cas, valgrind 0 erreur sur
+les 10 scenes, fuzz 400 fichiers 0 crash, 3 scenes obligatoires rendues
+par `scripts/render_all.sh` en 9 s). A partir de ce tag :
+
+- **aucune regression de l'obligatoire n'est acceptee** (M1–M8, B1–B4) ;
+- toute modification du moteur (rendu, geometrie, lumiere, parser) touche
+  **d'abord** les tests de non-regression (`tests/integration/test_golden.cpp`,
+  `tests/integration/test_mandatory.cpp`, `tests/golden/`) : on ajoute ou
+  regenere le golden **avant** de changer le comportement, jamais apres ;
+- `sh scripts/render_all.sh` + `make test` restent verts a chaque commit.
+
 ---
 
 ## 7. Backlog résiduel : matrice d'écarts
