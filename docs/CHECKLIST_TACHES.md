@@ -543,8 +543,8 @@ rt/
 - **Dépend** : T056 · **Sert** : *Reflection & transparency* sous-critères 3-5 · **Doc** : [SPECIFICATIONS.md §5.2 F](SPECIFICATIONS.md)
 - **DoD** : tests d'`ior` verts ; la formule est commentée dans le code ; scène `scenes/opt_glass.rt`.
 
-#### T058 ⬜ — Ombres affinées par transparence + *Direct light*
-> **Fait le** : — · **Commit** : —
+#### T058 ✅ — Ombres affinées par transparence + *Direct light*
+> **Fait le** : 2026-10-09 · **Commit** : 2202d08
 - **Prompt** : « (a) *Shadows and transparency* : l'ombre d'un objet translucide est **moins sombre** que celle d'un objet opaque (atténuation proportionnelle à la transparence et au `ior`). (b) *Direct light* : spotlight orienté vers la caméra/observateur qui **aveugle** (éclairage face à l'utilisateur, saturation du pixel). Scènes de preuve pour chacun. »
 - **Dépend** : T057, T052 · **Sert** : *Shadows and transparency*, *Direct light* · **Doc** : [SPECIFICATIONS.md §5.2 E](SPECIFICATIONS.md), [SPECIFICATIONS.md §5.2 F](SPECIFICATIONS.md)
 - **DoD** : 2 scènes de preuve + test de densité d'ombre (ombre translucide > ombre opaque en luminosité).
