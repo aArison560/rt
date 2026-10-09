@@ -31,16 +31,15 @@ constexpr std::uint32_t kTextureFormat = SDL_PIXELFORMAT_ABGR8888;
 
 } // namespace
 
-Window::~Window() {
-	shutdown();
-}
+Window::~Window() { shutdown(); }
 
 Status Window::init(int width, int height, const char* title) {
 	if (open_) {
 		return Status::error(StatusCode::InvalidArgument, "window already open", __LINE__);
 	}
 	if (width < 1 || height < 1 || width > 8192 || height > 8192) {
-		return Status::error(StatusCode::InvalidArgument, "bad window size: expected 1..8192", __LINE__);
+		return Status::error(StatusCode::InvalidArgument, "bad window size: expected 1..8192",
+		                     __LINE__);
 	}
 	// T078 : taille minimale d'affichage 64x64.
 	if (width < 64 || height < 64) {
@@ -64,7 +63,8 @@ Status Window::init(int width, int height, const char* title) {
 		return failIo(msg, __LINE__);
 	}
 	SDL_SetWindowMinimumSize(win, 64, 64);
-	SDL_Renderer* ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	SDL_Renderer* ren =
+	    SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if (ren == nullptr) {
 		ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_SOFTWARE);
 	}
@@ -99,6 +99,11 @@ Status Window::init(int width, int height, const char* title) {
 	accumDx_ = 0;
 	accumDy_ = 0;
 	accumWheel_ = 0;
+	mouseX_ = 0;
+	mouseY_ = 0;
+	leftDown_ = false;
+	uiHead_ = 0;
+	uiCount_ = 0;
 	stats_ = WindowStats{};
 	return Status::ok();
 }
@@ -127,13 +132,18 @@ void Window::shutdown() noexcept {
 	accumDx_ = 0;
 	accumDy_ = 0;
 	accumWheel_ = 0;
+	mouseX_ = 0;
+	mouseY_ = 0;
+	leftDown_ = false;
+	uiHead_ = 0;
+	uiCount_ = 0;
 	width_ = 0;
 	height_ = 0;
 	texWidth_ = 0;
 	texHeight_ = 0;
 }
 
-void Window::blit(const render::Framebuffer& fb) noexcept {
+void Window::updateTexture(const render::Framebuffer& fb) noexcept {
 	if (!open_ || renderer_ == nullptr || texture_ == nullptr) {
 		return;
 	}
@@ -145,8 +155,8 @@ void Window::blit(const render::Framebuffer& fb) noexcept {
 	// Resolution differente -> recree la texture (chemin froid, hors boucle).
 	if (fw != texWidth_ || fh != texHeight_) {
 		SDL_DestroyTexture(static_cast<SDL_Texture*>(texture_));
-		SDL_Texture* fresh = SDL_CreateTexture(static_cast<SDL_Renderer*>(renderer_), kTextureFormat,
-		                                       SDL_TEXTUREACCESS_STATIC, fw, fh);
+		SDL_Texture* fresh = SDL_CreateTexture(static_cast<SDL_Renderer*>(renderer_),
+		                                       kTextureFormat, SDL_TEXTUREACCESS_STATIC, fw, fh);
 		if (fresh == nullptr) {
 			return;
 		}
@@ -156,10 +166,34 @@ void Window::blit(const render::Framebuffer& fb) noexcept {
 	}
 	const auto* pixels = fb.displayData();
 	SDL_UpdateTexture(static_cast<SDL_Texture*>(texture_), nullptr, pixels, fw * 4);
+}
+
+bool Window::beginPresent() noexcept {
+	if (!open_ || renderer_ == nullptr || texture_ == nullptr) {
+		return false;
+	}
 	SDL_RenderClear(static_cast<SDL_Renderer*>(renderer_));
 	SDL_RenderCopy(static_cast<SDL_Renderer*>(renderer_), static_cast<SDL_Texture*>(texture_),
 	               nullptr, nullptr);
+	return true;
+}
+
+void Window::endPresent() noexcept {
+	if (!open_ || renderer_ == nullptr) {
+		return;
+	}
 	SDL_RenderPresent(static_cast<SDL_Renderer*>(renderer_));
+}
+
+void Window::blit(const render::Framebuffer& fb) noexcept {
+	if (!open_ || renderer_ == nullptr || texture_ == nullptr) {
+		return;
+	}
+	updateTexture(fb);
+	if (!beginPresent()) {
+		return;
+	}
+	endPresent();
 	++stats_.blitCount;
 }
 
@@ -246,19 +280,101 @@ void Window::pumpEvents() noexcept {
 			if (keyCount_ < kKeyQueue) {
 				keyQueue_[keyCount_++] = static_cast<int>(ev.key.keysym.sym);
 			}
-		} else if (ev.type == SDL_MOUSEBUTTONDOWN && ev.button.button == SDL_BUTTON_LEFT) {
-			dragging_ = true;
-		} else if (ev.type == SDL_MOUSEBUTTONUP && ev.button.button == SDL_BUTTON_LEFT) {
-			dragging_ = false;
 		} else if (ev.type == SDL_MOUSEMOTION) {
+			mouseX_ = static_cast<int>(ev.motion.x);
+			mouseY_ = static_cast<int>(ev.motion.y);
 			if (dragging_) {
 				accumDx_ += static_cast<int>(ev.motion.xrel);
 				accumDy_ += static_cast<int>(ev.motion.yrel);
 			}
+			UiEvent out;
+			out.type = UiEvent::Move;
+			out.x = mouseX_;
+			out.y = mouseY_;
+			pushUiEvent(out);
+		} else if (ev.type == SDL_MOUSEBUTTONDOWN) {
+			mouseX_ = static_cast<int>(ev.button.x);
+			mouseY_ = static_cast<int>(ev.button.y);
+			int btn = 0;
+			if (ev.button.button == SDL_BUTTON_LEFT) {
+				dragging_ = true;
+				leftDown_ = true;
+				btn = 1;
+			} else if (ev.button.button == SDL_BUTTON_RIGHT) {
+				btn = 2;
+			} else if (ev.button.button == SDL_BUTTON_MIDDLE) {
+				btn = 3;
+			}
+			if (btn != 0) {
+				UiEvent out;
+				out.type = UiEvent::Down;
+				out.x = mouseX_;
+				out.y = mouseY_;
+				out.button = btn;
+				pushUiEvent(out);
+			}
+		} else if (ev.type == SDL_MOUSEBUTTONUP) {
+			mouseX_ = static_cast<int>(ev.button.x);
+			mouseY_ = static_cast<int>(ev.button.y);
+			int btn = 0;
+			if (ev.button.button == SDL_BUTTON_LEFT) {
+				dragging_ = false;
+				leftDown_ = false;
+				btn = 1;
+			} else if (ev.button.button == SDL_BUTTON_RIGHT) {
+				btn = 2;
+			} else if (ev.button.button == SDL_BUTTON_MIDDLE) {
+				btn = 3;
+			}
+			if (btn != 0) {
+				UiEvent out;
+				out.type = UiEvent::Up;
+				out.x = mouseX_;
+				out.y = mouseY_;
+				out.button = btn;
+				pushUiEvent(out);
+			}
 		} else if (ev.type == SDL_MOUSEWHEEL) {
 			accumWheel_ += static_cast<int>(ev.wheel.y);
+			UiEvent out;
+			out.type = UiEvent::Wheel;
+			out.x = mouseX_;
+			out.y = mouseY_;
+			out.wheelX = static_cast<int>(ev.wheel.x);
+			out.wheelY = static_cast<int>(ev.wheel.y);
+			pushUiEvent(out);
 		}
 	}
+}
+
+void Window::pushUiEvent(const UiEvent& ev) noexcept {
+	if (uiCount_ >= kUiQueue) {
+		return;
+	}
+	const int idx = (uiHead_ + uiCount_) % kUiQueue;
+	uiQueue_[idx] = ev;
+	++uiCount_;
+}
+
+bool Window::pollUiEvent(UiEvent& out) noexcept {
+	out = UiEvent{};
+	if (!open_) {
+		return false;
+	}
+	pumpEvents();
+	if (uiCount_ <= 0) {
+		return false;
+	}
+	out = uiQueue_[uiHead_];
+	uiHead_ = (uiHead_ + 1) % kUiQueue;
+	--uiCount_;
+	return out.type != UiEvent::None;
+}
+
+void Window::uiMouseState(int& x, int& y, bool& leftDown) const noexcept {
+	x = mouseX_;
+	y = mouseY_;
+	leftDown = leftDown_;
 }
 
 bool Window::pollMouse(int& dx, int& dy, int& wheel) noexcept {

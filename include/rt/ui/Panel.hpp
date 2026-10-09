@@ -56,6 +56,23 @@ class Panel {
 	// par l'appelant via les setters ci-dessus). Sans scene -> sans effet.
 	void frame() noexcept;
 
+	// Entrees souris/clavier (sans SDL ici, ints seuls) : l'appelant
+	// (`app/`, qui possede la `Window` SDL) draine `Window::pollUiEvent`
+	// et transfere ici avant `frame()`. Sans contexte -> sans effet.
+	// `button` : 1 = gauche, 2 = droit, 3 = milieu (boutons microui).
+	void handleMouseMove(int x, int y) noexcept;
+	void handleMouseDown(int x, int y, int button) noexcept;
+	void handleMouseUp(int x, int y, int button) noexcept;
+	void handleScroll(int dx, int dy) noexcept;
+
+	// Vrai si la souris survole l'UI (dernier `frame()`) : l'appelant
+	// ignore alors l'orbite camera / le FOV molette (le drag va au slider).
+	[[nodiscard]] bool isHovering() const noexcept;
+	// Contexte natif `mu_Context*` (opaque) pour le rendu SDL en `app/`
+	// (`UiOverlay`) : nul si non attache. Reste possede par le panneau.
+	[[nodiscard]] void* nativeContext() noexcept { return ctx_; }
+	[[nodiscard]] const void* nativeContext() const noexcept { return ctx_; }
+
 	// Demande de (re)lancement posee par l'UI (bouton), consommee par l'appelant.
 	[[nodiscard]] bool takeLaunchRequest() noexcept;
 	// Demande de sauvegarde posee par l'UI (bouton `Save PNG`, T077).

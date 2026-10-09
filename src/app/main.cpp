@@ -8,6 +8,7 @@
 #include "rt/app/Controls.hpp"
 #include "rt/app/Interactive.hpp"
 #include "rt/app/Options.hpp"
+#include "rt/app/UiOverlay.hpp"
 #include "rt/base/Log.hpp"
 #include "rt/io/ImageWriter.hpp"
 #include "rt/io/Screenshot.hpp"
@@ -51,8 +52,7 @@ void onProgressPrint(int done, int total, void* user) noexcept {
 	}
 	const auto* clock = static_cast<const ProgressClock*>(user);
 	const auto now = std::chrono::steady_clock::now();
-	const double elapsed =
-	    std::chrono::duration<double>(now - clock->start).count();
+	const double elapsed = std::chrono::duration<double>(now - clock->start).count();
 	double eta = 0.0;
 	if (done < total) {
 		eta = elapsed * static_cast<double>(total - done) / static_cast<double>(done);
@@ -100,8 +100,12 @@ int runHeadless(const rt::app::Options& opts) {
 	// (meme spp + meme seed = memes pixels). Callback + ETA sur stderr
 	// sauf `--quiet` (futur affichage T075/T108).
 	ProgressClock clock{std::chrono::steady_clock::now()};
-	rt::render::RenderParams params{
-	    .width = width, .height = height, .spp = spp, .maxDepth = scene.limits.maxDepth, .seed = seed, .threads = threads};
+	rt::render::RenderParams params{.width = width,
+	                                .height = height,
+	                                .spp = spp,
+	                                .maxDepth = scene.limits.maxDepth,
+	                                .seed = seed,
+	                                .threads = threads};
 	if (!opts.quiet) {
 		params.onProgress = &onProgressPrint;
 		params.progressUser = &clock;
@@ -132,9 +136,9 @@ int runHeadless(const rt::app::Options& opts) {
 		}
 	}
 	if (!opts.quiet) {
-		std::cout << "ok: " << opts.scenePath << ": " << scene.totalObjectCount()
-		          << " objects, " << scene.lights.size() << " lights, " << width << "x"
-		          << height << ", spp " << spp << ", threads " << threads;
+		std::cout << "ok: " << opts.scenePath << ": " << scene.totalObjectCount() << " objects, "
+		          << scene.lights.size() << " lights, " << width << "x" << height << ", spp " << spp
+		          << ", threads " << threads;
 		if (opts.hasOut) {
 			std::cout << ", wrote " << opts.outPath;
 		}
@@ -168,22 +172,32 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 		return 1;
 	}
 	rt::platform::Window window;
-	if (rt::Status status = window.init(width, height, opts.scenePath.c_str());
-	    status.isError()) {
+	if (rt::Status status = window.init(width, height, opts.scenePath.c_str()); status.isError()) {
 		rt::log::error(status.message);
 		return 1;
 	}
-	window.blit(framebuffer);
+	// Fix microui : overlay SDL (rects + texte TTF) compose par-dessus le
+	// framebuffer en un seul `present` (froid, 1x/frame, hors hot path).
+	// Echec police -> mode degrade (rects cliquables, texte ignore).
+	rt::app::UiOverlay overlay;
+	(void)overlay.init(window.nativeRenderer());
+	// T075 : panneau microui attache (champs issus de `schema/`, sliders
+	// FOV/ambiance + boutons Render/Save ; dessin SDL minimal, logique testee).
+	rt::ui::Panel panel;
+	panel.attach(&scene);
+	// Premier frame : remplit la liste `mu_Command` avant le 1er present.
+	panel.frame();
+	window.updateTexture(framebuffer);
+	if (window.beginPresent()) {
+		overlay.draw(panel.nativeContext());
+		window.endPresent();
+	}
 	if (!opts.quiet) {
 		std::cout << "window: " << width << "x" << height << " (close to quit)\n";
 	}
 	const int spp = opts.hasSpp ? opts.spp : scene.limits.samples;
 	const long long seed = opts.hasSeed ? opts.seed : scene.limits.seed;
 	const int threads = opts.hasThreads ? opts.threads : 1;
-	// T075 : panneau microui attache (champs issus de `schema/`, sliders
-	// FOV/ambiance + boutons Render/Save ; dessin SDL minimal, logique testee).
-	rt::ui::Panel panel;
-	panel.attach(&scene);
 	// T108 (*Environment 1*) : la callback de progression alimente a la fois
 	// le panneau (barre `done/total`, 1x par batch spp) et le terminal
 	// (meme format qu'en headless, sauf `--quiet`). `noexcept` (R2).
@@ -214,6 +228,8 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 	scene.markClean();
 	long long rerenders = 0;
 	while (!window.pollQuit()) {
+		// Survol UI du frame precedent : le drag va au slider, pas a l'orbite.
+		const bool uiHover = panel.isHovering();
 		int sdlKey = 0;
 		bool changed = false;
 		bool wantShot = false;
@@ -232,16 +248,46 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 			}
 		}
 		// T074 : souris (orbite + molette FOV), en direct, meme fanions R5.
+		// Si l'UI est survolee, la molette/drag vont a microui (scroll /
+		// slider), pas a la camera.
 		int mdx = 0;
 		int mdy = 0;
 		int mwheel = 0;
-		if (window.pollMouse(mdx, mdy, mwheel)) {
-			if ((mdx != 0 || mdy != 0) && rt::app::orbitCamera(scene, mdx, mdy)) {
-				changed = true;
+		bool mouseMoved = window.pollMouse(mdx, mdy, mwheel);
+		int uiWheelX = 0;
+		int uiWheelY = 0;
+		if (mouseMoved) {
+			if (uiHover) {
+				uiWheelX = 0;
+				uiWheelY = mwheel;
+			} else {
+				if ((mdx != 0 || mdy != 0) && rt::app::orbitCamera(scene, mdx, mdy)) {
+					changed = true;
+				}
+				if (mwheel != 0 && rt::app::adjustFov(scene, mwheel)) {
+					changed = true;
+				}
 			}
-			if (mwheel != 0 && rt::app::adjustFov(scene, mwheel)) {
-				changed = true;
+		}
+		// Fix microui : transfere la file SDL -> `mu_input_*` avant `frame()`.
+		// `pollUiEvent` pompe deja ; les residus molette (hors hover) sont
+		// aussi transmis comme scroll (inoffensif hors fenetre UI).
+		rt::platform::UiEvent uiEv;
+		while (window.pollUiEvent(uiEv)) {
+			if (uiEv.type == rt::platform::UiEvent::Move) {
+				panel.handleMouseMove(uiEv.x, uiEv.y);
+			} else if (uiEv.type == rt::platform::UiEvent::Down) {
+				panel.handleMouseMove(uiEv.x, uiEv.y);
+				panel.handleMouseDown(uiEv.x, uiEv.y, uiEv.button);
+			} else if (uiEv.type == rt::platform::UiEvent::Up) {
+				panel.handleMouseMove(uiEv.x, uiEv.y);
+				panel.handleMouseUp(uiEv.x, uiEv.y, uiEv.button);
+			} else if (uiEv.type == rt::platform::UiEvent::Wheel) {
+				panel.handleScroll(uiEv.wheelX, uiEv.wheelY);
 			}
+		}
+		if (mouseMoved && uiHover && (uiWheelX != 0 || uiWheelY != 0)) {
+			panel.handleScroll(uiWheelX, uiWheelY);
 		}
 		// T075/T076 : l'UI fait avancer ses sliders chaque frame ; si elle a
 		// leve R5, c'est une edition comme les autres (appercu puis affinage).
@@ -281,7 +327,7 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 			                                 .progressUser = &windowProgress};
 			rt::render::RenderStats stats;
 			if (rt::render::render(scene, framebuffer, preview, &stats).isOk()) {
-				window.blit(framebuffer);
+				window.updateTexture(framebuffer);
 				ctl.consumePreview();
 				ctl.onPreviewDone();
 				if (!opts.quiet) {
@@ -301,7 +347,7 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 			                                .progressUser = &windowProgress};
 			rt::render::RenderStats stats;
 			if (rt::render::render(scene, framebuffer, params, &stats).isOk()) {
-				window.blit(framebuffer);
+				window.updateTexture(framebuffer);
 				++rerenders;
 				ctl.consumeFull();
 				ctl.onFullDone();
@@ -310,6 +356,12 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 				}
 			}
 			scene.markClean();
+		}
+		// Fix microui : compose `framebuffer + UI` en un seul `present`
+		// chaque frame (hover/slider fluide meme sans re-trace).
+		if (window.beginPresent()) {
+			overlay.draw(panel.nativeContext());
+			window.endPresent();
 		}
 		// T075 : fait avancer l'UI (sliders/boutons) chaque frame, sans bloquer.
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));

@@ -579,9 +579,16 @@ Pour **prouver** les options en soutenance, le format doit piloter au moins :
 > `cc -std=c11 -w`) + `include/rt/ui/Panel.hpp` + `src/ui/Panel.cpp`
 > (`attach`, `fieldNames()` == `schema::all()` R1, setters R5,
 > `frame()` microui + `takeLaunch/SaveRequest`) branché dans `runWindowed`
-> (une `frame()` par tour, sans blocage). Tests :
-> `tests/unit/test_panel.cpp` (champs == table, sans scene sans crash,
-> albedo via UI change l'image).
+> (une `frame()` par tour, sans blocage). Fix affichage : `Panel`
+> (`handleMouseMove/Down/Up`, `handleScroll`, `isHovering()`,
+> `nativeContext()`), `Window` (file bornee `UiEvent`, `pollUiEvent`,
+> `updateTexture` + `beginPresent`/`endPresent` en un seul `present`) et
+> `app/UiOverlay` (commandes `mu_Command` -> `SDL_FillRect/Copy` + texte
+> `SDL_ttf`, optionnel, degrade rects sinon) composes chaque frame
+> (`framebuffer + UI`, 1 `present`, orbite/molette ignores au survol).
+> Tests : `tests/unit/test_panel.cpp` (champs == table, sans scene sans crash,
+> albedo via UI change l'image) + `tests/unit/test_uifix.cpp` (entrees,
+> survol dedans/dehors, commandes dessinables, overlay nul).
 >
 > Implémenté (T076, R5) : `include/rt/app/Interactive.hpp` +
 > `src/app/Interactive.cpp` (`onEdited` -> preview, `onPreviewDone` -> full,

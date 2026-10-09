@@ -33,13 +33,18 @@ endif
 SDL_CFLAGS := $(shell pkg-config --cflags sdl2 2>/dev/null)
 SDL_LIBS   := $(shell pkg-config --libs sdl2 2>/dev/null)
 
+# SDL_ttf (fix microui) : texte de l'overlay via pkg-config, vide si absent
+# (repli : panneaux visibles sans texte, cf. `UiOverlay`). Optionnel.
+TTF_CFLAGS := $(shell pkg-config --cflags SDL2_ttf 2>/dev/null)
+TTF_LIBS   := $(shell pkg-config --libs SDL2_ttf 2>/dev/null)
+
 # microui (T075) : vendored `thirdparty/microui/` (rxi, MIT, v2.02), C11.
 # Compile a part en `-w` (le C d'origine ne passerait pas `-Werror`) puis lie.
 MICROUI_SRC = thirdparty/microui/microui.c
 MICROUI_OBJ = $(OBJDIR)/microui.o
 MICROUI_TEST_OBJ = $(TEST_OBJDIR)/microui.o
 
-SRCS	= main.cpp Options.cpp Controls.cpp Interactive.cpp Directives.cpp Lexer.cpp Scene.cpp Parser.cpp Validator.cpp Framebuffer.cpp Camera.cpp Renderer.cpp Material.cpp Pattern.cpp PointLight.cpp DirectionalLight.cpp SpotLight.cpp ImageWriter.cpp Screenshot.cpp Texture.cpp Object.cpp Sphere.cpp Plane.cpp Cylinder.cpp Cone.cpp Bvh.cpp BvhCache.cpp ThreadPool.cpp Window.cpp Panel.cpp
+SRCS	= main.cpp Options.cpp Controls.cpp Interactive.cpp UiOverlay.cpp Directives.cpp Lexer.cpp Scene.cpp Parser.cpp Validator.cpp Framebuffer.cpp Camera.cpp Renderer.cpp Material.cpp Pattern.cpp PointLight.cpp DirectionalLight.cpp SpotLight.cpp ImageWriter.cpp Screenshot.cpp Texture.cpp Object.cpp Sphere.cpp Plane.cpp Cylinder.cpp Cone.cpp Bvh.cpp BvhCache.cpp ThreadPool.cpp Window.cpp Panel.cpp
 OBJS	= $(SRCS:%.cpp=$(OBJDIR)/%.o)
 
 VPATH	= src/app src/base src/schema src/scene src/geometry src/shading \
@@ -48,11 +53,11 @@ VPATH	= src/app src/base src/schema src/scene src/geometry src/shading \
 all: $(NAME)
 
 $(NAME): $(OBJS) $(MICROUI_OBJ)
-	$(CC) $(CXXFLAGS) $(LDFLAGS) $(OBJS) $(MICROUI_OBJ) $(PNG_LIBS) $(JPEG_LIBS) $(SDL_LIBS) -o $(NAME)
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $(OBJS) $(MICROUI_OBJ) $(PNG_LIBS) $(JPEG_LIBS) $(SDL_LIBS) $(TTF_LIBS) -o $(NAME)
 
 $(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CC) $(CXXFLAGS) $(PNG_CFLAGS) $(JPEG_CFLAGS) $(SDL_CFLAGS) -Iinclude -Ithirdparty -c $< -o $@
+	$(CC) $(CXXFLAGS) $(PNG_CFLAGS) $(JPEG_CFLAGS) $(SDL_CFLAGS) $(TTF_CFLAGS) -Iinclude -Ithirdparty -c $< -o $@
 
 $(MICROUI_OBJ): $(MICROUI_SRC)
 	@mkdir -p $(dir $@)
@@ -71,15 +76,15 @@ INTDIR      = tests/integration
 TESTBIN     = rt_test
 TEST_OBJDIR = obj-test
 
-TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp) $(wildcard $(INTDIR)/*.cpp) src/app/Options.cpp src/app/Controls.cpp src/app/Interactive.cpp src/schema/Directives.cpp src/scene/Lexer.cpp src/scene/Scene.cpp src/scene/Parser.cpp src/scene/Validator.cpp src/render/Framebuffer.cpp src/render/Camera.cpp src/render/Renderer.cpp src/shading/Material.cpp src/shading/Pattern.cpp src/lighting/PointLight.cpp src/lighting/DirectionalLight.cpp src/lighting/SpotLight.cpp src/io/ImageWriter.cpp src/io/Screenshot.cpp src/io/Texture.cpp src/geometry/Object.cpp src/geometry/Sphere.cpp src/geometry/Plane.cpp src/geometry/Cylinder.cpp src/geometry/Cone.cpp src/accel/Bvh.cpp src/accel/BvhCache.cpp src/sched/ThreadPool.cpp src/platform/Window.cpp src/ui/Panel.cpp
+TEST_SRCS   = $(CATCHDIR)/catch_amalgamated.cpp $(wildcard $(TESTDIR)/*.cpp) $(wildcard $(INTDIR)/*.cpp) src/app/Options.cpp src/app/Controls.cpp src/app/Interactive.cpp src/app/UiOverlay.cpp src/schema/Directives.cpp src/scene/Lexer.cpp src/scene/Scene.cpp src/scene/Parser.cpp src/scene/Validator.cpp src/render/Framebuffer.cpp src/render/Camera.cpp src/render/Renderer.cpp src/shading/Material.cpp src/shading/Pattern.cpp src/lighting/PointLight.cpp src/lighting/DirectionalLight.cpp src/lighting/SpotLight.cpp src/io/ImageWriter.cpp src/io/Screenshot.cpp src/io/Texture.cpp src/geometry/Object.cpp src/geometry/Sphere.cpp src/geometry/Plane.cpp src/geometry/Cylinder.cpp src/geometry/Cone.cpp src/accel/Bvh.cpp src/accel/BvhCache.cpp src/sched/ThreadPool.cpp src/platform/Window.cpp src/ui/Panel.cpp
 TEST_OBJS   = $(TEST_SRCS:%.cpp=$(TEST_OBJDIR)/%.o)
 
 $(TESTBIN): $(TEST_OBJS) $(MICROUI_TEST_OBJ)
-	$(CC) $(CXXFLAGS) $(LDFLAGS) $(TEST_OBJS) $(MICROUI_TEST_OBJ) $(PNG_LIBS) $(JPEG_LIBS) $(SDL_LIBS) -o $(TESTBIN)
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $(TEST_OBJS) $(MICROUI_TEST_OBJ) $(PNG_LIBS) $(JPEG_LIBS) $(SDL_LIBS) $(TTF_LIBS) -o $(TESTBIN)
 
 $(TEST_OBJDIR)/%.o: %.cpp
 	@mkdir -p $(dir $@)
-	$(CC) $(CXXFLAGS) $(PNG_CFLAGS) $(JPEG_CFLAGS) $(SDL_CFLAGS) -Iinclude -Ithirdparty -c $< -o $@
+	$(CC) $(CXXFLAGS) $(PNG_CFLAGS) $(JPEG_CFLAGS) $(SDL_CFLAGS) $(TTF_CFLAGS) -Iinclude -Ithirdparty -c $< -o $@
 
 $(MICROUI_TEST_OBJ): $(MICROUI_SRC)
 	@mkdir -p $(dir $@)

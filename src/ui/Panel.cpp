@@ -223,7 +223,8 @@ void Panel::frame() noexcept {
 			}
 		}
 		mu_label(ctx, "fov");
-		if (mu_slider_ex(ctx, &fovSlider, kMinFov, kMaxFov, 1.0F, "%.0f", MU_OPT_ALIGNCENTER) != 0) {
+		if (mu_slider_ex(ctx, &fovSlider, kMinFov, kMaxFov, 1.0F, "%.0f", MU_OPT_ALIGNCENTER) !=
+		    0) {
 			setCameraFov(fovSlider);
 		}
 		mu_label(ctx, "ambient");
@@ -238,7 +239,8 @@ void Panel::frame() noexcept {
 			setFirstObjectX(objXSlider);
 		}
 		mu_label(ctx, "tex.scale");
-		if (mu_slider_ex(ctx, &texScaleSlider, 0.25F, 8.0F, 0.25F, "%.2f", MU_OPT_ALIGNCENTER) != 0) {
+		if (mu_slider_ex(ctx, &texScaleSlider, 0.25F, 8.0F, 0.25F, "%.2f", MU_OPT_ALIGNCENTER) !=
+		    0) {
 			setFirstTextureScale(texScaleSlider);
 		}
 		mu_end_window(ctx);
@@ -285,6 +287,71 @@ float Panel::progressFraction() const noexcept {
 		return 1.0F;
 	}
 	return frac;
+}
+
+namespace {
+
+int toMuButton(int button) noexcept {
+	// 1 = gauche, 2 = droit, 3 = milieu (convention `Window::UiEvent`).
+	if (button == 1) {
+		return MU_MOUSE_LEFT;
+	}
+	if (button == 2) {
+		return MU_MOUSE_RIGHT;
+	}
+	if (button == 3) {
+		return MU_MOUSE_MIDDLE;
+	}
+	return 0;
+}
+
+} // namespace
+
+void Panel::handleMouseMove(int x, int y) noexcept {
+	if (ctx_ == nullptr) {
+		return;
+	}
+	mu_input_mousemove(static_cast<mu_Context*>(ctx_), x, y);
+}
+
+void Panel::handleMouseDown(int x, int y, int button) noexcept {
+	if (ctx_ == nullptr) {
+		return;
+	}
+	const int muBtn = toMuButton(button);
+	if (muBtn == 0) {
+		return;
+	}
+	mu_input_mousedown(static_cast<mu_Context*>(ctx_), x, y, muBtn);
+}
+
+void Panel::handleMouseUp(int x, int y, int button) noexcept {
+	if (ctx_ == nullptr) {
+		return;
+	}
+	const int muBtn = toMuButton(button);
+	if (muBtn == 0) {
+		return;
+	}
+	mu_input_mouseup(static_cast<mu_Context*>(ctx_), x, y, muBtn);
+}
+
+void Panel::handleScroll(int dx, int dy) noexcept {
+	if (ctx_ == nullptr) {
+		return;
+	}
+	mu_input_scroll(static_cast<mu_Context*>(ctx_), dx, dy);
+}
+
+bool Panel::isHovering() const noexcept {
+	if (ctx_ == nullptr) {
+		return false;
+	}
+	const auto* ctx = static_cast<const mu_Context*>(ctx_);
+	// `hover` = controle survole ; `hover_root/next` = fenetre survolee
+	// (zone vide/titre). `next` couvre le frame courant (1 frame d'avance
+	// sur `hover_root`, cf. `mu_begin`), sans latence pour l'orbite.
+	return ctx->hover != 0 || ctx->hover_root != nullptr || ctx->next_hover_root != nullptr;
 }
 
 } // namespace rt::ui

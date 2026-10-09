@@ -23,6 +23,20 @@ struct WindowStats {
 	long long lastBlitUs = 0;
 };
 
+// Evenement souris brut pour microui (sans SDL ni microui ici) :
+// l'appelant (`app/`) draine via `pollUiEvent()` et transfere au
+// `Panel` (`handleMouseMove/Down/Up`, `handleScroll`) avant `frame()`.
+// `button` : 1 = gauche, 2 = droit, 3 = milieu.
+struct UiEvent {
+	enum Type : int { None = 0, Move, Down, Up, Wheel };
+	Type type = None;
+	int x = 0;
+	int y = 0;
+	int button = 0;
+	int wheelX = 0;
+	int wheelY = 0;
+};
+
 class Window {
   public:
 	Window() = default;
@@ -66,9 +80,27 @@ class Window {
 	// dernier appel (remet à zéro). Relâchement propre, curseur recapturé
 	// (pas de mode relatif, pas de piège).
 	[[nodiscard]] bool pollMouse(int& dx, int& dy, int& wheel) noexcept;
+	// File microui (fix affichage) : position absolue + clics + molette,
+	// sans ecraser `pollMouse` (orbite) ni `pollKey`. Draine un evenement
+	// (FIFO borne, sans allocation) ; faux si vide ou ferme.
+	[[nodiscard]] bool pollUiEvent(UiEvent& out) noexcept;
+	// Derniere position connue + etat bouton gauche (sans pomper, sans echec).
+	void uiMouseState(int& x, int& y, bool& leftDown) const noexcept;
+	// Moteur SDL brut (pour l'overlay microui en `app/`, sans exposer SDL
+	// dans l'en-tete) : nul si ferme. L'appelant dessine entre
+	// `beginPresent()` et `endPresent()`, jamais dans le hot path.
+	[[nodiscard]] void* nativeRenderer() noexcept { return renderer_; }
+	// Met a jour la texture depuis le framebuffer, sans presenter (pour
+	// composer `framebuffer + UI` en un seul `present`). Tampon nul -> ignore.
+	void updateTexture(const render::Framebuffer& fb) noexcept;
+	// `Clear + Copy` (sans `present`, faux si ferme) puis `Present`.
+	// `blit()` historique = `updateTexture + beginPresent + endPresent`.
+	[[nodiscard]] bool beginPresent() noexcept;
+	void endPresent() noexcept;
 
   private:
 	void pumpEvents() noexcept;
+	void pushUiEvent(const UiEvent& ev) noexcept;
 	void* window_ = nullptr;
 	void* renderer_ = nullptr;
 	void* texture_ = nullptr;
@@ -85,6 +117,16 @@ class Window {
 	int accumDx_ = 0;
 	int accumDy_ = 0;
 	int accumWheel_ = 0;
+	// Etat microui (fix affichage) : position absolue + bouton gauche.
+	int mouseX_ = 0;
+	int mouseY_ = 0;
+	bool leftDown_ = false;
+	// File bornee d'evenements UI (sans allocation, R3) : `Move/Down/Up`
+	// + `Wheel`. Pleine -> evenement entrant jete (jamais de blocage).
+	static constexpr int kUiQueue = 64;
+	UiEvent uiQueue_[kUiQueue] = {};
+	int uiHead_ = 0;
+	int uiCount_ = 0;
 	WindowStats stats_;
 };
 
