@@ -1,9 +1,22 @@
-# scenes/fig_vi1.rt — scene lumiere de reference (T059, figure VI.1 du sujet).
-# Les 4 objets de base (plan + sphere + cylindre + cone, ici 2 spheres pour la
-# coexistence T046), 2 spots (ombres porteuses), brillance (speculaire).
+# scenes/fig_vi1.rt — scene obligatoire 1 (T080, figure VI.1 du sujet).
+# Les 4 formes de base dans la meme image (plan + sphere + cylindre + cone ;
+# ici 2 spheres pour prouver la coexistence T046), 2 spots (ombres porteuses,
+# multi-spot T052), brillance Blinn-Phong (speculaire T053).
 # Camera (0 2 6) -> (0 0 0) fov 50 : meme cadrage que `fig_vi1_base.rt` (T048)
 # pour comparer (base = 2 ponctuelles, ici = 2 spots + speculaire).
 # Toute directive existe dans `docs/FORMAT_SCENE.md` §5 (table `src/schema/`, R1).
+# Ecarts assumes vs figure VI.1 du sujet (T080) :
+# - 2 spheres (rouge à gauche, verte à droite) au lieu d'1 : prouve la
+#   coexistence de plusieurs objets du meme type (exigence fiche §3.3).
+# - Couleurs vives (rouge/vert/magenta/jaune) au lieu des tons du sujet :
+#   chaque primitive est identifiable à l'oeil pour la demo.
+# - 2 spots "key" (4 6 4, 45°, 1.5) + "fill" (-4 5 3, 40°, 0.8) : le sujet ne
+#   fige ni positions ni intensites ; ce reglage donne ombres croisees +
+#   point blanc speculaire visibles sur `docs/preuves/fig_vi1.png`.
+# - Cylindre incline 45° autour de Z et cone en arriere-plan (0 1 -2,
+#   angle 20) : montre translation + rotation (M4) dans la scene obligatoire.
+# - Sol gris albedo 0.5 + fond (0.02 0.02 0.05) + ambiance (0.06 0.06 0.08) :
+#   aucun pixel totalement noir (Ambiance light).
 scene "fig_vi1" {
     limits {
         width 320
