@@ -1,6 +1,7 @@
 // Couche plateforme SDL (T070) — tests Catch2.
 // DoD : fenetre ouverte, image affichee, fermeture propre, sans fuite SDL.
-// Sans `DISPLAY` (CI), `init` renvoie une erreur propre (pas de crash) ;
+// Sans `DISPLAY` (CI), pilote factice `dummy` (seul pilote propre sous LSan,
+// le repli par defaut sonde KMSDRM/libdrm et fuit dans SDL2 malgre `SDL_Quit`) ;
 // avec `DISPLAY`, ouverture reelle breve + blit + expose + fermeture.
 
 #include <catch2/catch_amalgamated.hpp>
@@ -53,6 +54,13 @@ TEST_CASE("window : double init refusee", "[window]") {
 
 TEST_CASE("window : blit puis expose sans recalcul (T070/T071)", "[window]") {
 	if (!haveDisplay()) {
+		// CI headless : force `SDL_VIDEODRIVER=dummy` (cf. `runWindowed`,
+		// pilote reserve aux tests). Restaure ensuite : `test_edges` exige
+		// l'echec sans pilote et herite de cet environnement via `system`.
+		const bool hadDriver = (std::getenv("SDL_VIDEODRIVER") != nullptr);
+		if (!hadDriver) {
+			setenv("SDL_VIDEODRIVER", "dummy", 1);
+		}
 		rt::platform::Window window;
 		// Sans ecran, l'echec est propre (message + code), jamais de crash.
 		// Le resultat depend du pilote factice : erreur OU succes les deux
@@ -63,6 +71,9 @@ TEST_CASE("window : blit puis expose sans recalcul (T070/T071)", "[window]") {
 		} else {
 			window.shutdown();
 			REQUIRE_FALSE(window.isOpen());
+		}
+		if (!hadDriver) {
+			unsetenv("SDL_VIDEODRIVER");
 		}
 		SUCCEED("no DISPLAY: init propre (erreur ou succes factice)");
 		return;
