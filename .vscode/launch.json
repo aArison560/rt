@@ -2,14 +2,26 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "C/C++ Runner: Debug Session",
+      "name": "rt: window 1280x720 (F5)",
       "type": "cppdbg",
       "request": "launch",
-      "args": [],
+      "program": "${workspaceFolder}/rt",
+      "cwd": "${workspaceFolder}",
+      "args": [
+        "${input:scene}",
+        "--spp",
+        "10",
+        "--threads",
+        "16",
+        "--width",
+        "1280",
+        "--height",
+        "720",
+        "--window"
+      ],
       "stopAtEntry": false,
       "externalConsole": false,
-      "cwd": "/home/p102/Bureau/rt/tests",
-      "program": "/home/p102/Bureau/rt/tests/build/Debug/outDebug",
+      "preLaunchTask": "build rt",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
@@ -18,6 +30,33 @@
           "text": "-enable-pretty-printing",
           "ignoreFailures": true
         }
+      ]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "scene",
+      "type": "pickString",
+      "description": "Scene à rendre",
+      "default": "${workspaceFolder}/scenes/default.rt",
+      "options": [
+        "${workspaceFolder}/scenes/default.rt",
+        "${workspaceFolder}/scenes/fig_vi1.rt",
+        "${workspaceFolder}/scenes/fig_vi1_base.rt",
+        "${workspaceFolder}/scenes/fig_vi2.rt",
+        "${workspaceFolder}/scenes/fig_vi3.rt",
+        "${workspaceFolder}/scenes/live.rt",
+        "${workspaceFolder}/scenes/opt_checker.rt",
+        "${workspaceFolder}/scenes/opt_direct.rt",
+        "${workspaceFolder}/scenes/opt_glass.rt",
+        "${workspaceFolder}/scenes/opt_group.rt",
+        "${workspaceFolder}/scenes/opt_parallel.rt",
+        "${workspaceFolder}/scenes/opt_perlin.rt",
+        "${workspaceFolder}/scenes/opt_tex_transform.rt",
+        "${workspaceFolder}/scenes/opt_textures4.rt",
+        "${workspaceFolder}/scenes/opt_transparent_shadow.rt",
+        "${workspaceFolder}/scenes/opt_wave.rt",
+        "${workspaceFolder}/scenes/perf_many.rt"
       ]
     }
   ]
