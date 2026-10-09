@@ -47,7 +47,7 @@
 ### 0.2 Paramètre de session
 
 ```
-TACHES_PAR_SESSION = 3
+TACHES_PAR_SESSION = 1
 ```
 
 Nombre de tâches à réaliser avant de s'arrêter. L'utilisateur peut le modifier :
