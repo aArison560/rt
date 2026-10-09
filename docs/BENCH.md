@@ -30,6 +30,74 @@
   mesure n'est un temps de rendu que si la commande rend.
 
 ## Résultats
+### t067-figvi3-8 — 2026-10-09 10:49:13 EAT
+
+- **Commande** : `./rt scenes/fig_vi3.rt 320 240 --out /tmp/bench_t067_figvi3_8.png --quiet --threads 8`
+- **Note** : T067: fig_vi3.rt 320x240 spp4 8 threads (obligatoire)
+- **Protocole** : 5 exécution(s) mesurée(s), 1 échauffement(s), outil `date +%s.%N`, horloge `date +%s.%N`
+- **Machine** : Linux 6.12.111+deb13-amd64 x86_64 · epsilon
+- **Commit au moment de la mesure** : `bae2e2b`
+
+| runs | moyenne (s) | écart-type (s) | min (s) | max (s) | CV (%) |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 0.171684 | 0.008573 | 0.162673 | 0.184031 | 4.99 |
+
+Détail brut :
+
+```json
+{"command":"./rt scenes/fig_vi3.rt 320 240 --out /tmp/bench_t067_figvi3_8.png --quiet --threads 8","label":"t067-figvi3-8","n":5,"warmup":1,"tool":"date +%s.%N","clock":"date +%s.%N","unit":"s","mean":0.171684,"stddev":0.008573,"min":0.162673,"max":0.184031,"times":[0.171452,0.162673,0.164866,0.184031,0.175398],"timestamp":"2026-10-09T10:49:13+03:00"}
+```
+### t067-figvi3-1 — 2026-10-09 10:49:06 EAT
+
+- **Commande** : `./rt scenes/fig_vi3.rt 320 240 --out /tmp/bench_t067_figvi3_1.png --quiet --threads 1`
+- **Note** : T067: fig_vi3.rt 320x240 spp4 1 thread (obligatoire, melange d'ombres)
+- **Protocole** : 5 exécution(s) mesurée(s), 1 échauffement(s), outil `date +%s.%N`, horloge `date +%s.%N`
+- **Machine** : Linux 6.12.111+deb13-amd64 x86_64 · epsilon
+- **Commit au moment de la mesure** : `bae2e2b`
+
+| runs | moyenne (s) | écart-type (s) | min (s) | max (s) | CV (%) |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 0.477937 | 0.036972 | 0.434435 | 0.525046 | 7.74 |
+
+Détail brut :
+
+```json
+{"command":"./rt scenes/fig_vi3.rt 320 240 --out /tmp/bench_t067_figvi3_1.png --quiet --threads 1","label":"t067-figvi3-1","n":5,"warmup":1,"tool":"date +%s.%N","clock":"date +%s.%N","unit":"s","mean":0.477937,"stddev":0.036972,"min":0.434435,"max":0.525046,"times":[0.503544,0.525046,0.451635,0.475026,0.434435],"timestamp":"2026-10-09T10:49:06+03:00"}
+```
+### t067-default-8 — 2026-10-09 10:49:04 EAT
+
+- **Commande** : `./rt scenes/default.rt 320 240 --out /tmp/bench_t067_default8.png --quiet --threads 8`
+- **Note** : T067: default.rt 320x240 spp4 8 threads (demo)
+- **Protocole** : 5 exécution(s) mesurée(s), 1 échauffement(s), outil `date +%s.%N`, horloge `date +%s.%N`
+- **Machine** : Linux 6.12.111+deb13-amd64 x86_64 · epsilon
+- **Commit au moment de la mesure** : `bae2e2b`
+
+| runs | moyenne (s) | écart-type (s) | min (s) | max (s) | CV (%) |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 0.198453 | 0.011155 | 0.182820 | 0.213303 | 5.62 |
+
+Détail brut :
+
+```json
+{"command":"./rt scenes/default.rt 320 240 --out /tmp/bench_t067_default8.png --quiet --threads 8","label":"t067-default-8","n":5,"warmup":1,"tool":"date +%s.%N","clock":"date +%s.%N","unit":"s","mean":0.198453,"stddev":0.011155,"min":0.182820,"max":0.213303,"times":[0.182820,0.194271,0.199710,0.202160,0.213303],"timestamp":"2026-10-09T10:49:04+03:00"}
+```
+### t067-default-1 — 2026-10-09 10:48:59 EAT
+
+- **Commande** : `./rt scenes/default.rt 320 240 --out /tmp/bench_t067_default1.png --quiet --threads 1`
+- **Note** : T067: default.rt 320x240 spp4 1 thread (demo)
+- **Protocole** : 5 exécution(s) mesurée(s), 1 échauffement(s), outil `date +%s.%N`, horloge `date +%s.%N`
+- **Machine** : Linux 6.12.111+deb13-amd64 x86_64 · epsilon
+- **Commit au moment de la mesure** : `bae2e2b`
+
+| runs | moyenne (s) | écart-type (s) | min (s) | max (s) | CV (%) |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 0.439644 | 0.012922 | 0.424591 | 0.453072 | 2.94 |
+
+Détail brut :
+
+```json
+{"command":"./rt scenes/default.rt 320 240 --out /tmp/bench_t067_default1.png --quiet --threads 1","label":"t067-default-1","n":5,"warmup":1,"tool":"date +%s.%N","clock":"date +%s.%N","unit":"s","mean":0.439644,"stddev":0.012922,"min":0.424591,"max":0.453072,"times":[0.429034,0.451829,0.424591,0.453072,0.439696],"timestamp":"2026-10-09T10:48:59+03:00"}
+```
 ### t065-bvh-on — 2026-10-09 10:34:13 EAT
 
 - **Commande** : `./rt scenes/perf_many.rt 320 240 --out /tmp/bench_t065_after.png --quiet --threads 1`
@@ -267,3 +335,74 @@ Détail brut :
   3.57 min avant > 0.34 max après — DoD T065).
 - **Non-régression** : `rt_test [golden]` vert (4 cas, tolérance 5 pixels),
   `rt_test [threads]` vert (1/2/4/8 identiques conservés avec BVH).
+
+## T067 — Rapport de performance complet (synthèse manuelle, chiffres mesurés)
+
+> Tous les chiffres ci-dessous viennent de `scripts/bench.sh` (sections
+> `t064-*`, `t065-*`, `t067-*` : moyenne + écart-type sur 5 runs + 1 warmup,
+> `date +%s.%N`) ou de `getrusage(RUSAGE_CHILDREN).ru_maxrss` (pic RSS,
+> `/usr/bin/time` absent du poste — voir Mémoire). **Aucun chiffre estimé.**
+> Rejouer : commandes sous chaque tableau (`--label` identique = section
+> remplacée, comparaison avant/après propre).
+
+### Matériel et versions (mesurés le 2026-10-09)
+
+- **Machine** : `Linux 6.12.111+deb13-amd64 x86_64` · 8 cœurs (`nproc`) ·
+  15 GiB RAM (`free -h`) — relevés par `uname -srm`, `nproc`, `free -h`.
+- **Compilateur** : `c++ (Debian 14.2.0-19) 14.2.0` (`c++ --version`,
+  flags `-Wall -Wextra -Werror -O2 -std=c++2c`).
+- **Libs** : `libpng 1.6.48` (`pkg-config --modversion libpng`),
+  `valgrind-3.24.0` ; `hyperfine`/`perf`/`bear` absents
+  (`sh scripts/check_env.sh`, `command -v`).
+- **Commit mesuré** : chaque section `bench.sh` cite son commit (T064-T067 :
+  `5f5e070`→`cd92759`, BVH branchée en T065).
+
+### Par scène (320×240, 5 runs, `threads 1` vs `8`)
+
+> Commandes : `sh scripts/bench.sh scenes/<nom>.rt --args "320 240
+> --out /tmp/bench_t067_<nom><t>.png --quiet --threads <t>"
+> --label t067-<nom>-<t> --runs 5`.
+> `rays/s ≈ W×H×spp / moyenne` (mur incl. démarrage/parse/PNG : borne basse
+> honnête ; le `[stats] rays/s` interne, hors IO, est ~2× supérieur).
+> `spp` = 4 (`default`, `fig_vi1`, `fig_vi3`, `limits.samples`) sauf
+> `perf_many` (`spp` = 2).
+
+| scène | objets | threads | moyenne (s) | écart-type (s) | rays/s ≈ | speedup vs 1 |
+|---|---:|---:|---:|---:|---:|---:|
+| `default.rt` (démo) | 2 | 1 | 0.439644 | 0.012922 | ~699 000 | 1.00 |
+| `default.rt` (démo) | 2 | 8 | 0.198453 | 0.011155 | ~1 548 000 | 2.22 |
+| `fig_vi1.rt` (obligatoire VI.1) | 5 | 1 | 0.735890 | 0.027068 | ~417 000 | 1.00 |
+| `fig_vi1.rt` (obligatoire VI.1) | 5 | 8 | 0.252267 | 0.003176 | ~1 218 000 | 2.92 |
+| `fig_vi3.rt` (obligatoire VI.3) | 4 | 1 | 0.477937 | 0.036972 | ~643 000 | 1.00 |
+| `fig_vi3.rt` (obligatoire VI.3) | 4 | 8 | 0.171684 | 0.008573 | ~1 789 000 | 2.78 |
+| `perf_many.rt` (101 objets, BVH) | 101 | 1 | 0.320736 | 0.012089 | ~479 000 | 11.72 vs linéaire |
+| `perf_many.rt` (101 objets, linéaire) | 101 | 1 | 3.759435 | 0.142151 | ~41 000 | 1.00 (référence) |
+
+### Mémoire pic (RSS, mesurée par processus frais)
+
+> `/usr/bin/time -v` absent (`ls /usr/bin/*time*` : `timedatectl`/`timeout`/
+> `uptime` seuls — même constat qu'en T024). Méthode de repli documentée et
+> reproductible : `python3 -c "subprocess.run([...]); getrusage(RUSAGE_CHILDREN).ru_maxrss"`
+> (un processus frais par cas, sinon le max est cumulatif — vérifié).
+> Budget théorique cohérent : framebuffer 320×240×20 o = 1.5 Mo
+> (`MEMORY_STRATEGY.md` §4.1) + BVH 101 objets ≈ 201 nœuds × 32 o ≈ 6 Ko.
+
+| cas (320×240) | pic RSS mesuré |
+|---|---:|
+| `default.rt` 1 thread | 11.4 Mo |
+| `fig_vi1.rt` 1 thread | 11.4 Mo |
+| `fig_vi3.rt` 1 thread | 11.4 Mo |
+| `perf_many.rt` (101 objets) 1 thread | 11.4 Mo |
+| `fig_vi1.rt` 8 threads | 11.6 Mo |
+
+- Mémoire **plate** selon scènes et threads (binaire + libs dominent à cette
+  résolution ; ni la BVH ni les 8 piles `jthread` ne se voient au Mo près).
+
+### Le rendu est vraiment rapide — sous-titré de chiffres
+
+> **Le rendu est vraiment rapide** : `fig_vi3.rt` (obligatoire, mélange
+> d'ombres) en **0.17 s** à 8 threads (1.8 M rays/s), `default.rt` en
+> **0.20 s**, `fig_vi1.rt` en **0.25 s** ; même à 1 thread aucune obligatoire
+> ne dépasse **0.74 s** en 320×240 spp4 ; 101 objets passent de 3.76 s à
+> **0.32 s** grâce à la BVH (≈ 11.7×) pour **11.4 Mo** pic. Mesures
+> reproductibles ci-dessus (5 runs + variances, commandes fournies).
