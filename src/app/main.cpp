@@ -13,6 +13,7 @@
 #include "rt/render/Framebuffer.hpp"
 #include "rt/render/Renderer.hpp"
 #include "rt/scene/Parser.hpp"
+#include "rt/ui/Panel.hpp"
 
 namespace {
 
@@ -177,6 +178,10 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 	const int spp = opts.hasSpp ? opts.spp : scene.limits.samples;
 	const long long seed = opts.hasSeed ? opts.seed : scene.limits.seed;
 	const int threads = opts.hasThreads ? opts.threads : 1;
+	// T075 : panneau microui attache (champs issus de `schema/`, sliders
+	// FOV/ambiance + boutons Render/Save ; dessin SDL minimal, logique testee).
+	rt::ui::Panel panel;
+	panel.attach(&scene);
 	long long rerenders = 0;
 	while (!window.pollQuit()) {
 		int sdlKey = 0;
@@ -219,6 +224,10 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 			}
 			scene.markClean();
 		}
+		// T075 : fait avancer l'UI (sliders/boutons) chaque frame, sans bloquer.
+		panel.frame();
+		(void)panel.takeLaunchRequest();
+		(void)panel.takeSaveRequest();
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 	}
 	return 0;

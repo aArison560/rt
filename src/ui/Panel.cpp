@@ -1,0 +1,172 @@
+// Panneau microui (T075) — implementation.
+// `fieldNames()` lit la table unique `schema/Directives` (R1) : une ligne
+// ajoutee la-bas apparait ici (test). Les setters modifient la `Scene`
+// attachee et levent R5. `frame()` pilote un `mu_Context` vendored
+// (boutons + sliders minimaux, sans SDL ici ; le dessin SDL vit dans
+// `platform/` ou `app/` via les requetes `take*`).
+
+#include "rt/ui/Panel.hpp"
+
+#include <cstring>
+#include <new>
+
+extern "C" {
+#include "microui/microui.h"
+}
+
+#include "rt/scene/Scene.hpp"
+#include "rt/schema/Directives.hpp"
+
+namespace rt::ui {
+
+namespace {
+
+constexpr float kMinFov = 10.0F;
+constexpr float kMaxFov = 120.0F;
+
+int textWidth(mu_Font font, const char* text, int len) {
+	(void)font;
+	if (text == nullptr || len <= 0) {
+		return 0;
+	}
+	return len * 8;
+}
+
+int textHeight(mu_Font font) {
+	(void)font;
+	return 14;
+}
+
+} // namespace
+
+Panel::~Panel() {
+	if (ctx_ != nullptr) {
+		delete static_cast<mu_Context*>(ctx_);
+		ctx_ = nullptr;
+	}
+}
+
+void Panel::attach(scene::Scene* scene) noexcept {
+	if (ctx_ == nullptr) {
+		auto* ctx = new (std::nothrow) mu_Context();
+		if (ctx == nullptr) {
+			return;
+		}
+		mu_init(ctx);
+		ctx->text_width = &textWidth;
+		ctx->text_height = &textHeight;
+		ctx_ = ctx;
+	}
+	scene_ = scene;
+	launchRequested_ = false;
+	saveRequested_ = false;
+}
+
+std::vector<std::string> Panel::fieldNames() const {
+	std::vector<std::string> names;
+	const auto table = schema::all();
+	names.reserve(table.size());
+	for (const auto& entry : table) {
+		names.emplace_back(entry.path);
+	}
+	return names;
+}
+
+bool Panel::setBackground(Vec3 color) noexcept {
+	if (scene_ == nullptr) {
+		return false;
+	}
+	scene_->background.color = color;
+	scene_->sceneDirty = true;
+	scene_->displayDirty = true;
+	return true;
+}
+
+bool Panel::setAmbientIntensity(float intensity) noexcept {
+	if (scene_ == nullptr) {
+		return false;
+	}
+	if (intensity < 0.0F) {
+		intensity = 0.0F;
+	}
+	if (intensity > 10.0F) {
+		intensity = 10.0F;
+	}
+	scene_->ambient.intensity = intensity;
+	scene_->sceneDirty = true;
+	scene_->displayDirty = true;
+	return true;
+}
+
+bool Panel::setCameraFov(float fov) noexcept {
+	if (scene_ == nullptr) {
+		return false;
+	}
+	if (fov < kMinFov) {
+		fov = kMinFov;
+	}
+	if (fov > kMaxFov) {
+		fov = kMaxFov;
+	}
+	scene_->camera.fov = fov;
+	scene_->sceneDirty = true;
+	scene_->displayDirty = true;
+	return true;
+}
+
+bool Panel::setFirstAlbedo(Vec3 albedo) noexcept {
+	if (scene_ == nullptr || scene_->objects.empty()) {
+		return false;
+	}
+	scene_->objects[0].material.albedo = albedo;
+	scene_->touchObjects();
+	return true;
+}
+
+void Panel::frame() noexcept {
+	if (ctx_ == nullptr || scene_ == nullptr) {
+		return;
+	}
+	auto* ctx = static_cast<mu_Context*>(ctx_);
+	mu_begin(ctx);
+	if (mu_begin_window(ctx, "RT controls", mu_rect(10, 10, 240, 300))) {
+		mu_layout_row(ctx, 1, nullptr, 0);
+		mu_label(ctx, "scene (schema-driven)");
+		// Boutons : lancement + sauvegarde (consommes via take*).
+		if (mu_button(ctx, "Render")) {
+			launchRequested_ = true;
+		}
+		if (mu_button(ctx, "Save PNG")) {
+			saveRequested_ = true;
+		}
+		// Sliders minimaux (FOV + ambiance) branchés sur la scene.
+		static float fovSlider = 60.0F;
+		static float ambSlider = 1.0F;
+		fovSlider = scene_->camera.fov;
+		ambSlider = scene_->ambient.intensity;
+		mu_label(ctx, "fov");
+		if (mu_slider_ex(ctx, &fovSlider, kMinFov, kMaxFov, 1.0F, "%.0f", MU_OPT_ALIGNCENTER) != 0) {
+			setCameraFov(fovSlider);
+		}
+		mu_label(ctx, "ambient");
+		if (mu_slider_ex(ctx, &ambSlider, 0.0F, 5.0F, 0.1F, "%.1f", MU_OPT_ALIGNCENTER) != 0) {
+			setAmbientIntensity(ambSlider);
+		}
+		mu_end_window(ctx);
+	}
+	mu_end(ctx);
+}
+
+bool Panel::takeLaunchRequest() noexcept {
+	const bool pending = launchRequested_;
+	launchRequested_ = false;
+	return pending;
+}
+
+bool Panel::takeSaveRequest() noexcept {
+	const bool pending = saveRequested_;
+	saveRequested_ = false;
+	return pending;
+}
+
+} // namespace rt::ui

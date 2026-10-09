@@ -574,6 +574,14 @@ Pour **prouver** les options en soutenance, le format doit piloter au moins :
 > `runWindowed` (mêmes fanions R5, re-trace si change). Tests :
 > `tests/unit/test_mouse.cpp` (orbite visible, scène sauf caméra intacte,
 > FOV direct + bornes).
+>
+> Implémenté (T075) : microui v2.02 vendored (`thirdparty/microui/`, MIT rxi,
+> `cc -std=c11 -w`) + `include/rt/ui/Panel.hpp` + `src/ui/Panel.cpp`
+> (`attach`, `fieldNames()` == `schema::all()` R1, setters R5,
+> `frame()` microui + `takeLaunch/SaveRequest`) branché dans `runWindowed`
+> (une `frame()` par tour, sans blocage). Tests :
+> `tests/unit/test_panel.cpp` (champs == table, sans scene sans crash,
+> albedo via UI change l'image).
 
 ---
 

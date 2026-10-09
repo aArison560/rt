@@ -135,6 +135,12 @@ BVH build  →  Path tracing par tuiles/régions  →  Film
 
 ### 5.1 Schéma cible inspiré de Blender
 
+> Implémenté (T075) : `Panel::fieldNames()` == `schema::all()` (R1, une ligne
+> ajoutée au schéma apparaît dans l'UI, test `[panel]`) ; setters R5
+> (`setFirstAlbedo` change l'image, test pixels) ; microui v2.02 vendored
+> (`thirdparty/microui/`, `frame()` + boutons Render/Save branchés dans
+> `runWindowed`).
+
 ```
         fichier .rt (schéma unique = source de vérité)
                      │
