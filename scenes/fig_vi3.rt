@@ -1,8 +1,12 @@
-# scenes/fig_vi3.rt — melange d'ombres (T059, figure VI.3 du sujet).
-# 1 sphere occultrice sur un sol clair + 2 spots opposes ((4 5 3) et (-4 5 3)) :
-# chaque spot projette l'ombre de la sphere d'un cote different, la zone ou
-# les 2 sont bloquees (ombre cumulee) est plus sombre que les penombres
-# (1 bloque sur 2), elles-memes plus sombres que le plein eclairage.
+# scenes/fig_vi3.rt — scene obligatoire 3 (T082, figure VI.3 du sujet).
+# Melange d'ombres multi-spots : 1 sphere occultrice sur un sol clair + 2
+# spots opposes ((4 5 3) et (-4 5 3)) ; chaque spot projette l'ombre de la
+# sphere d'un cote different, la zone ou les 2 sont bloquees (ombre cumulee)
+# est plus sombre que les penombres (1 bloque sur 2), elles-memes plus
+# sombres que le plein eclairage — verifie par `test_golden.cpp`
+# (plein + ombreG + ombreD > 0).
+# Conforme a la figure VI.3 : ombres superposees, assombrissement selon le
+# nombre de sources bloquantes (fiche §3.2 d). Camera (0 4 7) -> (0 0 0).
 # Camera (0 4 7) -> (0 0 0) : meme cadrage que le test T052 pour voir les 2
 # zones. Toute directive existe dans `docs/FORMAT_SCENE.md` §5 (R1).
 scene "fig_vi3" {
