@@ -243,7 +243,7 @@ TEST_CASE("parser : garde-fous limits (scene too large)", "[parser]") {
 	REQUIRE(tooManyLights.find("scene too large") != std::string::npos);
 }
 
-TEST_CASE("parser : scene imbriquee 3 niveaux (File ++)", "[parser]") {
+TEST_CASE("parser : scene imbriquee 3 niveaux (File ++)", "[parser][t100]") {
 	rt::scene::Scene scene;
 	REQUIRE(parseOk("scene \"vitrine\" { camera { position (0 2 6) target (0 0 0) } "
 	                "objects { group \"sol\" { object plane \"sol\" { point (0 -1 0) normal "
@@ -256,4 +256,37 @@ TEST_CASE("parser : scene imbriquee 3 niveaux (File ++)", "[parser]") {
 	REQUIRE(scene.groups[0].objects[0].type == ObjectType::Plane);
 	REQUIRE(scene.groups[1].children.size() == 1);
 	REQUIRE(scene.groups[1].children[0]->objects[0].name == "b");
+	// T100 : les sous-blocs `material {}` separes sont lus comme structure,
+	// pas comme lignes : l'albedo attache au plan est conserve.
+	REQUIRE(scene.groups[0].objects[0].material.albedo.x == Catch::Approx(0.5F));
+	REQUIRE(scene.groups[0].objects[0].material.albedo.y == Catch::Approx(0.5F));
+	REQUIRE(scene.groups[0].objects[0].material.albedo.z == Catch::Approx(0.5F));
+	// T100 : deux objets avec des blocs `material {}` separes et distincts.
+	rt::scene::Scene two;
+	REQUIRE(parseOk("scene { camera { position (0 1 4) target (0 0 0) } objects { "
+	                "object sphere \"a\" { center (-1 0 0) radius 1 "
+	                "material { albedo (0.9 0.1 0.1) diffuse 0.7 } } "
+	                "object sphere \"b\" { center (1 0 0) radius 1 "
+	                "material { albedo (0.1 0.1 0.9) specular 0.8 shininess 64 } } } }",
+	                two));
+	REQUIRE(two.objects.size() == 2);
+	REQUIRE(two.objects[0].material.albedo.x == Catch::Approx(0.9F));
+	REQUIRE(two.objects[1].material.albedo.z == Catch::Approx(0.9F));
+	REQUIRE(two.objects[1].material.specular == Catch::Approx(0.8F));
+	REQUIRE(two.objects[1].material.shininess == Catch::Approx(64.0F));
+	// T100 : le format est free-form — memes octets logiques avec une
+	// mise en page radicalement differente (une directive par ligne vs
+	// tout sur une ligne) donnent la meme structure. Un format
+	// « une information par ligne » echouerait ici.
+	rt::scene::Scene flat;
+	rt::scene::Scene spread;
+	REQUIRE(parseOk("scene{camera{position(0 1 4)target(0 0 0)}objects{object{type sphere}}}",
+	                flat));
+	REQUIRE(parseOk("scene {\n  camera {\n    position (0 1 4)\n    target (0 0 0)\n  }\n"
+	                "  objects {\n    object {\n      type sphere\n    }\n  }\n}\n",
+	                spread));
+	REQUIRE(flat.objects.size() == 1);
+	REQUIRE(spread.objects.size() == 1);
+	REQUIRE(flat.objects[0].type == spread.objects[0].type);
+	REQUIRE(flat.camera.position.x == Catch::Approx(spread.camera.position.x));
 }

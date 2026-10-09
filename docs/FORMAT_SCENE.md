@@ -45,6 +45,24 @@ Preuves de hiérarchie (exigées par le DoD de T020) :
 - l'annexe XML (§8) transcrit le même arbre élément par élément : le modèle
   est un arbre, pas une séquence de lignes.
 
+### 1.1 Pourquoi ce n'est pas du ligne-par-ligne (T100)
+
+Le critère *File ++* refuse « juste un fichier avec une information par ligne ».
+Trois propriétés prouvent que ce format n'en est pas un (test
+`parser : scene imbriquee 3 niveaux (File ++)`, tag `[t100]`) :
+
+1. **Imbrication 3 niveaux exigée** : `scene → objects → group → object`
+   (et jusqu'à `group → group → object` dans le test). Un lecteur ligne-par-ligne
+   ne peut pas refermer les blocs ni attribuer un objet à son groupe parent.
+2. **Sous-blocs `material {}` séparés** : deux objets portent chacun leur propre
+   `material { albedo … }` avec des valeurs distinctes ; le parser affirme que
+   chaque albedo est lu sur le bon objet (pas de fuite d'une ligne à l'autre).
+3. **Free-form** : espaces, tabulations, retours ligne et commentaires `#` sont
+   des séparateurs équivalents (§2). La même scène écrite « tout sur une ligne »
+   ou « une directive par ligne » donne octet par octet la même `Scene`
+   (le test parse les deux mises en page et compare). Un format ligne-par-ligne
+   changerait de sens selon les retours ligne ; ici ils ne comptent pas.
+
 ---
 
 ## 2. Principes lexicaux
