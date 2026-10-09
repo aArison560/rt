@@ -412,6 +412,10 @@ color = material.texture->sample(fract(u), fract(v));   // répétition tiling
   `seed`, pointeur `TraceCtx`) ; `scenes/opt_perlin.rt` ; tests
   `tests/unit/test_perlin.cpp` (`[t106]` : même graine → même suite + voisins indépendants +
   rendu déterministe). Damier préexistant → les 2 pts Perlin comptent (règle fiche).
+- **État (T107)** : `waveNormal()` (`N + A*sin(f*P)`, `A = scale`, `0` = off bit-identique,
+  indépendant des couleurs, `noexcept` R3) + `render/` (normale perturbée avant direct +
+  réflexion + réfraction) ; `scenes/opt_wave.rt` ; tests `tests/unit/test_wave.cpp`
+  (`[t107]` : périodicité `2π/f` + `amplitude = 0` octet-identique au sans-pattern).
 
 ---
 

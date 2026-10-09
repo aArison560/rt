@@ -681,6 +681,13 @@ struct TraceCtx {
 	if (rec.materialIndex < ctx.mats->size()) {
 		mat = (*ctx.mats)[rec.materialIndex];
 	}
+	// T107 : onde sur la normale (`sine`, independant des couleurs).
+	// Perturbe `rec.normal` avant tout l'eclairage (direct + reflexion +
+	// refraction utilisent la normale ondulee). `scale = 0` -> inchangee.
+	if (mat.patternKind == static_cast<int>(shading::PatternKind::Sine)) {
+		rec.normal = shading::waveNormal(rec.normal, rec.point, mat.patternScale,
+		                                 mat.patternFrequency);
+	}
 	// T103 : texture image remplace l'albedo (`material.texture->sample`,
 	// OPTIONS_GUIDE §5.1). `rec.uv` vient de la primitive (4 types, T041–
 	// T044) ; pavage + plus proche dans `sampleTexture` (fract, `noexcept`,

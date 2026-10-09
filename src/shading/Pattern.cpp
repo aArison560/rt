@@ -199,4 +199,34 @@ Vec3 perlinAlbedo(Vec3 albedo, Vec3 point, const Perlin& perlin, float scale,
 	return Vec3(albedo.x * factor, albedo.y * factor, albedo.z * factor);
 }
 
+Vec3 waveNormal(Vec3 normal, Vec3 point, float amplitude, float frequency) noexcept {
+	if (!std::isfinite(normal.x) || !std::isfinite(normal.y) || !std::isfinite(normal.z)) {
+		return normal;
+	}
+	if (nearZero(normal)) {
+		return normal;
+	}
+	float amp = 0.0F;
+	if (std::isfinite(amplitude) && amplitude > 0.0F) {
+		amp = amplitude > 1.0F ? 1.0F : amplitude;
+	} else {
+		return normal;
+	}
+	float freq = 1.0F;
+	if (std::isfinite(frequency) && frequency > 0.0F) {
+		freq = frequency > 64.0F ? 64.0F : frequency;
+	}
+	if (!std::isfinite(point.x) || !std::isfinite(point.y) || !std::isfinite(point.z)) {
+		return normal;
+	}
+	const Vec3 wave(std::sin(freq * point.y), std::sin(freq * point.z),
+	                std::sin(freq * point.x));
+	const Vec3 perturbed(normal.x + amp * wave.x, normal.y + amp * wave.y,
+	                     normal.z + amp * wave.z);
+	if (!std::isfinite(perturbed.x) || nearZero(perturbed)) {
+		return normal;
+	}
+	return normalize(perturbed);
+}
+
 } // namespace rt::shading

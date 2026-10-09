@@ -75,4 +75,13 @@ struct Perlin {
 [[nodiscard]] Vec3 perlinAlbedo(Vec3 albedo, Vec3 point, const Perlin& perlin, float scale,
                                 float frequency) noexcept;
 
+// Onde sinusoidale sur la normale (T107, *Disruptions* 1) : `N' =
+// normalize(N + A * (sin(f*Py), sin(f*Pz), sin(f*Px)))`, independant des
+// couleurs (l'albedo est inchange). `A = scale` (amplitude, `0` = pas
+// d'onde, defini), `f = frequency` (pulsation spatiale, sanitize -> 1).
+// Periodique en chaque axe (periode `2*pi/f`), `N` nulle/NaN -> inchangee.
+// `noexcept`, sans allocation (R2/R3, hot path).
+[[nodiscard]] Vec3 waveNormal(Vec3 normal, Vec3 point, float amplitude,
+                              float frequency) noexcept;
+
 } // namespace rt::shading
