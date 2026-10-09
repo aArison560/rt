@@ -9,6 +9,7 @@
 #include "rt/io/Texture.hpp"
 
 #include <csetjmp>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -303,6 +304,54 @@ std::size_t TextureCache::bytes() const noexcept {
 		}
 	}
 	return total;
+}
+
+Vec3 sampleTexture(const TextureImage& image, float u, float v) noexcept {
+	if (image.width <= 0 || image.height <= 0 || image.rgba.empty()) {
+		return Vec3{};
+	}
+	if (!std::isfinite(u) || !std::isfinite(v)) {
+		return Vec3{};
+	}
+	// Pavage : `fract` (les UV du plan sont en unites monde, negatives
+	// admises). `u - floor(u)` vaut toujours dans [0,1[.
+	float fu = u - std::floor(u);
+	float fv = v - std::floor(v);
+	if (!std::isfinite(fu) || !std::isfinite(fv)) {
+		return Vec3{};
+	}
+	if (fu < 0.0F) {
+		fu = 0.0F;
+	} else if (fu >= 1.0F) {
+		fu = 0.999999F;
+	}
+	if (fv < 0.0F) {
+		fv = 0.0F;
+	} else if (fv >= 1.0F) {
+		fv = 0.999999F;
+	}
+	const auto w = static_cast<std::size_t>(image.width);
+	const auto h = static_cast<std::size_t>(image.height);
+	std::size_t xi = static_cast<std::size_t>(fu * static_cast<float>(w));
+	std::size_t yi = static_cast<std::size_t>(fv * static_cast<float>(h));
+	if (xi >= w) {
+		xi = w - 1U;
+	}
+	if (yi >= h) {
+		yi = h - 1U;
+	}
+	// Ligne 0 = haut de l'image (PNG/JPEG) ; `v = 0` = bas des UV
+	// (convention FIXME/GL) : on retourne verticalement pour que le haut
+	// de la texture apparaisse en haut de la sphere.
+	yi = h - 1U - yi;
+	const std::size_t idx = (yi * w + xi) * 4U;
+	if (idx + 3U >= image.rgba.size()) {
+		return Vec3{};
+	}
+	constexpr float kInv255 = 1.0F / 255.0F;
+	return Vec3(static_cast<float>(image.rgba[idx]) * kInv255,
+	            static_cast<float>(image.rgba[idx + 1U]) * kInv255,
+	            static_cast<float>(image.rgba[idx + 2U]) * kInv255);
 }
 
 } // namespace rt::io

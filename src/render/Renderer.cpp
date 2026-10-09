@@ -44,6 +44,7 @@
 #include "rt/lighting/SpotLight.hpp"
 #include "rt/render/Camera.hpp"
 #include "rt/render/Framebuffer.hpp"
+#include "rt/io/Texture.hpp"
 #include "rt/scene/Scene.hpp"
 #include "rt/sched/ThreadPool.hpp"
 #include "rt/shading/Material.hpp"
@@ -255,13 +256,27 @@ void collectDirectionalLights(const scene::Scene& scene,
 
 void appendOneObject(const scene::Object& src, const Transform& world,
                      std::vector<std::unique_ptr<geometry::AObject>>& outObjs,
-                     std::vector<shading::MaterialParams>& outMats, std::uint32_t& nextId) {
+                     std::vector<shading::MaterialParams>& outMats,
+                     std::vector<const io::TextureImage*>& outTex,
+                     io::TextureCache& texCache, long long maxTexBytes, std::uint32_t& nextId) {
 	const std::uint32_t matIndex = static_cast<std::uint32_t>(outMats.size());
 	std::unique_ptr<geometry::AObject> obj = makeWorldObject(src, world, nextId, matIndex);
 	if (!obj) {
 		return;
 	}
 	outMats.push_back(toMaterialParams(src.material));
+	// T103 : texture image alignee sur `outMats` (meme index). Chargement
+	// froid via le cache partage ; echec (absent/corrompu) -> `nullptr`
+	// defini (repli albedo, jamais de crash). Borne `limits` (T024/T102).
+	const io::TextureImage* texPtr = nullptr;
+	if (src.material.texture.present && !src.material.texture.file.empty()) {
+		rt::Result<std::shared_ptr<io::TextureImage>> loaded =
+		    texCache.load(src.material.texture.file, maxTexBytes);
+		if (loaded.isOk() && loaded.value()) {
+			texPtr = loaded.value().get();
+		}
+	}
+	outTex.push_back(texPtr);
 	outObjs.push_back(std::move(obj));
 	++nextId;
 }
@@ -272,17 +287,20 @@ void appendOneObject(const scene::Object& src, const Transform& world,
 void appendGroupObjects(const scene::Group& group, const Transform& parentWorld,
                         std::vector<std::unique_ptr<geometry::AObject>>& outObjs,
                         std::vector<shading::MaterialParams>& outMats,
+                        std::vector<const io::TextureImage*>& outTex,
+                        io::TextureCache& texCache, long long maxTexBytes,
                         std::uint32_t& nextId) {
 	const Transform local = buildLocalTransform(group.transform);
 	const Transform groupWorld = parentWorld.compose(local);
 	for (const scene::Object& obj : group.objects) {
 		const Transform objLocal = buildLocalTransform(obj.transform);
 		const Transform objWorld = groupWorld.compose(objLocal);
-		appendOneObject(obj, objWorld, outObjs, outMats, nextId);
+		appendOneObject(obj, objWorld, outObjs, outMats, outTex, texCache, maxTexBytes, nextId);
 	}
 	for (const std::shared_ptr<scene::Group>& child : group.children) {
 		if (child) {
-			appendGroupObjects(*child, groupWorld, outObjs, outMats, nextId);
+			appendGroupObjects(*child, groupWorld, outObjs, outMats, outTex, texCache,
+			                   maxTexBytes, nextId);
 		}
 	}
 }
@@ -292,20 +310,26 @@ void appendGroupObjects(const scene::Group& group, const Transform& parentWorld,
 // memoire bornee par `limits` via la validation T024).
 void collectSceneObjects(const scene::Scene& scene,
                          std::vector<std::unique_ptr<geometry::AObject>>& outObjs,
-                         std::vector<shading::MaterialParams>& outMats) {
+                         std::vector<shading::MaterialParams>& outMats,
+                         std::vector<const io::TextureImage*>& outTex,
+                         io::TextureCache& texCache) {
 	outObjs.clear();
 	outMats.clear();
+	outTex.clear();
 	const std::size_t total = scene.totalObjectCount();
 	outObjs.reserve(total);
 	outMats.reserve(total);
+	outTex.reserve(total);
+	const long long maxTexBytes = scene.limits.maxTextureBytes;
 	std::uint32_t nextId = 0;
 	const Transform identity;
 	for (const scene::Object& obj : scene.objects) {
 		const Transform objWorld = buildLocalTransform(obj.transform);
-		appendOneObject(obj, objWorld, outObjs, outMats, nextId);
+		appendOneObject(obj, objWorld, outObjs, outMats, outTex, texCache, maxTexBytes, nextId);
 	}
 	for (const scene::Group& group : scene.groups) {
-		appendGroupObjects(group, identity, outObjs, outMats, nextId);
+		appendGroupObjects(group, identity, outObjs, outMats, outTex, texCache, maxTexBytes,
+		                   nextId);
 	}
 }
 
@@ -442,6 +466,10 @@ struct TraceCtx {
 	const std::vector<shading::PointLightParams>* points = nullptr;
 	const std::vector<shading::DirectionalLightParams>* dirs = nullptr;
 	const std::vector<shading::SpotLightParams>* spots = nullptr;
+	// T103 : images textures alignees sur `mats` (meme index, `nullptr` =
+	// pas de texture). Pointeurs froids (le `TextureCache` vit dans
+	// `render()`), lecture seule en boucle chaude (R3, pas d'alloc).
+	const std::vector<const io::TextureImage*>* texImages = nullptr;
 	shading::AmbientParams ambient;
 	Vec3 background;
 	int maxDepth = 4;
@@ -640,6 +668,18 @@ struct TraceCtx {
 	if (rec.materialIndex < ctx.mats->size()) {
 		mat = (*ctx.mats)[rec.materialIndex];
 	}
+	// T103 : texture image remplace l'albedo (`material.texture->sample`,
+	// OPTIONS_GUIDE §5.1). `rec.uv` vient de la primitive (4 types, T041–
+	// T044) ; pavage + plus proche dans `sampleTexture` (fract, `noexcept`,
+	// sans alloc). `nullptr` ou image vide -> albedo fichier (repli defini,
+	// jamais de crash). L'echantillon module ensuite tout l'eclairage
+	// (diffus + speculaire via `mat`).
+	if (ctx.texImages != nullptr && rec.materialIndex < ctx.texImages->size()) {
+		const io::TextureImage* tex = (*ctx.texImages)[rec.materialIndex];
+		if (tex != nullptr && tex->width > 0 && tex->height > 0 && !tex->rgba.empty()) {
+			mat.albedo = io::sampleTexture(*tex, rec.uv.x, rec.uv.y);
+		}
+	}
 	const Vec3 viewDir = ray.direction * -1.0F;
 	const Vec3 direct = shadeDirect(rec, viewDir, ctx, mat);
 	float refl = 0.0F;
@@ -816,9 +856,14 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	// Chemin froid (T046) : conversion scene -> objets monde (geometrie +
 	// materiaux), lumieres et ambiance. Allocation unique avant la boucle ;
 	// la boucle chaude n'alloue plus (R3).
+	// T103 : le cache textures vit ici (froid, `shared_ptr`, borne
+	// `limits`) ; `worldTex` pointe vers ses images (meme index que
+	// `worldMats`), `nullptr` = pas de texture.
 	std::vector<std::unique_ptr<geometry::AObject>> worldObjs;
 	std::vector<shading::MaterialParams> worldMats;
-	collectSceneObjects(scene, worldObjs, worldMats);
+	std::vector<const io::TextureImage*> worldTex;
+	io::TextureCache texCache;
+	collectSceneObjects(scene, worldObjs, worldMats, worldTex, texCache);
 	// T052 : toutes les ponctuelles (multi-spot, ordre du fichier).
 	// T055 : toutes les directionnelles (paralleles, ordre du fichier).
 	// `reserve()` dans les `collect*()` : aucune realloc courante.
@@ -853,7 +898,7 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	// T058 : + ombres continues + spots (cône + aveuglement).
 	const auto sceneSeed = static_cast<std::uint32_t>(params.seed);
 	const TraceCtx traceCtx{&worldObjs, bvhPtr, &worldMats, &pointLights, &dirLights, &spotLights,
-	                        ambient, scene.background.color, params.maxDepth};
+	                        &worldTex, ambient, scene.background.color, params.maxDepth};
 	const auto buildEnd = std::chrono::steady_clock::now();
 	// T064 : remplissage des compteurs (sans atomique : calcule apres
 	// `waitIdle`, jamais dans la boucle chaude). `bvhBuilds` = 1 par rendu

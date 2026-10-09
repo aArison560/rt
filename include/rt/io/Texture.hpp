@@ -22,6 +22,7 @@
 
 #include "rt/base/Result.hpp"
 #include "rt/base/Status.hpp"
+#include "rt/base/Vec.hpp"
 
 namespace rt::io {
 
@@ -57,5 +58,10 @@ class TextureCache {
   private:
 	std::map<std::string, std::shared_ptr<TextureImage>> cache_;
 };
+
+// Echantillonne `image` en `(u, v)` avec pavage (T103) : `fract` sur chaque
+// axe (negatifs geres), plus proche voisin. `noexcept`, sans allocation
+// (R2/R3, hot path) : image vide ou NaN -> noir defini. Couleur en [0,1].
+[[nodiscard]] Vec3 sampleTexture(const TextureImage& image, float u, float v) noexcept;
 
 } // namespace rt::io

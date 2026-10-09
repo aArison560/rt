@@ -358,6 +358,11 @@ color = material.texture->sample(fract(u), fract(v));   // répétition tiling
   l'extension), absent → `IoError` avec chemin complet, `maxBytes` → `LimitExceeded` ;
   `textures/checker.png` (64×64) + `textures/gradient.jpg` (64×64) ; tests
   `tests/unit/test_texture.cpp` (`[t102]`, 3 cas : charge, partage, erreurs).
+- **État (T103)** : `sampleTexture()` (pavage `fract` + plus proche, `noexcept` R3) + `render/`
+  (cache froid, `worldTex` aligné sur `worldMats`, `mat.albedo = texel`, repli albedo si
+  `nullptr`) ; `scenes/opt_textures4.rt` (plan/cylindre = damier PNG, sphère/cône = dégradé
+  JPEG) ; tests `tests/unit/test_textures4.cpp` (`[t103]` : sampler + damier 4 objets +
+  avec/sans texture >5% pixels).
 
 ### 5.2 More texture applications — 0…5 points
 

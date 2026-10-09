@@ -1,0 +1,71 @@
+# scenes/opt_textures4.rt — UV sur les 4 primitives (T103, *Textures* 1-2).
+# Chaque objet porte une texture image (PNG ou JPEG, autre lib que XPM) :
+# plan + cylindre = damier PNG, sphere + cone = degrade JPEG. Les UV sont
+# generes par la primitive (spheriques/cylindriques/tangents, T041-T044)
+# et echantillonnes avec pavage (`sampleTexture`, T103).
+scene "textures4" {
+    limits {
+        width 320
+        height 240
+        samples 2
+        max_depth 2
+        seed 11
+    }
+    camera {
+        position (0 3 9)
+        target (0 1 0)
+        up (0 1 0)
+        fov 55
+    }
+    background {
+        color (0.02 0.02 0.05)
+    }
+    ambient {
+        color (0.2 0.2 0.22)
+        intensity 1.0
+    }
+    lights {
+        light point "key" {
+            position (4 6 4)
+            color (1 1 1)
+            intensity 1.2
+        }
+    }
+    objects {
+        object plane "sol" {
+            point (0 0 0)
+            normal (0 1 0)
+            material {
+                albedo (1 1 1)
+                texture "textures/checker.png" {
+                }
+            }
+        }
+        object sphere "boule" {
+            center (-2.2 1.2 0)
+            radius 1.2
+            material {
+                albedo (1 1 1)
+                texture "textures/gradient.jpg" {
+                }
+            }
+        }
+        object cylinder "colonne" {
+            center (0 1.5 -1)
+            material {
+                albedo (1 1 1)
+                texture "textures/checker.png" {
+                }
+            }
+        }
+        object cone "pointe" {
+            center (2.2 0.5 0)
+            angle 20
+            material {
+                albedo (1 1 1)
+                texture "textures/gradient.jpg" {
+                }
+            }
+        }
+    }
+}
