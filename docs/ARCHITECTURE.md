@@ -597,6 +597,14 @@ Pour **prouver** les options en soutenance, le format doit piloter au moins :
 > (sans recalcul, `saved <path>` + `RT_SCREENSHOT_DIR` configurable, défaut
 > `docs/preuves`). Tests : `tests/unit/test_screenshot.cpp` (nom, PNG valide,
 > dossier absent/vide sans crash).
+>
+> Implémenté (T078) : bords fenetrés — min 64×64 (`init` + `SetWindowMinimum`),
+> recopie proportionnelle au resize (étirement, T071), double ouverture
+> refusée + reopen séquentiel OK (RAII), `SDL_QUIT`/focus ignorés sans crash,
+> sans écran -> message + code 1 (`DISPLAY`/`WAYLAND`/`SDL_VIDEODRIVER`).
+> Pas-à-pas `docs/preuves/interactions.md`. Tests :
+> `tests/unit/test_edges.cpp` (min, reopen, multi-résolutions, sans-écran
+> code 1, ASan propre).
 
 ---
 
