@@ -128,7 +128,7 @@ BVH build  →  Path tracing par tuiles/régions  →  Film
 | # | Blender | Notre projet | Priorité |
 |---|---------|--------------|----------|
 | 1 | **DNA/RNA** : un schéma unique → fichier + UI + validation | Décrire une **seule fois** le format `.rt` structuré ; le parser, l'UI (microui) et la validation en dérivent ([ARCHITECTURE.md §5](ARCHITECTURE.md)) | **Haute** (bloque `File ++`) |
-| 2 | **Depsgraph** + invalidation ciblée | `Scene::objectVersion` invalide la BVH ; deux drapeaux `sceneDirty` / `displayDirty` | **Haute** (découpe calcul/affichage) |
+| 2 | **Depsgraph** + invalidation ciblée | `Scene::objectVersion` invalide la BVH via `accel::BvhCache::ensure()` (T062 : 1000 ensures → 1 build, `bvhBuilds()` + `RT_DEBUG`) ; deux drapeaux `sceneDirty` / `displayDirty` | **Haute** (découpe calcul/affichage) |
 | 3 | **Render engine ≠ Display** | Cycles calcule, l'écran affiche : **exactement l'exigence M6** (« expose sans recalcul ») | **Éliminatoire** |
 | 4 | **Session / jobs / tuiles** | `ThreadPool` + `renderRegion()` aujourd'hui ; tuiles réseau demain | Moyenne |
 | 5 | **Notifiers** (bus découplé) | `EventHandler` SDL : `EXPOSED`, resize, clavier → le calcul ne s'accroche pas à l'événement | Moyenne |

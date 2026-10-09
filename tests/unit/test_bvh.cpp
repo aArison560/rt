@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "rt/accel/Bvh.hpp"
+#include "rt/accel/BvhCache.hpp"
 #include "rt/base/Mat4.hpp"
 #include "rt/base/Vec.hpp"
 #include "rt/geometry/Object.hpp"
@@ -259,4 +260,79 @@ TEST_CASE("bvh : traverse degeneree definie (T061)", "[bvh][t061]") {
 	// Fenetre degeneree : miss defini des deux cotes.
 	REQUIRE(!linearHit(objs, ray, 5.0F, 1.0F, expected));
 	REQUIRE(!bvh.traverse(ray, 5.0F, 1.0F, actual, objs));
+}
+
+TEST_CASE("bvh cache : 1000 ensures sans modification -> 1 reconstruction (T062 DoD)",
+          "[bvh][t062]") {
+	auto objs = makeGridSpheres(32);
+	rt::accel::BvhCache cache;
+	REQUIRE(cache.bvhBuilds() == 0);
+	REQUIRE(cache.builtVersion() == rt::accel::BvhCache::kNeverBuilt);
+	constexpr std::uint64_t version = 7;
+	for (int i = 0; i < 1000; ++i) {
+		REQUIRE(cache.ensure(objs, version).isOk());
+	}
+	// Une seule reconstruction malgre 1000 appels (invalidation ciblee).
+	REQUIRE(cache.bvhBuilds() == 1);
+	REQUIRE(cache.builtVersion() == version);
+	REQUIRE(cache.bvh().primCount() == 32);
+	REQUIRE(cache.bvh().nodeCount() >= 1);
+	REQUIRE(cache.bvh().nodeCount() <= 2 * 32 - 1);
+	// La BVH en cache traverse comme le brute-force (pas de regression).
+	const rt::Ray ray(rt::Vec3(9.0F, 0.0F, 0.0F), rt::Vec3(-1.0F, 0.0F, 0.0F));
+	rt::HitRecord expected;
+	rt::HitRecord actual;
+	REQUIRE(linearHit(objs, ray, 0.001F, rt::kInfinity, expected) ==
+	        cache.bvh().traverse(ray, 0.001F, rt::kInfinity, actual, objs));
+}
+
+TEST_CASE("bvh cache : une modification -> exactement 1 de plus (T062 DoD)",
+          "[bvh][t062]") {
+	auto objs = makeGridSpheres(32);
+	rt::accel::BvhCache cache;
+	REQUIRE(cache.ensure(objs, 7).isOk());
+	REQUIRE(cache.bvhBuilds() == 1);
+	// 100 appels supplementaires sans modification : toujours 1.
+	for (int i = 0; i < 100; ++i) {
+		REQUIRE(cache.ensure(objs, 7).isOk());
+	}
+	REQUIRE(cache.bvhBuilds() == 1);
+	// `touchObjects()` (R5) incremente la version -> exactement 1 de plus.
+	REQUIRE(cache.ensure(objs, 8).isOk());
+	REQUIRE(cache.bvhBuilds() == 2);
+	REQUIRE(cache.builtVersion() == 8);
+	for (int i = 0; i < 100; ++i) {
+		REQUIRE(cache.ensure(objs, 8).isOk());
+	}
+	REQUIRE(cache.bvhBuilds() == 2);
+}
+
+TEST_CASE("bvh cache : vide, cardinalite et pointeur nul (T062)", "[bvh][t062]") {
+	rt::accel::BvhCache cache;
+	// Vide : 1 construction (arbre vide valide), puis stable.
+	std::vector<std::unique_ptr<rt::geometry::AObject>> empty;
+	REQUIRE(cache.ensure(empty, 0).isOk());
+	REQUIRE(cache.bvhBuilds() == 1);
+	REQUIRE(cache.bvh().empty());
+	for (int i = 0; i < 10; ++i) {
+		REQUIRE(cache.ensure(empty, 0).isOk());
+	}
+	REQUIRE(cache.bvhBuilds() == 1);
+	// Meme version mais cardinalite differente -> reconstruction (garde-fou
+	// inter-scenes : un cache par scene, cf. `BvhCache.hpp`).
+	auto objs = makeGridSpheres(8);
+	REQUIRE(cache.ensure(objs, 0).isOk());
+	REQUIRE(cache.bvhBuilds() == 2);
+	REQUIRE(cache.bvh().primCount() == 8);
+	// Pointeur nul -> erreur propre, compteur et version inchanges.
+	std::vector<std::unique_ptr<rt::geometry::AObject>> withNull;
+	withNull.push_back(nullptr);
+	REQUIRE(cache.ensure(withNull, 1).isError());
+	REQUIRE(cache.bvhBuilds() == 2);
+	REQUIRE(cache.builtVersion() == 0);
+	// `clear()` oublie la version : le prochain `ensure` reconstruit.
+	cache.clear();
+	REQUIRE(cache.builtVersion() == rt::accel::BvhCache::kNeverBuilt);
+	REQUIRE(cache.ensure(objs, 0).isOk());
+	REQUIRE(cache.bvhBuilds() == 3);
 }

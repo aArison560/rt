@@ -589,6 +589,18 @@ outils ») imposent une vraie surface d'interaction.
 > fenêtre vide → miss défini). Mesuré (`scripts/bench_bvh.sh`, harness
 > `bench.sh`, `docs/BENCH.md` `t061-bvh-linear/traverse`) : 1000 sphères ×
 > 2000 rayons déterministes, 0,239 s → 0,009 s (≈ 26×, mêmes 757 hits).
+>
+> Implémenté (T062) : `rt::accel::BvhCache` (`include/rt/accel/BvhCache.hpp` +
+> `src/accel/BvhCache.cpp`) — invalidation ciblée façon *depsgraph* Blender
+> (`docs/INSPIRATION_BLENDER.md` §2) : `ensure(objs, scene.objectVersion`)
+> ne reconstruit que si la version a changé (ou si le cardinal diffère,
+> garde-fou inter-scènes ; **un cache par scène**, `clear()` en changeant).
+> Compteur `bvhBuilds()` exposé (DoD) et affiché sur `stderr` quand
+> `RT_DEBUG` est défini (`[debug] bvhBuilds=… version=… objs=… nodes=…`,
+> chemin froid). `ensure()` verrouillé (`mutex_`, T066) ; `traverse()` reste
+> lecture seule (tuiles disjointes). Tests : `tests/unit/test_bvh.cpp`
+> `[t062]` (1000 `ensure` même version → 1 build ; version+1 → exactement 1
+> de plus ; vide/cardinalité/nul/`clear()` définis).
 
 ### 8.2 Multithreading (item *Technical effects*)
 
