@@ -5,6 +5,7 @@
 #include <iostream>
 #include <thread>
 
+#include "rt/app/Controls.hpp"
 #include "rt/app/Options.hpp"
 #include "rt/base/Log.hpp"
 #include "rt/io/ImageWriter.hpp"
@@ -74,7 +75,7 @@ void onProgressPrint(int done, int total, void* user) noexcept {
 // `--help`/`--version` -> 0 sans scene.
 // T070 : `--window` sans `--headless` ouvre une fenetre (voir `runWindowed`
 // ci-dessous, SDL isole dans `platform/`).
-int runWindowed(const rt::app::Options& opts, const rt::scene::Scene& scene,
+int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
                 rt::render::Framebuffer& framebuffer, int width, int height);
 int runHeadless(const rt::app::Options& opts) {
 	rt::Result<rt::scene::Scene> result = rt::scene::parseFile(opts.scenePath);
@@ -82,7 +83,7 @@ int runHeadless(const rt::app::Options& opts) {
 		rt::log::error(result.status().message);
 		return 1;
 	}
-	const rt::scene::Scene& scene = result.value();
+	rt::scene::Scene& scene = result.value();
 	// T032 : boucle de rendu mono-thread, independante de SDL (R6).
 	// Resolution/spp/seed : CLI > `limits` (R1). `maxDepth` vient de la
 	// scene (aucun `--max-depth` en T026, profondeur bornee pour T056).
@@ -151,8 +152,10 @@ int runHeadless(const rt::app::Options& opts) {
 // donc jamais un echec ici : ce chemin ne lit meme pas cette variable.
 // T070 : `--window` (sans `--headless`) ouvre une fenetre SDL (RAII),
 // y copie le tampon persistant puis boucle d'evenements jusqu'a fermeture.
+// T073 : touches clavier (voir `Controls.hpp` + `README.md`) -> fanions R5
+// puis re-trace + reblit uniquement si la scene a change (jamais gratuit).
 // `--headless` l'emporte sur `--window` (repli sans reseau ni ecran, T078).
-int runWindowed(const rt::app::Options& opts, const rt::scene::Scene& /*scene*/,
+int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
                 rt::render::Framebuffer& framebuffer, int width, int height) {
 	// T078 : sans ecran, echec propre immediat (pas de blocage, code 1).
 	// `SDL_VIDEODRIVER=dummy` reste accepte pour les tests (pilote factice).
@@ -171,7 +174,39 @@ int runWindowed(const rt::app::Options& opts, const rt::scene::Scene& /*scene*/,
 	if (!opts.quiet) {
 		std::cout << "window: " << width << "x" << height << " (close to quit)\n";
 	}
+	const int spp = opts.hasSpp ? opts.spp : scene.limits.samples;
+	const long long seed = opts.hasSeed ? opts.seed : scene.limits.seed;
+	const int threads = opts.hasThreads ? opts.threads : 1;
+	long long rerenders = 0;
 	while (!window.pollQuit()) {
+		int sdlKey = 0;
+		bool changed = false;
+		while (window.pollKey(sdlKey)) {
+			const rt::app::KeyAction action = rt::app::keyFromSdl(sdlKey);
+			if (action == rt::app::KeyAction::None) {
+				continue;
+			}
+			if (rt::app::applyKeyAction(scene, action)) {
+				changed = true;
+			}
+		}
+		if (changed) {
+			rt::render::RenderParams params{.width = width,
+			                                .height = height,
+			                                .spp = spp,
+			                                .maxDepth = scene.limits.maxDepth,
+			                                .seed = seed,
+			                                .threads = threads};
+			rt::render::RenderStats stats;
+			if (rt::render::render(scene, framebuffer, params, &stats).isOk()) {
+				window.blit(framebuffer);
+				++rerenders;
+				if (!opts.quiet) {
+					std::fprintf(stderr, "[keys] rerender #%lld (dirty)\n", rerenders);
+				}
+			}
+			scene.markClean();
+		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 	}
 	return 0;

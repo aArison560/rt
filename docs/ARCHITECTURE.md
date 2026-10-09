@@ -557,6 +557,15 @@ Pour **prouver** les options en soutenance, le format doit piloter au moins :
 > vérifié) ; preuve chronométrée en T072. Tests :
 > `tests/unit/test_expose.cpp` (1 `blit` + 3 exposes → `blitCount` fixe,
 > `exposeCount` = 3, tampon inchangé).
+>
+> Implémenté (T073, M5) : `include/rt/app/Controls.hpp` + `src/app/Controls.cpp`
+> (`KeyAction`, `keyFromSdl`, `applyKeyAction` — avance/recul/strafe/Q/E,
+> FOV ±5° 10..120, lumière 1/2 ±0.2, `R` reset ; pas 0.5, camera seule =
+> fanions R5 sans version++, lumière = `touchObjects`) + `Window::pollKey`
+> (file 32, pompée avec expose/quit) branchés dans `runWindowed`
+> (re-trace + reblit seulement si change, `[keys]` loggé). Touches dans
+> `README.md`. Tests : `tests/unit/test_controls.cpp` (inconnu sans effet,
+> aller/retour, FOV, lumières, bornes).
 
 ---
 

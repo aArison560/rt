@@ -57,8 +57,13 @@ class Window {
 	// Vrai si un evenement d'exposition a ete recu et deja re-presente.
 	// Le re-affichage est fait ici meme (reblit), l'appelant n'a rien a faire.
 	[[nodiscard]] bool pollExpose() noexcept;
+	// File de touches (T073) : `pollQuit` pompe les evenements et stocke les
+	// touches ; `pollKey` en rend une (code `SDL_Keycode` brut, 0 si vide).
+	// Aucun acces scene/moteur ici, la traduction vit dans `app/Controls`.
+	[[nodiscard]] bool pollKey(int& outSdlKey) noexcept;
 
   private:
+	void pumpEvents() noexcept;
 	void* window_ = nullptr;
 	void* renderer_ = nullptr;
 	void* texture_ = nullptr;
@@ -67,6 +72,10 @@ class Window {
 	int texWidth_ = 0;
 	int texHeight_ = 0;
 	bool open_ = false;
+	bool quitSeen_ = false;
+	static constexpr int kKeyQueue = 32;
+	int keyQueue_[kKeyQueue] = {};
+	int keyCount_ = 0;
 	WindowStats stats_;
 };
 

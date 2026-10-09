@@ -93,6 +93,8 @@ Status Window::init(int width, int height, const char* title) {
 	texWidth_ = width;
 	texHeight_ = height;
 	open_ = true;
+	quitSeen_ = false;
+	keyCount_ = 0;
 	stats_ = WindowStats{};
 	return Status::ok();
 }
@@ -115,6 +117,8 @@ void Window::shutdown() noexcept {
 	}
 	SDL_Quit();
 	open_ = false;
+	quitSeen_ = false;
+	keyCount_ = 0;
 	width_ = 0;
 	height_ = 0;
 	texWidth_ = 0;
@@ -173,20 +177,8 @@ bool Window::pollQuit() noexcept {
 	if (!open_) {
 		return false;
 	}
-	bool quit = false;
-	SDL_Event ev;
-	while (SDL_PollEvent(&ev) != 0) {
-		if (ev.type == SDL_QUIT) {
-			quit = true;
-		} else if (ev.type == SDL_WINDOWEVENT && ev.window.event == SDL_WINDOWEVENT_EXPOSED) {
-			presentCached();
-		} else if (ev.type == SDL_WINDOWEVENT && ev.window.event == SDL_WINDOWEVENT_RESIZED) {
-			// T071/T078 : recopie proportionnelle — la texture existante est
-			// etiree par `SDL_RenderCopy` (aucun nouveau calcul, marque ici).
-			presentCached();
-		}
-	}
-	return quit;
+	pumpEvents();
+	return quitSeen_;
 }
 
 bool Window::pollExpose() noexcept {
@@ -209,6 +201,45 @@ bool Window::pollExpose() noexcept {
 		presentCached();
 	}
 	return saw;
+}
+
+bool Window::pollKey(int& outSdlKey) noexcept {
+	outSdlKey = 0;
+	if (!open_) {
+		return false;
+	}
+	pumpEvents();
+	if (keyCount_ <= 0) {
+		return false;
+	}
+	outSdlKey = keyQueue_[0];
+	for (int i = 1; i < keyCount_; ++i) {
+		keyQueue_[i - 1] = keyQueue_[i];
+	}
+	--keyCount_;
+	return true;
+}
+
+void Window::pumpEvents() noexcept {
+	if (!open_) {
+		return;
+	}
+	SDL_Event ev;
+	while (SDL_PollEvent(&ev) != 0) {
+		if (ev.type == SDL_QUIT) {
+			quitSeen_ = true;
+		} else if (ev.type == SDL_WINDOWEVENT && ev.window.event == SDL_WINDOWEVENT_EXPOSED) {
+			presentCached();
+		} else if (ev.type == SDL_WINDOWEVENT && ev.window.event == SDL_WINDOWEVENT_RESIZED) {
+			// T071/T078 : recopie proportionnelle — la texture existante est
+			// etiree par `SDL_RenderCopy` (aucun nouveau calcul, marque ici).
+			presentCached();
+		} else if (ev.type == SDL_KEYDOWN) {
+			if (keyCount_ < kKeyQueue) {
+				keyQueue_[keyCount_++] = static_cast<int>(ev.key.keysym.sym);
+			}
+		}
+	}
 }
 
 } // namespace rt::platform

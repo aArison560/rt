@@ -38,6 +38,30 @@ make fclean  # nettoyage complet
 | `--width <n>`, `--height <n>` | alias de `[width height]` (1..8192) |
 | `--headless` | sans fenêtre (défaut avec `--out`) |
 | `--window` | ouvre une fenêtre SDL2 (T070, exige `DISPLAY`, ignoré si `--headless`) |
+
+## Contrôles fenêtrés (T073–T074, M5)
+
+`./rt scenes/default.rt --window` (fermer pour quitter) :
+
+| Touche | Effet | Fanion |
+|--------|-------|--------|
+| `W`/`↑` | caméra avance (position + cible, pas 0.5) | `sceneDirty`/`displayDirty` (BVH conservée) |
+| `S`/`↓` | caméra recule | idem |
+| `A`/`←` | strafe gauche | idem |
+| `D`/`→` | strafe droite | idem |
+| `Q` | monte (y + 0.5) | idem |
+| `E` | descend (y − 0.5) | idem |
+| `+`/`=` | FOV − 5° (zoom, 10..120) | idem |
+| `-`/`_` | FOV + 5° (dézoom) | idem |
+| `1` | 1re lumière + 0.2 (max 10) | `touchObjects` (BVH à revalider) |
+| `2` | 1re lumière − 0.2 (min 0) | idem |
+| `R` | reset caméra (pos/cible/up/FOV) | `sceneDirty`/`displayDirty` |
+| `P` | capture PNG horodatée (T077, `docs/preuves/`) | blit seul |
+| molette | FOV ± 5° (T074, en direct) | `sceneDirty`/`displayDirty` |
+| glisser souris | orbite caméra autour de la cible (T074) | `sceneDirty`/`displayDirty` |
+
+Seule la caméra change (scène identique sauf caméra, rappel image1/image2,
+T074). Touche inconnue → aucun effet, aucun re-affichage (DoD T073).
 | `--quiet`, `-q` | sortie réduite |
 | `--` | fin des options |
 
