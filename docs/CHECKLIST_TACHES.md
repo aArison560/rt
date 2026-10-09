@@ -549,8 +549,8 @@ rt/
 - **Dépend** : T057, T052 · **Sert** : *Shadows and transparency*, *Direct light* · **Doc** : [SPECIFICATIONS.md §5.2 E](SPECIFICATIONS.md), [SPECIFICATIONS.md §5.2 F](SPECIFICATIONS.md)
 - **DoD** : 2 scènes de preuve + test de densité d'ombre (ombre translucide > ombre opaque en luminosité).
 
-#### T059 ⬜ — Scènes lumière de référence + non-régression
-> **Fait le** : — · **Commit** : —
+#### T059 ✅ — Scènes lumière de référence + non-régression
+> **Fait le** : 2026-10-09 · **Commit** : e73c6d5
 - **Prompt** : « Écris `scenes/fig_vi1.rt` (4 objets, 2 spots, ombres, brillance) et `scenes/fig_vi3.rt` (mélange d'ombres), ajoute un test de non-régression : hash des images rendues enregistrés dans `tests/golden/`, comparaison à chaque `make test` (tolérance sur quelques pixels). »
 - **Dépend** : T054, T055, T058 · **Sert** : M7, M8 · **Doc** : `docs/subjects/fr.subject.pdf` (figures VI.1, VI.3)
 - **DoD** : les 3 scènes rendent ; le test golden détecte une régression volontaire (vérifié une fois, puis remis).
