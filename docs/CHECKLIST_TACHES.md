@@ -731,62 +731,62 @@ rt/
 
 ### Phase P9 — Options priorité 1 (les mieux notées par heure passée)
 
-#### T100 ⬜ — Item *File ++* : prouver la hiérarchie
-> **Fait le** : — · **Commit** : —
+#### T100 ✅ — Item *File ++* : prouver la hiérarchie
+> **Fait le** : 2026-10-09 · **Commit** : 520b0e5
 - **Prompt** : « Écris un test automatique qui échoue si le format retombe à « une information par ligne » : parse un fichier **imbriqué 3 niveaux** (scene → objects → group → object), un fichier avec des sous-blocs `material {}` séparés, et affirme que la structure est lue. Ajoute à `docs/FORMAT_SCENE.md` une section « pourquoi ce n'est pas du ligne-par-ligne ». »
 - **Dépend** : T020, T023 · **Sert** : **File ++** · **Doc** : [SPECIFICATIONS.md §5.2 A](SPECIFICATIONS.md)
 - **DoD** : le test prouve l'imbrication ; un exemple XML équivalent est en annexe.
 
-#### T101 ⬜ — Éléments composés réutilisables (*Composed elements*)
-> **Fait le** : — · **Commit** : —
+#### T101 ✅ — Éléments composés réutilisables (*Composed elements*)
+> **Fait le** : 2026-10-09 · **Commit** : 592e833
 - **Prompt** : « Bloc `group { ... }` dans le schéma : un ensemble d'objets simples (cube = 6 plans limités, verre = cône + cylindre + sphère) **défini une fois et instancié plusieurs fois** à des positions/orientations différentes. L'instanciation partage la définition (pas de duplication en mémoire). Tests : 2 instances à 2 endroits distincts. »
 - **Dépend** : T045, T100 · **Sert** : *Composed elements* · **Doc** : [SPECIFICATIONS.md §5.2 I](SPECIFICATIONS.md)
 - **DoD** : scène `scenes/opt_group.rt` avec la même définition utilisée ≥ 2 fois ; test de partage mémoire.
 
-#### T102 ⬜ — Chargement de textures PNG/JPEG
-> **Fait le** : — · **Commit** : —
+#### T102 ✅ — Chargement de textures PNG/JPEG
+> **Fait le** : 2026-10-09 · **Commit** : 116982e
 - **Prompt** : « `src/io/TextureLoader.cpp` : charge PNG et JPEG (**bibliothèque autre que MiniLibX/XPM** — exigence du sous-critère 5) via `stb_image` ou libpng/libjpeg, cache `nom → partagé` (`shared_ptr`, RAII), fichier absent → `Status` avec chemin complet, mémoire bornée par `limits`. »
 - **Dépend** : T021, T034 · **Sert** : *Textures* sous-critère 5 · **Doc** : [SPECIFICATIONS.md §5.2 G](SPECIFICATIONS.md)
 - **DoD** : 2 textures (1 PNG, 1 JPEG) dans `textures/` ; manquant → message, 0 crash ; valgrind propre (libération du cache).
 
-#### T103 ⬜ — UV sur les 4 primitives (*Textures* 1–2)
-> **Fait le** : — · **Commit** : —
+#### T103 ✅ — UV sur les 4 primitives (*Textures* 1–2)
+> **Fait le** : 2026-10-09 · **Commit** : 110772b
 - **Prompt** : « Génère des coordonnées UV pour plan, sphère, cylindre, cône, et applique une texture à **chacun des 4 objets** dans une scène unique. Test : une texture à damier visible sur les 4 objets sans distorsion aberrante. »
 - **Dépend** : T102, T041–T044 · **Sert** : *Textures* sous-critères 1-2 (2 pts) · **Doc** : [SPECIFICATIONS.md §5.2 G](SPECIFICATIONS.md)
 - **DoD** : scène `scenes/opt_textures4.rt` ; les 4 objets sont texturés.
 
-#### T104 ⬜ — Échelle et décalage de texture (*Textures* 3–4)
-> **Fait le** : — · **Commit** : —
+#### T104 ✅ — Échelle et décalage de texture (*Textures* 3–4)
+> **Fait le** : 2026-10-09 · **Commit** : b6a9603
 - **Prompt** : « Directives `texture { scale (sx sy) offset (ox oy) rotate r }` appliquées **par objet** : on peut étirer (ou compresser) et décaler la texture. Test visuel + test unitaire sur les UV transformées. »
 - **Dépend** : T103, T021 · **Sert** : *Textures* sous-critères 3-4 (2 pts) · **Doc** : [SPECIFICATIONS.md §5.2 G](SPECIFICATIONS.md)
 - **DoD** : scène démontrant les 4 cas (étiré/décalé, séparément) ; test unitaire UV.
 
-#### T105 ⬜ — Damier (*Disruptions* 2)
-> **Fait le** : — · **Commit** : —
+#### T105 ✅ — Damier (*Disruptions* 2)
+> **Fait le** : 2026-10-09 · **Commit** : f468396
 - **Prompt** : « Pattern `checker` évalué en espace objet ou monde (option), taille réglable, applicable à la couleur **et** en masque de transparence plus tard. Test : alternance correcte sur un plan et sur une sphère. »
 - **Dépend** : T103 · **Sert** : *Disruptions* 2 pts · **Doc** : [SPECIFICATIONS.md §5.2 D](SPECIFICATIONS.md)
 - **DoD** : scène `scenes/opt_checker.rt` ; test unitaire de l'alternance.
 
-#### T106 ⬜ — Bruit de Perlin (*Disruptions* 3–4)
-> **Fait le** : — · **Commit** : —
+#### T106 ✅ — Bruit de Perlin (*Disruptions* 3–4)
+> **Fait le** : 2026-10-09 · **Commit** : 0e957f4
 - **Prompt** : « Implémente un **bruit de Perlin** (table de permutation déterministe et seedée, fonctions de lissage, fractal 1-3 octaves) utilisable pour la couleur, la normale et la transparence. Attention : les 2 derniers points ne se comptent que si au moins un autre pattern existe (règle de la fiche). »
 - **Dépend** : T105 · **Sert** : *Disruptions* **2 pts** · **Doc** : [SPECIFICATIONS.md §5.2 D](SPECIFICATIONS.md)
 - **DoD** : test de déterminisme (même seed → même bruit) ; scène `scenes/opt_perlin.rt`.
 
-#### T107 ⬜ — Perturbation de normale par onde (*Disruptions* 1)
-> **Fait le** : — · **Commit** : —
+#### T107 ✅ — Perturbation de normale par onde (*Disruptions* 1)
+> **Fait le** : 2026-10-09 · **Commit** : a91e779
 - **Prompt** : « Pattern `wave` : perturbation de la normale par `sin()` (effet vague/onde sur l'objet) — indépendant des couleurs. Test : la normale diffère de la géométrique de façon périodique, et disparaît à `amplitude=0`. »
 - **Dépend** : T105 · **Sert** : *Disruptions* 1 pt · **Doc** : [SPECIFICATIONS.md §5.2 D](SPECIFICATIONS.md)
 - **DoD** : test `amplitude=0` identique au rendu sans pattern ; scène `scenes/opt_wave.rt`.
 
-#### T108 ⬜ — Barre de progression (*Environment 1*)
-> **Fait le** : — · **Commit** : —
+#### T108 ✅ — Barre de progression (*Environment 1*)
+> **Fait le** : 2026-10-09 · **Commit** : a1d17cf
 - **Prompt** : « Message de chargement graphique + **barre de progression** dans l'UI (tuiles faites/total, spp accumulés, temps restant), affichée pendant le rendu et non seulement en fin de course. Sortie terminal conservée en parallèle pour le mode headless. »
 - **Dépend** : T075, T063 · **Sert** : *Environment 1* · **Doc** : [SPECIFICATIONS.md §5.2 L](SPECIFICATIONS.md)
 - **DoD** : la barre progresse réellement (vérifié sur une scène lente) ; en headless, la progression est imprimée.
 
-#### T109 ⬜ — Interaction live (*Environment 3*)
-> **Fait le** : — · **Commit** : —
+#### T109 ✅ — Interaction live (*Environment 3*)
+> **Fait le** : 2026-10-09 · **Commit** : ca74097
 - **Prompt** : « Modifier caméra, position d'objet, couleurs, textures **sans relancer le programme** : chaque édition invalide via `sceneDirty` → basse qualité immédiate → affinage. Scène de démonstration `scenes/live.rt` + procédure écrite des gestes à faire devant le correcteur. »
 - **Dépend** : T076, T104 · **Sert** : *Environment 3* · **Doc** : [SPECIFICATIONS.md §5.2 L](SPECIFICATIONS.md)
 - **DoD** : aucun redémarrage nécessaire ; le protocole de démonstration est écrit en 5 gestes.
