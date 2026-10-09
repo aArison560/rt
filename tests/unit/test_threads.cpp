@@ -148,3 +148,23 @@ TEST_CASE("renderer stats : compteurs coherents (T064)", "[threads][t064]") {
 	REQUIRE(rt::render::render(scene, plain, params).isOk());
 	REQUIRE(framebuffersEqual(fb, plain));
 }
+
+// T066 : reproductibilite 1 thread == 4 threads, octet par octet, sur la
+// scene de reference `fig_vi1.rt` (5 objets, 2 spots, speculaire — autre
+// scene/graine que le test T063 pour une couverture independante).
+// DoD : passe 10 fois de suite (verifie en shell, pas en boucle ici).
+TEST_CASE("renderer threads : reproductibilite 1 vs 4 sur fig_vi1 (T066 DoD)",
+          "[threads][t066]") {
+	rt::Result<rt::scene::Scene> parsed = rt::scene::parseFile("scenes/fig_vi1.rt");
+	REQUIRE(parsed.isOk());
+	const rt::scene::Scene& scene = parsed.value();
+	rt::render::Framebuffer one;
+	rt::render::Framebuffer four;
+	const rt::render::RenderParams paramsOne{
+	    .width = 80, .height = 60, .spp = 2, .maxDepth = 4, .seed = 99, .threads = 1};
+	const rt::render::RenderParams paramsFour{
+	    .width = 80, .height = 60, .spp = 2, .maxDepth = 4, .seed = 99, .threads = 4};
+	REQUIRE(rt::render::render(scene, one, paramsOne).isOk());
+	REQUIRE(rt::render::render(scene, four, paramsFour).isOk());
+	REQUIRE(framebuffersEqual(one, four));
+}

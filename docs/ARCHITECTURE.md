@@ -648,6 +648,14 @@ outils ») imposent une vraie surface d'interaction.
 > `docs/BENCH.md` `t065-bvh-off/on`) : `perf_many.rt` (101 objets) 320×240
 > spp2, 3.759 s ± 0.142 → 0.321 s ± 0.012 (≈ **11.7×**, pixels
 > octet-identiques) ; `rt_test [golden]` vert (DoD).
+>
+> Implémenté (T066) : propreté thread — `BvhCache::ensure()` verrouillé
+> (`mutex_`), `traverse()` lecture seule, tuiles disjointes (pas de partage
+> mutable), compteurs `RenderStats` calculés après `waitIdle` (sans
+> atomique) ; `rt_test_tsan [threads]` vert (6 cas, 0 warning TSan, binaire
+> TSan identique au normal octet par octet) ; test de reproductibilité
+> `[t066]` (`fig_vi1.rt` 80×60 spp2 seed99, 1 vs 4 threads octet par octet,
+> 10/10 en shell — DoD).
 
 ### 8.3 Rendu progressif (feedback utilisateur)
 
