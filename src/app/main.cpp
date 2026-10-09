@@ -6,6 +6,7 @@
 #include <thread>
 
 #include "rt/app/Controls.hpp"
+#include "rt/app/Interactive.hpp"
 #include "rt/app/Options.hpp"
 #include "rt/base/Log.hpp"
 #include "rt/io/ImageWriter.hpp"
@@ -182,11 +183,19 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 	// FOV/ambiance + boutons Render/Save ; dessin SDL minimal, logique testee).
 	rt::ui::Panel panel;
 	panel.attach(&scene);
+	// T076 : machine preview (1 spp) puis affinage (spp cible), blit seul
+	// sinon. Le calcul reste en tuiles `ThreadPool` (pas de blocage UI).
+	rt::app::Interactive ctl;
+	scene.markClean();
 	long long rerenders = 0;
 	while (!window.pollQuit()) {
 		int sdlKey = 0;
 		bool changed = false;
 		while (window.pollKey(sdlKey)) {
+			// T077 : `P` = capture (pas de re-trace, voir apres la boucle).
+			if (sdlKey == 'p' || sdlKey == 'P') {
+				continue;
+			}
 			const rt::app::KeyAction action = rt::app::keyFromSdl(sdlKey);
 			if (action == rt::app::KeyAction::None) {
 				continue;
@@ -207,7 +216,38 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 				changed = true;
 			}
 		}
+		// T075/T076 : l'UI fait avancer ses sliders chaque frame ; si elle a
+		// leve R5, c'est une edition comme les autres (appercu puis affinage).
+		panel.frame();
+		if (panel.takeLaunchRequest()) {
+			changed = true;
+		}
+		(void)panel.takeSaveRequest();
+		if (scene.sceneDirty && !changed) {
+			changed = true;
+		}
 		if (changed) {
+			ctl.onEdited();
+		}
+		if (ctl.needsPreview()) {
+			rt::render::RenderParams preview{.width = width,
+			                                 .height = height,
+			                                 .spp = 1,
+			                                 .maxDepth = scene.limits.maxDepth,
+			                                 .seed = seed,
+			                                 .threads = threads};
+			rt::render::RenderStats stats;
+			if (rt::render::render(scene, framebuffer, preview, &stats).isOk()) {
+				window.blit(framebuffer);
+				ctl.consumePreview();
+				ctl.onPreviewDone();
+				if (!opts.quiet) {
+					std::fprintf(stderr, "[preview] 1 spp blit\n");
+				}
+			}
+			scene.markClean();
+		}
+		if (ctl.needsFull()) {
 			rt::render::RenderParams params{.width = width,
 			                                .height = height,
 			                                .spp = spp,
@@ -218,6 +258,8 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 			if (rt::render::render(scene, framebuffer, params, &stats).isOk()) {
 				window.blit(framebuffer);
 				++rerenders;
+				ctl.consumeFull();
+				ctl.onFullDone();
 				if (!opts.quiet) {
 					std::fprintf(stderr, "[keys] rerender #%lld (dirty)\n", rerenders);
 				}
@@ -225,9 +267,6 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 			scene.markClean();
 		}
 		// T075 : fait avancer l'UI (sliders/boutons) chaque frame, sans bloquer.
-		panel.frame();
-		(void)panel.takeLaunchRequest();
-		(void)panel.takeSaveRequest();
 		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 	}
 	return 0;

@@ -582,6 +582,13 @@ Pour **prouver** les options en soutenance, le format doit piloter au moins :
 > (une `frame()` par tour, sans blocage). Tests :
 > `tests/unit/test_panel.cpp` (champs == table, sans scene sans crash,
 > albedo via UI change l'image).
+>
+> Implémenté (T076, R5) : `include/rt/app/Interactive.hpp` +
+> `src/app/Interactive.cpp` (`onEdited` -> preview, `onPreviewDone` -> full,
+> `onDisplayOnly` -> blit seul, compteurs `previews/fulls/blits`) branché dans
+> `runWindowed` (1 spp immédiat puis affinage au spp cible, `ThreadPool`
+> tuiles, UI fluide). Tests : `tests/unit/test_interactive.cpp` (édition ->
+> preview+full+blit, 100 affichages = 0 re-trace, DoD).
 
 ---
 
