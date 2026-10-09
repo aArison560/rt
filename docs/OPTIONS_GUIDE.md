@@ -451,6 +451,10 @@ positions/orientations différentes**.
 - **Preuve** : **le même cube posé 3 fois**, à 3 endroits/orientations différentes. Échouer si
   « c'est recopié en dur » (le critère insiste : « if it's not the case, the composed element is
   useless »).
+- **État (T101)** : `scenes/opt_group.rt` — composition « verre » (cône + cylindre + sphère)
+  instanciée 2 fois (`verre_gauche` à x=-2.2, `verre_droite` à x=+2.2, même patron, `transform`
+  parent) ; test `tests/unit/test_group.cpp` (`[t101]` : même définition ≥2 fois + partage
+  `shared_ptr`, 2 instances à 2 endroits) ; `./rt scenes/opt_group.rt --out docs/preuves/opt_group.png`.
 
 ### 7.2 Negative objects — ☐ Oui/Non
 
