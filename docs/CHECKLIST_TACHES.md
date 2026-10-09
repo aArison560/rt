@@ -537,8 +537,8 @@ rt/
 - **Dépend** : T053 · **Sert** : *Reflection & transparency* sous-critères 1-2 · **Doc** : [SPECIFICATIONS.md §5.2 F](SPECIFICATIONS.md)
 - **DoD** : les 2 tests de bornes passent ; pas de boucle infinie (profondeur bornée, test le prouve).
 
-#### T057 ⬜ — Transparence et réfraction (Snell/Descartes)
-> **Fait le** : — · **Commit** : —
+#### T057 ✅ — Transparence et réfraction (Snell/Descartes)
+> **Fait le** : 2026-10-09 · **Commit** : 73bae9d
 - **Prompt** : « Implémente la réfraction avec l'**indice de réfraction** (`ior`) via la loi de Descartes (code lisible et commenté — le correcteur cherchera la formule), `transparency` en pourcentage, gestion de la réflexion totale interne. Tests : `ior=1` → pas de déviation ; réfraction vers l'extérieur = courbure cohérente. »
 - **Dépend** : T056 · **Sert** : *Reflection & transparency* sous-critères 3-5 · **Doc** : [SPECIFICATIONS.md §5.2 F](SPECIFICATIONS.md)
 - **DoD** : tests d'`ior` verts ; la formule est commentée dans le code ; scène `scenes/opt_glass.rt`.
