@@ -26,10 +26,48 @@ namespace {
 	}
 	return ext;
 }
-
 // Centroide d'une boite (moyenne, sans allocation).
 [[nodiscard]] Vec3 centroidOf(const AABB& box) noexcept {
 	return (box.min + box.max) * Real(0.5F);
+}
+
+// Test rayon/AABB optimise (T061, methode de Williams) : `invDir` est
+// precalcule une fois par `traverse()` (aucune division par noeud),
+// `parallel[axis]` couvre les directions quasi nulles (`|d| <= kEpsilon`,
+// meme garde que `AABB::hit` en T013 : jamais de division par zero).
+// `enter` recoit le `t` d'entree (pour visiter le fils proche d'abord).
+// `noexcept`, sans allocation (R2/R3).
+[[nodiscard]] bool boxHit(const Ray& ray, const Real invDir[3], const bool parallel[3],
+                          const AABB& box, Real tMin, Real tMax, Real& enter) noexcept {
+	Real currentMin = tMin;
+	Real currentMax = tMax;
+	for (std::size_t axis = 0; axis < 3; ++axis) {
+		if (!parallel[axis]) {
+			Real t0 = (box.min[axis] - ray.origin[axis]) * invDir[axis];
+			Real t1 = (box.max[axis] - ray.origin[axis]) * invDir[axis];
+			if (t0 > t1) {
+				const Real tmp = t0;
+				t0 = t1;
+				t1 = tmp;
+			}
+			if (t0 > currentMin) {
+				currentMin = t0;
+			}
+			if (t1 < currentMax) {
+				currentMax = t1;
+			}
+		} else {
+			// Rayon parallele a l'axe : rejete s'il est hors des dalles.
+			if (ray.origin[axis] < box.min[axis] || ray.origin[axis] > box.max[axis]) {
+				return false;
+			}
+		}
+		if (currentMax < currentMin) {
+			return false;
+		}
+	}
+	enter = currentMin;
+	return true;
 }
 
 } // namespace
@@ -165,6 +203,108 @@ std::uint32_t Bvh::buildRecursive(std::uint32_t start, std::uint32_t count, int 
 	const std::uint32_t right = buildRecursive(mid, start + count - mid, depth + 1);
 	nodes_[index] = BvhNode::makeInterior(bounds, left, right);
 	return index;
+}
+
+bool Bvh::traverse(const Ray& ray, Real tMin, Real tMax, HitRecord& rec,
+                   const std::vector<std::unique_ptr<geometry::AObject>>& objs) const noexcept {
+	if (nodes_.empty() || root_ == kInvalid || root_ >= nodes_.size()) {
+		return false;
+	}
+	// Le vecteur doit correspondre a celui servi a `build()` : meme taille
+	// (les index restent valides), sinon miss defini, jamais de crash.
+	if (objs.size() != primBoxes_.size() || primIndices_.size() != primBoxes_.size()) {
+		return false;
+	}
+	if (!(tMin <= tMax) || std::isnan(tMin) || std::isnan(tMax)) {
+		return false;
+	}
+	// Williams : une seule division par axe pour tout le parcours.
+	Real invDir[3] = {Real(0), Real(0), Real(0)};
+	bool parallel[3] = {true, true, true};
+	for (std::size_t axis = 0; axis < 3; ++axis) {
+		const Real dir = ray.direction[axis];
+		if ((dir > kEpsilon || dir < -kEpsilon) && std::isfinite(dir)) {
+			invDir[axis] = Real(1) / dir;
+			parallel[axis] = false;
+		}
+	}
+	// Pile fixe (tableau local, R3 : aucune allocation, pas de recursion).
+	std::uint32_t stack[kStackSize];
+	std::size_t top = 0;
+	stack[top++] = root_;
+	bool hit = false;
+	Real closest = tMax;
+	HitRecord tmp;
+	while (top > 0) {
+		const std::uint32_t index = stack[--top];
+		if (index >= nodes_.size()) {
+			continue;
+		}
+		const BvhNode& node = nodes_[index];
+		Real enter = tMin;
+		if (!boxHit(ray, invDir, parallel, node.bounds, tMin, closest, enter)) {
+			continue;
+		}
+		if (node.isLeaf()) {
+			const std::uint32_t start = node.leafStart();
+			const std::uint32_t count = node.leafCount();
+			if (start >= primIndices_.size() ||
+			    count > primIndices_.size() - start) {
+				continue;
+			}
+			for (std::uint32_t i = 0; i < count; ++i) {
+				const std::uint32_t prim = primIndices_[start + i];
+				if (prim >= objs.size()) {
+					continue;
+				}
+				const std::unique_ptr<geometry::AObject>& obj = objs[prim];
+				if (!obj) {
+					continue;
+				}
+				if (obj->intersect(ray, tMin, closest, tmp)) {
+					rec = tmp;
+					closest = tmp.t;
+					hit = true;
+				}
+			}
+		} else {
+			const std::uint32_t left = node.left();
+			const std::uint32_t right = node.right();
+			if (left >= nodes_.size() || right >= nodes_.size()) {
+				continue;
+			}
+			// Fils proche d'abord (ressert `closest` plus tot, elague plus).
+			Real enterLeft = tMin;
+			Real enterRight = tMin;
+			const bool hitLeft =
+			    boxHit(ray, invDir, parallel, nodes_[left].bounds, tMin, closest, enterLeft);
+			const bool hitRight =
+			    boxHit(ray, invDir, parallel, nodes_[right].bounds, tMin, closest, enterRight);
+			if (hitLeft && hitRight) {
+				if (top + 2 > kStackSize) {
+					continue;
+				}
+				if (enterLeft < enterRight) {
+					stack[top++] = right;
+					stack[top++] = left;
+				} else {
+					stack[top++] = left;
+					stack[top++] = right;
+				}
+			} else if (hitLeft) {
+				if (top + 1 > kStackSize) {
+					continue;
+				}
+				stack[top++] = left;
+			} else if (hitRight) {
+				if (top + 1 > kStackSize) {
+					continue;
+				}
+				stack[top++] = right;
+			}
+		}
+	}
+	return hit;
 }
 
 } // namespace rt::accel

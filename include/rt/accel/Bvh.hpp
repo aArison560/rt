@@ -83,6 +83,9 @@ public:
 	static constexpr int kMaxDepth = 32;
 	// Taille max d'une feuille (compromis traversal/build, documente).
 	static constexpr std::size_t kMaxLeaf = 4;
+	// Pile fixe de traversal (T061) : >= `kMaxDepth` + marge (un arbre
+	// binaire strict ne depile jamais plus que sa profondeur + 1).
+	static constexpr std::size_t kStackSize = 64;
 
 	Bvh() = default;
 
@@ -104,6 +107,21 @@ public:
 		return primIndices_;
 	}
 	[[nodiscard]] const std::vector<AABB>& primBoxes() const noexcept { return primBoxes_; }
+
+	// Traversal d'un rayon (T061) : plus proche dans `[tMin, tMax]`, `rec`
+	// rempli comme `intersect` (point, normale contre le rayon via
+	// `setFaceNormal`, `t`, `frontFace`, `uv`, `materialIndex`).
+	// Pile fixe `kStackSize` (tableau local, pas de recursion profonde),
+	// test AABB optimise (methode de Williams : `invDir` precalcule une
+	// fois, dalles sans division par noeud), `tMax` resserre au plus
+	// proche (comme `findClosestHit` en T046). Resultats identiques a la
+	// recherche lineaire (test d'equivalence T061, tolerance flottante).
+	// `objs` doit etre le vecteur servi a `build()` (meme taille, sinon
+	// miss defini, jamais de crash) ; `objs` reste proprietaire.
+	// `noexcept`, sans allocation (R2/R3 : pile + registres uniquement).
+	[[nodiscard]] bool traverse(const Ray& ray, Real tMin, Real tMax, HitRecord& rec,
+	                            const std::vector<std::unique_ptr<geometry::AObject>>& objs)
+	    const noexcept;
 
 	// AABB monde d'un objet : les 8 coins de `localBounds()` (espace objet)
 	// passes par `objectToWorld` (approche A, T045). `noexcept`, pile

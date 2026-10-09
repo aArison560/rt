@@ -577,6 +577,18 @@ outils ») imposent une vraie surface d'interaction.
 > sphères en grille → 511 nœuds (<= 2N-1 = 1999) en ~0,3 ms (< 50 ms).
 > Tests : `tests/unit/test_bvh.cpp` (vide, singleton, DoD 1000, transform,
 > nul refusé).
+>
+> Implémenté (T061) : `Bvh::traverse(ray, tMin, tMax, rec, objs)` (pile fixe
+> `kStackSize = 64`, tableau local, pas de récursion ; test AABB optimisé
+> méthode de Williams, `invDir` précalculé une fois, garde parallèle
+> `|d| <= kEpsilon` comme `AABB::hit` ; fils proche d'abord, `tMax`
+> resserré comme `findClosestHit`) ; `noexcept`, sans allocation (R2/R3).
+> Tests : équivalence brute-force sur 200 scènes aléatoires × 20 rayons
+> (mêmes `t` à 1e-4, mêmes `materialIndex`) + 1000 sphères × 100 rayons +
+> rayons axiaux + dégénérés (vide, direction nulle, taille incohérente,
+> fenêtre vide → miss défini). Mesuré (`scripts/bench_bvh.sh`, harness
+> `bench.sh`, `docs/BENCH.md` `t061-bvh-linear/traverse`) : 1000 sphères ×
+> 2000 rayons déterministes, 0,239 s → 0,009 s (≈ 26×, mêmes 757 hits).
 
 ### 8.2 Multithreading (item *Technical effects*)
 

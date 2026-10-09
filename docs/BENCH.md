@@ -30,6 +30,40 @@
   mesure n'est un temps de rendu que si la commande rend.
 
 ## Résultats
+### t061-bvh-traverse — 2026-10-09 09:53:09 EAT
+
+- **Commande** : `sh scripts/bench_bvh.sh traverse 1000 2000`
+- **Note** : T061 apres : Bvh traverse pile fixe + Williams, memes 2000 rayons (graine fixe)
+- **Protocole** : 5 exécution(s) mesurée(s), 1 échauffement(s), outil `date +%s.%N`, horloge `date +%s.%N`
+- **Machine** : Linux 6.12.111+deb13-amd64 x86_64 · epsilon
+- **Commit au moment de la mesure** : `bced1e3`
+
+| runs | moyenne (s) | écart-type (s) | min (s) | max (s) | CV (%) |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 0.009136 | 0.000237 | 0.008803 | 0.009421 | 2.59 |
+
+Détail brut :
+
+```json
+{"command":"sh scripts/bench_bvh.sh traverse 1000 2000","label":"t061-bvh-traverse","n":5,"warmup":1,"tool":"date +%s.%N","clock":"date +%s.%N","unit":"s","mean":0.009136,"stddev":0.000237,"min":0.008803,"max":0.009421,"times":[0.009421,0.009264,0.009018,0.009173,0.008803],"timestamp":"2026-10-09T09:53:09+03:00"}
+```
+### t061-bvh-linear — 2026-10-09 09:53:06 EAT
+
+- **Commande** : `sh scripts/bench_bvh.sh linear 1000 2000`
+- **Note** : T061 avant : brute-force lineaire, 1000 spheres x 2000 rayons deterministes (graine fixe)
+- **Protocole** : 5 exécution(s) mesurée(s), 1 échauffement(s), outil `date +%s.%N`, horloge `date +%s.%N`
+- **Machine** : Linux 6.12.111+deb13-amd64 x86_64 · epsilon
+- **Commit au moment de la mesure** : `bced1e3`
+
+| runs | moyenne (s) | écart-type (s) | min (s) | max (s) | CV (%) |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 0.238512 | 0.001974 | 0.235118 | 0.240239 | 0.83 |
+
+Détail brut :
+
+```json
+{"command":"sh scripts/bench_bvh.sh linear 1000 2000","label":"t061-bvh-linear","n":5,"warmup":1,"tool":"date +%s.%N","clock":"date +%s.%N","unit":"s","mean":0.238512,"stddev":0.001974,"min":0.235118,"max":0.240239,"times":[0.239250,0.240239,0.239216,0.238738,0.235118],"timestamp":"2026-10-09T09:53:06+03:00"}
+```
 ### t051-2lights — 2026-10-08 19:12:26 EAT
 
 - **Commande** : `./rt scenes/default.rt 320 240 --out /tmp/bench_t051_2.png --quiet`
