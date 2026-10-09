@@ -1,0 +1,78 @@
+# scenes/opt_tex_transform.rt — echelle et decalage de texture (T104).
+# 4 cas separes sur damier PNG : reference, etire (scale 4), decale U,
+# decale V. Chaque `texture { scale offset }` est par objet (SPEC §5.2 G).
+scene "textrans" {
+    limits {
+        width 320
+        height 240
+        samples 2
+        max_depth 2
+        seed 12
+    }
+    camera {
+        position (0 2.5 11)
+        target (0 1.2 0)
+        up (0 1 0)
+        fov 55
+    }
+    background {
+        color (0.02 0.02 0.05)
+    }
+    ambient {
+        color (0.25 0.25 0.27)
+        intensity 1.0
+    }
+    lights {
+        light point "key" {
+            position (4 6 5)
+            color (1 1 1)
+            intensity 1.2
+        }
+    }
+    objects {
+        object sphere "ref" {
+            center (-4.5 1.2 0)
+            radius 1.1
+            material {
+                albedo (1 1 1)
+                texture "textures/checker.png" {
+                    scale 1 1
+                    offset 0 0
+                }
+            }
+        }
+        object sphere "etire" {
+            center (-1.5 1.2 0)
+            radius 1.1
+            material {
+                albedo (1 1 1)
+                texture "textures/checker.png" {
+                    scale 4 4
+                    offset 0 0
+                }
+            }
+        }
+        object sphere "decale_u" {
+            center (1.5 1.2 0)
+            radius 1.1
+            material {
+                albedo (1 1 1)
+                texture "textures/checker.png" {
+                    scale 1 1
+                    offset 0.5 0
+                }
+            }
+        }
+        object sphere "decale_v" {
+            center (4.5 1.2 0)
+            radius 1.1
+            material {
+                albedo (1 1 1)
+                texture "textures/checker.png" {
+                    scale 1 1
+                    offset 0 0.5
+                }
+            }
+        }
+    }
+}

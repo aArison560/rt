@@ -363,6 +363,10 @@ color = material.texture->sample(fract(u), fract(v));   // répétition tiling
   `nullptr`) ; `scenes/opt_textures4.rt` (plan/cylindre = damier PNG, sphère/cône = dégradé
   JPEG) ; tests `tests/unit/test_textures4.cpp` (`[t103]` : sampler + damier 4 objets +
   avec/sans texture >5% pixels).
+- **État (T104)** : `MaterialParams.texScale/texOffset` (POD, défauts 1/0) + `u' = u*sx+ox`
+  dans `traceRay` (garde `scale <= 0`/NaN → 1) ; `scenes/opt_tex_transform.rt` (référence,
+  étiré ×4, décalé U/V) ; tests `tests/unit/test_tex_transform.cpp` (`[t104]` : valeurs
+  lues + étiré/décalé changent l'image).
 
 ### 5.2 More texture applications — 0…5 points
 

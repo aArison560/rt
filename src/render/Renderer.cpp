@@ -128,6 +128,8 @@ constexpr Real kPrimaryTMin = 0.001F;
 	out.ior = src.ior;
 	out.hasTexture = src.texture.present;
 	out.hasPattern = src.pattern.present;
+	out.texScale = src.texture.scale;
+	out.texOffset = src.texture.offset;
 	return out;
 }
 
@@ -677,7 +679,21 @@ struct TraceCtx {
 	if (ctx.texImages != nullptr && rec.materialIndex < ctx.texImages->size()) {
 		const io::TextureImage* tex = (*ctx.texImages)[rec.materialIndex];
 		if (tex != nullptr && tex->width > 0 && tex->height > 0 && !tex->rgba.empty()) {
-			mat.albedo = io::sampleTexture(*tex, rec.uv.x, rec.uv.y);
+			// T104 : `u' = u*sx + ox`, `v' = v*sy + oy` par objet
+			// (etirer/compresser + decaler, sous-criteres 3-4).
+			// `scale <= 0` ou NaN -> 1 defini (borne schema R1, garde ici).
+			float sx = mat.texScale.x;
+			float sy = mat.texScale.y;
+			if (!std::isfinite(sx) || sx <= 0.0F) {
+				sx = 1.0F;
+			}
+			if (!std::isfinite(sy) || sy <= 0.0F) {
+				sy = 1.0F;
+			}
+			float ox = std::isfinite(mat.texOffset.x) ? mat.texOffset.x : 0.0F;
+			float oy = std::isfinite(mat.texOffset.y) ? mat.texOffset.y : 0.0F;
+			mat.albedo =
+			    io::sampleTexture(*tex, rec.uv.x * sx + ox, rec.uv.y * sy + oy);
 		}
 	}
 	const Vec3 viewDir = ray.direction * -1.0F;

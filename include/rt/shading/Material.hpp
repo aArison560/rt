@@ -50,6 +50,12 @@ struct MaterialParams {
 	// d'allocation dans le hot path). Echantillonnage en T102/T105.
 	bool hasTexture = false;
 	bool hasPattern = false;
+	// Transformation UV par objet (T104, *Textures* 3-4) : `u' = u*sx + ox`,
+	// `v' = v*sy + oy` (copies de `scene::TextureRef`, validees R1 T024,
+	// `scale` > 0). Appliquee dans `render/` avant `sampleTexture`.
+	// Defauts : echelle (1,1), decalage (0,0) = UV bruts (T103).
+	Vec3 texScale = Vec3(1.0F, 1.0F, 0.0F);
+	Vec3 texOffset = Vec3(0.0F, 0.0F, 0.0F);
 };
 
 static_assert(std::is_trivially_copyable_v<MaterialParams>,
