@@ -184,6 +184,30 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 	// FOV/ambiance + boutons Render/Save ; dessin SDL minimal, logique testee).
 	rt::ui::Panel panel;
 	panel.attach(&scene);
+	// T108 (*Environment 1*) : la callback de progression alimente a la fois
+	// le panneau (barre `done/total`, 1x par batch spp) et le terminal
+	// (meme format qu'en headless, sauf `--quiet`). `noexcept` (R2).
+	struct WindowProgress {
+		rt::ui::Panel* panel = nullptr;
+		bool quiet = false;
+	};
+	WindowProgress windowProgress{&panel, opts.quiet};
+	auto onWindowProgress = [](int done, int total, void* user) noexcept {
+		auto* progress = static_cast<WindowProgress*>(user);
+		if (progress == nullptr || progress->panel == nullptr) {
+			return;
+		}
+		progress->panel->setProgress(done, total);
+		if (!progress->quiet && total > 0 && done > 0) {
+			std::fprintf(stderr, "\r[window] progress: %d/%d (%d%%)", done, total,
+			             (done * 100) / total);
+			std::fflush(stderr);
+			if (done == total) {
+				std::fprintf(stderr, "\n");
+				std::fflush(stderr);
+			}
+		}
+	};
 	// T076 : machine preview (1 spp) puis affinage (spp cible), blit seul
 	// sinon. Le calcul reste en tuiles `ThreadPool` (pas de blocage UI).
 	rt::app::Interactive ctl;
@@ -252,7 +276,9 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 			                                 .spp = 1,
 			                                 .maxDepth = scene.limits.maxDepth,
 			                                 .seed = seed,
-			                                 .threads = threads};
+			                                 .threads = threads,
+			                                 .onProgress = onWindowProgress,
+			                                 .progressUser = &windowProgress};
 			rt::render::RenderStats stats;
 			if (rt::render::render(scene, framebuffer, preview, &stats).isOk()) {
 				window.blit(framebuffer);
@@ -270,7 +296,9 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 			                                .spp = spp,
 			                                .maxDepth = scene.limits.maxDepth,
 			                                .seed = seed,
-			                                .threads = threads};
+			                                .threads = threads,
+			                                .onProgress = onWindowProgress,
+			                                .progressUser = &windowProgress};
 			rt::render::RenderStats stats;
 			if (rt::render::render(scene, framebuffer, params, &stats).isOk()) {
 				window.blit(framebuffer);

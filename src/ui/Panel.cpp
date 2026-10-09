@@ -60,6 +60,8 @@ void Panel::attach(scene::Scene* scene) noexcept {
 	scene_ = scene;
 	launchRequested_ = false;
 	saveRequested_ = false;
+	progressDone_ = 0;
+	progressTotal_ = 0;
 }
 
 std::vector<std::string> Panel::fieldNames() const {
@@ -129,9 +131,46 @@ void Panel::frame() noexcept {
 	}
 	auto* ctx = static_cast<mu_Context*>(ctx_);
 	mu_begin(ctx);
-	if (mu_begin_window(ctx, "RT controls", mu_rect(10, 10, 240, 300))) {
+	if (mu_begin_window(ctx, "RT controls", mu_rect(10, 10, 240, 340))) {
 		mu_layout_row(ctx, 1, nullptr, 0);
 		mu_label(ctx, "scene (schema-driven)");
+		// T108 (*Environment 1*) : barre de progression (batches spp
+		// `done/total`, pourcentage + barre textuelle). Affichee pendant
+		// le rendu via `setProgress()` (callback `onProgress`, 1x/batch).
+		if (progressTotal_ > 0 && progressDone_ >= 0) {
+			char bar[64];
+			int done = progressDone_ > progressTotal_ ? progressTotal_ : progressDone_;
+			const int pct = (done * 100) / progressTotal_;
+			int blocks = pct / 10;
+			if (blocks < 0) {
+				blocks = 0;
+			} else if (blocks > 10) {
+				blocks = 10;
+			}
+			int pos = 0;
+			bar[pos++] = '[';
+			for (int i = 0; i < 10; ++i) {
+				bar[pos++] = i < blocks ? '#' : '-';
+			}
+			bar[pos++] = ']';
+			bar[pos++] = ' ';
+			// Pourcentage (itoa local, sans allocation).
+			int hundreds = pct / 100;
+			int tens = (pct / 10) % 10;
+			int ones = pct % 10;
+			if (hundreds > 0) {
+				bar[pos++] = static_cast<char>('0' + hundreds);
+			}
+			if (hundreds > 0 || tens > 0) {
+				bar[pos++] = static_cast<char>('0' + tens);
+			}
+			bar[pos++] = static_cast<char>('0' + ones);
+			bar[pos++] = '%';
+			bar[pos] = '\0';
+			mu_label(ctx, bar);
+		} else {
+			mu_label(ctx, "idle");
+		}
 		// Boutons : lancement + sauvegarde (consommes via take*).
 		if (mu_button(ctx, "Render")) {
 			launchRequested_ = true;
@@ -167,6 +206,35 @@ bool Panel::takeSaveRequest() noexcept {
 	const bool pending = saveRequested_;
 	saveRequested_ = false;
 	return pending;
+}
+
+void Panel::setProgress(int done, int total) noexcept {
+	if (total <= 0 || done < 0) {
+		progressDone_ = 0;
+		progressTotal_ = 0;
+		return;
+	}
+	progressDone_ = done > total ? total : done;
+	progressTotal_ = total;
+}
+
+float Panel::progressFraction() const noexcept {
+	if (progressTotal_ <= 0 || progressDone_ < 0) {
+		return 0.0F;
+	}
+	const float done = static_cast<float>(progressDone_);
+	const float total = static_cast<float>(progressTotal_);
+	if (!(total > 0.0F)) {
+		return 0.0F;
+	}
+	float frac = done / total;
+	if (!(frac >= 0.0F)) {
+		return 0.0F;
+	}
+	if (frac > 1.0F) {
+		return 1.0F;
+	}
+	return frac;
 }
 
 } // namespace rt::ui

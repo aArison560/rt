@@ -52,11 +52,23 @@ class Panel {
 	// Demande de sauvegarde posee par l'UI (bouton `Save PNG`, T077).
 	[[nodiscard]] bool takeSaveRequest() noexcept;
 
+	// Progression du rendu (T108, *Environment 1*) : `setProgress(done,
+	// total)` est appele par la callback `onProgress` du renderer (1x par
+	// batch spp, hors hot path fin) ; `frame()` affiche `done/total`,
+	// le pourcentage et une barre textuelle. `total <= 0` ou `done < 0`
+	// reinitialise (0/0). Sans appel : 0/0 (jamais de fausse barre).
+	void setProgress(int done, int total) noexcept;
+	[[nodiscard]] int progressDone() const noexcept { return progressDone_; }
+	[[nodiscard]] int progressTotal() const noexcept { return progressTotal_; }
+	[[nodiscard]] float progressFraction() const noexcept;
+
   private:
 	scene::Scene* scene_ = nullptr;
 	void* ctx_ = nullptr;
 	bool launchRequested_ = false;
 	bool saveRequested_ = false;
+	int progressDone_ = 0;
+	int progressTotal_ = 0;
 };
 
 } // namespace rt::ui

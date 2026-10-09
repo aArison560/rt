@@ -580,7 +580,7 @@ montage tile_*.png -tile 2x1 final.png                # montage
 
 | # | Critère | État | Action | Effort |
 |---|---------|------|--------|--------|
-| 1 | Interface de synthèse : message de chargement + **barre de progression** | ✖/△ | callback `onProgress(done,total)` → barre microui + log | 0,5 j |
+| 1 | Interface de synthèse : message de chargement + **barre de progression** | ✔ (T108) | callback `onProgress(done,total)` → barre microui + log | 0,5 j |
 | 2 | « Jolie interface » avec **chargement de fichier** et **contrôle du rendu** | △ | microui ✔ (settings, création/édition) ; ajouter **Load/Save** et toggle shadows/reflections | 1 j |
 | 3 | Interagir avec la scène **sans relancer** | △ ✔ | sliders → `scene` modifié → re-render ; démo en direct | à valider |
 | 4 | Rendu **automatique avec modifications entre les rendus** | ✖ | script shell (voir ci-dessous) | 0,25 j |
@@ -603,6 +603,10 @@ python3 scripts/gen_scene.py helix --turns 4 --out scenes/gen_helice.rt
 ```
 
 - **Preuve** : lancer un script devant le correcteur, montrer les images produites **à la suite**.
+- **État (T108)** : `Panel::setProgress(done,total)` + `progressFraction()` + barre `[####--] %`
+  dans `frame()` (microui, sans alloc) ; `runWindowed` branche `onProgress` (panneau + stderr
+  `[window] progress:`) ; headless imprime déjà `progress: D/N (%, eta)` (T036, vérifié sur
+  `perf_many.rt` 160×120 spp4 : 1/4 → 4/4) ; test `tests/unit/test_progress.cpp` (`[t108]`).
 
 ---
 
