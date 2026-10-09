@@ -669,62 +669,62 @@ rt/
 
 ### Phase P8 — Partie obligatoire finalisée (M1–M8, B1–B4)
 
-#### T080 ⬜ — Scène obligatoire 1 (figure VI.1)
-> **Fait le** : — · **Commit** : —
+#### T080 ✅ — Scène obligatoire 1 (figure VI.1)
+> **Fait le** : 2026-10-09 · **Commit** : 526bafa
 - **Prompt** : « Finalise `scenes/fig_vi1.rt` : les **4 formes** dans la même image, **2 spots**, ombres et brillance, à comparer directement à la figure VI.1 du sujet (réglages fins de positions/lumières). Documente les écarts assumés. »
 - **Dépend** : T059 · **Sert** : **M8** · **Doc** : `docs/subjects/fr.subject.pdf`
 - **DoD** : scène versionnée ; image régénérée par `scripts/render_all.sh` ; écarts évalués et écrits.
 
-#### T081 ⬜ — Scène obligatoire 2 : « seul l'œil déplacé » (le test décisif)
-> **Fait le** : — · **Commit** : —
+#### T081 ✅ — Scène obligatoire 2 : « seul l'œil déplacé » (le test décisif)
+> **Fait le** : 2026-10-09 · **Commit** : 9afd6b5
 - **Prompt** : « Crée `scenes/fig_vi2.rt` comme **copie quasi identique** de `fig_vi1.rt` : la **seule différence autorisée est la directive `camera`**. Écris un test automatique qui compare les 2 fichiers ligne à ligne et **échoue si autre chose que `camera` diffère**. »
 - **Dépend** : T080, T031 · **Sert** : **M5, M8** (« Did you know? ») · **Doc** : [SPECIFICATIONS.md §3.2 c](SPECIFICATIONS.md)
 - **DoD** : le test de comparaison existe et passe ; les 2 images montrent la même scène sous deux angles.
 
-#### T082 ⬜ — Scène obligatoire 3 : mélange d'ombres (figure VI.3)
-> **Fait le** : — · **Commit** : —
+#### T082 ✅ — Scène obligatoire 3 : mélange d'ombres (figure VI.3)
+> **Fait le** : 2026-10-09 · **Commit** : 6c12414
 - **Prompt** : « Écris `scenes/fig_vi3.rt` : **mélange d'ombres** multi-spots (ombres superposées, assombrissement selon le nombre de sources bloquantes), conforme à la figure VI.3. »
 - **Dépend** : T052, T080 · **Sert** : **M7, M8** · **Doc** : `docs/subjects/fr.subject.pdf`
 - **DoD** : l'image montre bien des ombres **cumulées** (plusieurs sources) ; scène versionnée.
 
-#### T083 ⬜ — Les 3 scènes en une commande
-> **Fait le** : — · **Commit** : —
+#### T083 ✅ — Les 3 scènes en une commande
+> **Fait le** : 2026-10-09 · **Commit** : 607c69c
 - **Prompt** : « `scripts/render_all.sh` doit rendre **les 3 scènes obligatoires + toutes les scènes d'options** en une commande, headless, en un temps raisonnable, et tout déposer dans `docs/preuves/`. Ajoute un résumé (durée, fichier, statut). »
 - **Dépend** : T080–T082, T037 · **Sert** : M8, démonstration · **Doc** : [CHECKLIST_DEFENSE.md §9.1](CHECKLIST_DEFENSE.md)
 - **DoD** : une commande régénère l'ensemble ; le temps total est acceptable pour une démo (< 2 min si possible).
 
-#### T084 ⬜ — Simulation du protocole du correcteur
-> **Fait le** : — · **Commit** : —
+#### T084 ✅ — Simulation du protocole du correcteur
+> **Fait le** : 2026-10-09 · **Commit** : e7a0a4a
 - **Prompt** : « Joue littéralement les 4 contrôles de la fiche ([SPECIFICATIONS §3.2](SPECIFICATIONS.md)) : (a) fenêtre au-dessus + focus → expose loggé et **sans recalcul**, (b) les 4 objets + transformations + coexistence, (c) œil déplacé (image2 ≠ image1 mais même scène), (d) lumières (brillance, ombres, multi-spot). Note le résultat de chaque contrôle dans `docs/preuves/protocole_correcteur.md`. »
 - **Dépend** : T072, T074, T081, T082 · **Sert** : **M3–M8** · **Doc** : [CHECKLIST_DEFENSE.md](CHECKLIST_DEFENSE.md)
 - **DoD** : les 4 cases sont `Yes` avec une preuve associée (commande, log ou image générée).
 
-#### T085 ⬜ — Robustesse globale : fuzz + sanitizers
-> **Fait le** : — · **Commit** : —
+#### T085 ✅ — Robustesse globale : fuzz + sanitizers
+> **Fait le** : 2026-10-09 · **Commit** : e10bf9d
 - **Prompt** : « Écris `scripts/fuzz.sh` : génère ~200 fichiers `.rt` mutés aléatoirement, les exécute en headless sous ASan/UBSan, compte les codes retour inattendus (139 segfault, 134 abort = échec). Corrige tout ce qui ressort. »
 - **Dépend** : T025, T047 · **Sert** : anti-crash (note 0) · **Doc** : [SPECIFICATIONS.md §4.1](SPECIFICATIONS.md)
 - **DoD** : `sh scripts/fuzz.sh` → 0 crash ; `valgrind --leak-check=full` sur toutes les scènes → 0 fuite.
 
-#### T086 ⬜ — Livrables obligatoires : `author`, norme, README, AGENTS
-> **Fait le** : — · **Commit** : —
+#### T086 ✅ — Livrables obligatoires : `author`, norme, README, AGENTS
+> **Fait le** : 2026-10-09 · **Commit** : f784ea1
 - **Prompt** : « Vérifie et finalise B1–B4 : dépôt non vide et buildable, **fichier `author`** au format du sujet avec les 3 noms, arbitrage de la **norminette** appliqué (écrit dans l'ADR + exécuté si décidé), README (installation, build, utilisation, options, scènes) et `AGENTS.md` (commandes, état des modules). »
 - **Dépend** : T005, T084 · **Sert** : **B1–B4 (sinon 0)** · **Doc** : [SPECIFICATIONS.md §4.2](SPECIFICATIONS.md), [CHECKLIST_DEFENSE.md §9.1](CHECKLIST_DEFENSE.md)
 - **DoD** : `git clone` dans un dossier vide + `make re && make test` fonctionne ; les 4 points B sont cochés noir sur blanc.
 
-#### T087 ⬜ — Audit interne avec la checklist de défense
-> **Fait le** : — · **Commit** : —
+#### T087 ✅ — Audit interne avec la checklist de défense
+> **Fait le** : 2026-10-09 · **Commit** : 309f3cf
 - **Prompt** : « Exécute `docs/CHECKLIST_DEFENSE.md` intégralement (§5 technique, §8 pièges, §9 livrables) comme si tu étais le correcteur, remplis chaque case avec la preuve réelle, et liste les manques en **`⬜`** dans ce fichier comme nouvelles tâches si nécessaire. »
 - **Dépend** : T085, T086 · **Sert** : soutenance · **Doc** : [CHECKLIST_DEFENSE.md](CHECKLIST_DEFENSE.md)
 - **DoD** : rapport d'audit daté ; les manques sont devenus des tâches (ou sont explicitement reportés).
 
-#### T088 ⬜ — Gel de la partie obligatoire
-> **Fait le** : — · **Commit** : —
+#### T088 ✅ — Gel de la partie obligatoire
+> **Fait le** : 2026-10-09 · **Commit** : 48ca34d (tag `v1-mandatory`)
 - **Prompt** : « Tagge `v1-mandatory` sur un dépôt vert (build, tests, valgrind, 3 scènes) et note dans `docs/PLAN_TRAVAIL.md` : à partir de là, **aucune régression de l'obligatoire n'est acceptée** ; toute modification touche d'abord les tests de non-régression. »
 - **Dépend** : T087 · **Sert** : organisation · **Doc** : [PLAN_TRAVAIL.md §6](PLAN_TRAVAIL.md)
 - **DoD** : le tag existe ; `git status` propre ; la règle est écrite.
 
-#### T089 ⬜ — Point d'organisation d'équipe (jalon J2)
-> **Fait le** : — · **Commit** : —
+#### T089 ✅ — Point d'organisation d'équipe (jalon J2)
+> **Fait le** : 2026-10-09 · **Commit** : 7e2cb5c
 - **Prompt** : « Mets à jour `docs/PLAN_TRAVAIL.md` : avancement réel par personne, revues réalisées, décisions prises, planning restant pour P9–P12. Prépare l'argumentaire écrit de l'item *Group organization* (réunions, répartition, revues, gestion des conflits). »
 - **Dépend** : T088 · **Sert** : *Group organization* (Oui/Non) · **Doc** : [PLAN_TRAVAIL.md](PLAN_TRAVAIL.md)
 - **DoD** : le plan reflète la réalité ; l'argumentaire est écrit et répétable en 2 minutes.
