@@ -569,38 +569,38 @@ rt/
 - **Dépend** : T060 · **Sert** : performance · **Doc** : —
 - **DoD** : test d'équivalence vert ; ASan/TSan verts ; gain mesuré (avant/après dans `docs/BENCH.md`).
 
-#### T062 ⬜ — Invalidation de la BVH (`objectVersion`)
-> **Fait le** : — · **Commit** : —
+#### T062 ✅ — Invalidation de la BVH (`objectVersion`)
+> **Fait le** : 2026-10-09 · **Commit** : 99a2a44
 - **Prompt** : « La BVH n'est reconstruite que si `scene.objectVersion` a changé depuis la dernière construction (cache avec numéro de version). Test : 1000 appels de rendu sans modification → 1 reconstruction ; une modification → exactement 1 de plus. C'est l'équivalent du *depsgraph* de Blender (invalidation ciblée). »
 - **Dépend** : T060, T028 · **Sert** : *Environment 3* (live), performance · **Doc** : [INSPIRATION_BLENDER.md §2](INSPIRATION_BLENDER.md)
 - **DoD** : le test de compteur vert ; compteurs exposés (`bvhBuilds`) et affichés en debug.
 
-#### T063 ⬜ — ThreadPool et rendu par tuiles
-> **Fait le** : — · **Commit** : —
+#### T063 ✅ — ThreadPool et rendu par tuiles
+> **Fait le** : 2026-10-09 · **Commit** : 67b8d5b
 - **Prompt** : « `src/sched/ThreadPool.cpp` : pool créé **une fois** (`std::jthread`), file de tuiles de 32×32 ou bandes, chaque travailleur rend `renderRegion(x0,y0,w,h)` ; arrêt propre, exceptions interceptées **par tâche** (un crash de tâche = code d'erreur, pas d'`std::terminate`). Boucle d'attente économe (condition variable, pas de spin). »
 - **Dépend** : T032, T016 · **Sert** : *multi-thread* (item K2), M8 · **Doc** : [ARCHITECTURE.md §8](ARCHITECTURE.md)
 - **DoD** : `--threads 1/2/4/8` produit des images **identiques** (déterminisme par seed absolue) ; TSan vert.
 
-#### T064 ⬜ — Mesure du speedup et affichage des métriques
-> **Fait le** : — · **Commit** : —
+#### T064 ✅ — Mesure du speedup et affichage des métriques
+> **Fait le** : 2026-10-09 · **Commit** : 5f5e070
 - **Prompt** : « Ajoute les compteurs de rendu (`rays/s`, objets/testés, temps par phase, nombre de threads) et affiche-les en fin de rendu + dans l'UI (T075). Écris `docs/BENCH.md` avec le tableau 1/2/4/8 threads et le calcul du speedup (efficacité < 1 attendue). »
 - **Dépend** : T063, T019 · **Sert** : *multi-thread*, *vraiment rapide* · **Doc** : [OUTILS.md §4](OUTILS.md)
 - **DoD** : chiffres réels obtenus par `scripts/bench.sh` (moyenne + écart-type), pas estimés ; speedup croissant.
 
-#### T065 ⬜ — Profiling et optimisation local
-> **Fait le** : — · **Commit** : —
+#### T065 ✅ — Profiling et optimisation local
+> **Fait le** : 2026-10-09 · **Commit** : d7c4e91
 - **Prompt** : « Mesure (`perf stat`/`callgrind` si disponibles, sinon instrumentation interne), identifie le goulot d'étranglement réel, optimise **un seul point** avec un avant/après chiffré dans `docs/BENCH.md`. Candidats : localité cache des tuiles, structure de `HitRecord`, évitement de recalculs, `std::pow` dans le hot path. Aucune optimisation non mesurée. »
 - **Dépend** : T064 · **Sert** : *vraiment rapide* · **Doc** : [OUTILS.md §4](OUTILS.md)
 - **DoD** : un gain mesuré est documenté (moyenne + variance) ; le test golden reste vert.
 
-#### T066 ⬜ — Propreté thread : TSan + reproductibilité
-> **Fait le** : — · **Commit** : —
+#### T066 ✅ — Propreté thread : TSan + reproductibilité
+> **Fait le** : 2026-10-09 · **Commit** : cd92759
 - **Prompt** : « Exécute toute la suite sous `make tsan`, corrige toute data race (framebuffer écrit par tuiles disjoints, compteurs atomiques, cache BVH verrouillé). Ajoute un test de **reproductibilité** : même scène + même seed + 1 thread == 4 threads, octet par octet. »
 - **Dépend** : T063 · **Sert** : qualité, *multi-thread* · **Doc** : [OUTILS.md §3](OUTILS.md)
 - **DoD** : `make quality` complet vert ; le test de reproductibilité passe 10 fois de suite.
 
-#### T067 ⬜ — Rapport de performance complet
-> **Fait le** : — · **Commit** : —
+#### T067 ✅ — Rapport de performance complet
+> **Fait le** : 2026-10-09 · **Commit** : bcf57d2
 - **Prompt** : « Finalise `docs/BENCH.md` : matériel, versions, par scène (démo + obligatoires), temps, rays/s, mémoire pic (`/usr/bin/time -v`), variances sur ≥ 5 runs, comparaison 1 thread vs N, et la phrase « le rendu est vraiment rapide » **sous-titrée de chiffres**. »
 - **Dépend** : T065 · **Sert** : item K3 *vraiment rapide* · **Doc** : [OUTILS.md §4](OUTILS.md)
 - **DoD** : le document est complet et reproductible (commandes fournies) ; aucun chiffre non mesuré.
