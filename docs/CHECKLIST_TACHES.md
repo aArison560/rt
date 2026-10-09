@@ -557,14 +557,14 @@ rt/
 
 ### Phase P6 — Performance (BVH, multithreading, mesure)
 
-#### T060 ⬜ — Construction de la BVH
-> **Fait le** : — · **Commit** : —
+#### T060 ✅ — Construction de la BVH
+> **Fait le** : 2026-10-09 · **Commit** : bced1e3
 - **Prompt** : « Implémente `src/accel/Bvh.cpp` : arbre binaire sur les AABB des objets, partition par médiane (ou binned SAH si le temps le permet), nœuds **compacts et POD** (SoA ou struct de 32 octets, `static_assert`), profondeur bornée. Allocation dans un buffer préalloué — **zéro `new` par nœud** (rèle R3). »
 - **Dépend** : T046, T014 · **Sert** : *vraiment rapide*, M8 · **Doc** : [ARCHITECTURE.md §8](ARCHITECTURE.md), [MEMORY_STRATEGY.md §4.2](MEMORY_STRATEGY.md)
 - **DoD** : test : construire une BVH sur 1000 objets synthétiques < 50 ms ; nœuds bornés (`nbNodes <= 2N-1`).
 
-#### T061 ⬜ — Traversal BVH
-> **Fait le** : — · **Commit** : —
+#### T061 ✅ — Traversal BVH
+> **Fait le** : 2026-10-09 · **Commit** : 2464c5a
 - **Prompt** : « `Bvh::traverse(ray, tMin, tMax, HitRecord&)` avec **pile fixe** (tableau local, pas de récursion profonde, pas d'allocation), test AABB optimisé (méthode de Williams), résultats identiques à la recherche linéaire. Test : comparer BVH et brute-force sur 200 scènes aléatoires → mêmes `t` (tolérance). »
 - **Dépend** : T060 · **Sert** : performance · **Doc** : —
 - **DoD** : test d'équivalence vert ; ASan/TSan verts ; gain mesuré (avant/après dans `docs/BENCH.md`).
