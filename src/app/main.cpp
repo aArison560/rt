@@ -10,6 +10,7 @@
 #include "rt/app/Options.hpp"
 #include "rt/base/Log.hpp"
 #include "rt/io/ImageWriter.hpp"
+#include "rt/io/Screenshot.hpp"
 #include "rt/platform/Window.hpp"
 #include "rt/render/Framebuffer.hpp"
 #include "rt/render/Renderer.hpp"
@@ -191,9 +192,11 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 	while (!window.pollQuit()) {
 		int sdlKey = 0;
 		bool changed = false;
+		bool wantShot = false;
 		while (window.pollKey(sdlKey)) {
-			// T077 : `P` = capture (pas de re-trace, voir apres la boucle).
+			// T077 : `P` = capture (pas de re-trace, tampon courant).
 			if (sdlKey == 'p' || sdlKey == 'P') {
+				wantShot = true;
 				continue;
 			}
 			const rt::app::KeyAction action = rt::app::keyFromSdl(sdlKey);
@@ -222,7 +225,21 @@ int runWindowed(const rt::app::Options& opts, rt::scene::Scene& scene,
 		if (panel.takeLaunchRequest()) {
 			changed = true;
 		}
-		(void)panel.takeSaveRequest();
+		if (panel.takeSaveRequest()) {
+			wantShot = true;
+		}
+		// T077 : capture (tampon courant, horodaté, sans recalcul).
+		if (wantShot) {
+			const char* envDir = std::getenv("RT_SCREENSHOT_DIR");
+			const std::string shotDir =
+			    (envDir != nullptr && envDir[0] != '\0') ? envDir : "docs/preuves";
+			rt::Result<std::string> saved = rt::io::saveScreenshot(framebuffer, shotDir);
+			if (saved.isOk()) {
+				std::cout << "saved " << saved.value() << '\n';
+			} else {
+				rt::log::error(saved.status().message);
+			}
+		}
 		if (scene.sceneDirty && !changed) {
 			changed = true;
 		}

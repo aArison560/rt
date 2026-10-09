@@ -589,6 +589,14 @@ Pour **prouver** les options en soutenance, le format doit piloter au moins :
 > `runWindowed` (1 spp immédiat puis affinage au spp cible, `ThreadPool`
 > tuiles, UI fluide). Tests : `tests/unit/test_interactive.cpp` (édition ->
 > preview+full+blit, 100 affichages = 0 re-trace, DoD).
+>
+> Implémenté (T077, screenshot) : `include/rt/io/Screenshot.hpp` +
+> `src/io/Screenshot.cpp` (`saveScreenshot(fb,dir)` -> `screenshot_*.png`
+> horodaté via `writeImage`, `screenshotName()` testable, `IoError` propre) +
+> touche `P` et bouton UI `Save PNG` branchés dans `runWindowed`
+> (sans recalcul, `saved <path>` + `RT_SCREENSHOT_DIR` configurable, défaut
+> `docs/preuves`). Tests : `tests/unit/test_screenshot.cpp` (nom, PNG valide,
+> dossier absent/vide sans crash).
 
 ---
 

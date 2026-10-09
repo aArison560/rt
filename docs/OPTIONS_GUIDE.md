@@ -513,7 +513,7 @@ autre perpendiculaire).
 | 1 | **Clustering** sur plusieurs machines | **2** | ✖ | découpage par tuiles (voir ci-dessous) |
 | 2 | **Multi-thread** | 1 | ✔ (`ThreadPool`) | preuve : `nproc`, affichage du nombre de threads |
 | 3 | Le rendu est **vraiment rapide** | 1 | △ | mesurer + afficher rays/s, BVH/SAH, tiling |
-| 4 | **Screenshot / save in-program** | 1 | ✔ (`S` → `ImageBuffer::savePNG`) | démo clavier |
+| 4 | **Screenshot / save in-program** | 1 | ✔ (`P`/bouton `Save PNG` → `io::saveScreenshot`, `docs/preuves/`, `RT_SCREENSHOT_DIR`) | démo clavier + UI (T077) |
 
 ### 9.1 Clustering (2 points — le meilleur ratio de la grille)
 
