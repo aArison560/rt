@@ -1,0 +1,58 @@
+# scenes/opt_perlin.rt — bruit de Perlin (T106, *Disruptions* 3-4).
+# `pattern { type perlin scale f }` : marbrure 3D (3 octaves) sur plan et
+# sphere. Deterministe (graine scene) : meme seed = meme marbrure.
+scene "perlin" {
+    limits {
+        width 320
+        height 240
+        samples 2
+        max_depth 2
+        seed 14
+    }
+    camera {
+        position (0 3 9)
+        target (0 1 0)
+        up (0 1 0)
+        fov 55
+    }
+    background {
+        color (0.02 0.02 0.05)
+    }
+    ambient {
+        color (0.3 0.3 0.32)
+        intensity 1.0
+    }
+    lights {
+        light point "key" {
+            position (4 6 4)
+            color (1 1 1)
+            intensity 1.2
+        }
+    }
+    objects {
+        object plane "sol" {
+            point (0 0 0)
+            normal (0 1 0)
+            material {
+                albedo (0.85 0.8 0.75)
+                pattern {
+                    type perlin
+                    scale 1.5
+                    frequency 1
+                }
+            }
+        }
+        object sphere "boule" {
+            center (0 1.4 0)
+            radius 1.4
+            material {
+                albedo (0.7 0.5 0.4)
+                pattern {
+                    type perlin
+                    scale 2
+                    frequency 1
+                }
+            }
+        }
+    }
+}

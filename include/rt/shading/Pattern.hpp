@@ -45,4 +45,34 @@ enum class PatternKind : unsigned char {
 // `*0.15` (alternance visible sur plan comme sur sphere, sans NaN).
 [[nodiscard]] Vec3 checkerAlbedo(Vec3 albedo, Vec2 uv, float scale, float frequency) noexcept;
 
+// Bruit de Perlin 3D (T106, *Disruptions* 3-4) : gradient ameliore de Ken
+// Perlin (fade/lerp/grad), table de permutation **deterministe et seedee**
+// (`Perlin` construite froid depuis une graine, `splitmix64`, sans alloc
+// ensuite), fractal 1-3 octaves (`fractal(octaves)`, persistance 0.5).
+// `perlinAlbedo()` module la couleur (`0.5 + 0.5*n` en [0,1], 3 octaves) ;
+// les hooks normale/transparence (`perlinNormal`, masque) reutilisent le
+// meme `value()` (voir T107 pour l'onde). Tout est `noexcept`, sans
+// allocation (R2/R3, hot path) : la table vit dans le froid (`TraceCtx`).
+struct Perlin {
+	// Table dupliquee (512) pour indexer sans modulo (classique).
+	unsigned char perm[512]{};
+
+	// Construit la table depuis `seed` (melange de Fisher-Yates sur
+	// 0..255 avec `splitmix64`, froid). `seed` identique -> table
+	// identique (DoD determinisme) ; deux graines differentes -> tables
+	// (tres probablement) differentes.
+	void init(unsigned long long seed) noexcept;
+};
+
+// Valeur de bruit en `p` ([-1,1] defini, NaN -> 0). `perlin` = table froide.
+[[nodiscard]] float perlinValue(const Perlin& perlin, Vec3 p) noexcept;
+// Fractal : somme `octaves` (1..3, borne, `oc <= 0` -> 1, `> 3` -> 3) avec
+// lacunarite 2 et persistance 0.5, normalise en [-1,1].
+[[nodiscard]] float perlinFractal(const Perlin& perlin, Vec3 p, int octaves) noexcept;
+// Couleur marbree (T106) : `n = fractal(point*freq, 3)` en [-1,1] puis
+// `k = 0.5 + 0.5*n` en [0,1] ; `out = albedo * (0.35 + 0.65*k)` (jamais
+// noir pur, jamais sature seul). `freq = scale*frequency` sanitize -> 1.
+[[nodiscard]] Vec3 perlinAlbedo(Vec3 albedo, Vec3 point, const Perlin& perlin, float scale,
+                                float frequency) noexcept;
+
 } // namespace rt::shading

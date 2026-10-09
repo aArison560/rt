@@ -480,6 +480,9 @@ struct TraceCtx {
 	// pas de texture). Pointeurs froids (le `TextureCache` vit dans
 	// `render()`), lecture seule en boucle chaude (R3, pas d'alloc).
 	const std::vector<const io::TextureImage*>* texImages = nullptr;
+	// T106 : table de Perlin froide (construite depuis la graine scene,
+	// `nullptr` = jamais de motif perlin dans cette scene).
+	const shading::Perlin* perlin = nullptr;
 	shading::AmbientParams ambient;
 	Vec3 background;
 	int maxDepth = 4;
@@ -712,6 +715,13 @@ struct TraceCtx {
 		mat.albedo = shading::checkerAlbedo(mat.albedo, rec.uv, mat.patternScale,
 		                                    mat.patternFrequency);
 	}
+	// T106 : Perlin 3D sur la position monde (marbrure, 3 octaves). Table
+	// froide issue de la graine scene (couture tuiles OK : absolu).
+	if (mat.patternKind == static_cast<int>(shading::PatternKind::Perlin) &&
+	    ctx.perlin != nullptr) {
+		mat.albedo = shading::perlinAlbedo(mat.albedo, rec.point, *ctx.perlin,
+		                                   mat.patternScale, mat.patternFrequency);
+	}
 	const Vec3 viewDir = ray.direction * -1.0F;
 	const Vec3 direct = shadeDirect(rec, viewDir, ctx, mat);
 	float refl = 0.0F;
@@ -896,6 +906,12 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	std::vector<const io::TextureImage*> worldTex;
 	io::TextureCache texCache;
 	collectSceneObjects(scene, worldObjs, worldMats, worldTex, texCache);
+	// T106 : table de Perlin froide depuis la graine scene (deterministe,
+	// partagee par tous les pixels/threads, sans alloc en boucle chaude).
+	// Construite meme sans motif perlin (cout negligeable, ~512 o) pour
+	// garder le chemin froid uniforme.
+	shading::Perlin perlinTable;
+	perlinTable.init(static_cast<unsigned long long>(params.seed));
 	// T052 : toutes les ponctuelles (multi-spot, ordre du fichier).
 	// T055 : toutes les directionnelles (paralleles, ordre du fichier).
 	// `reserve()` dans les `collect*()` : aucune realloc courante.
@@ -930,7 +946,8 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	// T058 : + ombres continues + spots (cône + aveuglement).
 	const auto sceneSeed = static_cast<std::uint32_t>(params.seed);
 	const TraceCtx traceCtx{&worldObjs, bvhPtr, &worldMats, &pointLights, &dirLights, &spotLights,
-	                        &worldTex, ambient, scene.background.color, params.maxDepth};
+	                        &worldTex, &perlinTable, ambient, scene.background.color,
+	                        params.maxDepth};
 	const auto buildEnd = std::chrono::steady_clock::now();
 	// T064 : remplissage des compteurs (sans atomique : calcule apres
 	// `waitIdle`, jamais dans la boucle chaude). `bvhBuilds` = 1 par rendu

@@ -406,6 +406,12 @@ color = material.texture->sample(fract(u), fract(v));   // répétition tiling
   `(xi+yi)&1` robuste aux négatifs, `scale*frequency`, sombre = `*0.15`, `noexcept` R3) +
   `render/` (après texture, composable) ; `scenes/opt_checker.rt` (plan ×4 + sphère ×6) ;
   tests `tests/unit/test_pattern.cpp` (`[t105]` : alternance + taille + scène plan/sphère).
+- **État (T106)** : `Perlin` (table 512 seedée `splitmix64` + Fisher-Yates, froid) +
+  `perlinValue` (gradient amélioré)/`perlinFractal` (1-3 octaves, persistance 0.5) +
+  `perlinAlbedo` (marbrure `0.35+0.65k`, `noexcept` R3) + `render/` (table froide issue de
+  `seed`, pointeur `TraceCtx`) ; `scenes/opt_perlin.rt` ; tests
+  `tests/unit/test_perlin.cpp` (`[t106]` : même graine → même suite + voisins indépendants +
+  rendu déterministe). Damier préexistant → les 2 pts Perlin comptent (règle fiche).
 
 ---
 
