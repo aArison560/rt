@@ -531,8 +531,8 @@ rt/
 - **Dépend** : T052 · **Sert** : *Parallel light* · **Doc** : [SPECIFICATIONS.md §5.2 E](SPECIFICATIONS.md)
 - **DoD** : le test comparatif passe ; scène `scenes/opt_parallel.rt` versionnée.
 
-#### T056 ⬜ — Réflexion (miroir, % réglable)
-> **Fait le** : — · **Commit** : —
+#### T056 ✅ — Réflexion (miroir, % réglable)
+> **Fait le** : 2026-10-09 · **Commit** : f0ddfe9
 - **Prompt** : « Ajoute le rayon réfléchi avec profondeur bornée (paramètre `max_depth` dans la scène), `reflectivity` en **pourcentage continu** (0 = mat, 1 = miroir pur), pondération correcte avec la composante diffuse. Tests : `reflectivity=0` identique au rendu sans miroir, `reflectivity=1` = reflet net. »
 - **Dépend** : T053 · **Sert** : *Reflection & transparency* sous-critères 1-2 · **Doc** : [SPECIFICATIONS.md §5.2 F](SPECIFICATIONS.md)
 - **DoD** : les 2 tests de bornes passent ; pas de boucle infinie (profondeur bornée, test le prouve).
