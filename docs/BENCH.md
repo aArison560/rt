@@ -30,6 +30,40 @@
   mesure n'est un temps de rendu que si la commande rend.
 
 ## Résultats
+### t065-bvh-on — 2026-10-09 10:34:13 EAT
+
+- **Commande** : `./rt scenes/perf_many.rt 320 240 --out /tmp/bench_t065_after.png --quiet --threads 1`
+- **Note** : T065 apres: BVH traversal (1 build/rendu), 101 objets 320x240 spp2, memes pixels que lineaire
+- **Protocole** : 5 exécution(s) mesurée(s), 1 échauffement(s), outil `date +%s.%N`, horloge `date +%s.%N`
+- **Machine** : Linux 6.12.111+deb13-amd64 x86_64 · epsilon
+- **Commit au moment de la mesure** : `5f5e070`
+
+| runs | moyenne (s) | écart-type (s) | min (s) | max (s) | CV (%) |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 0.320736 | 0.012089 | 0.311432 | 0.335023 | 3.77 |
+
+Détail brut :
+
+```json
+{"command":"./rt scenes/perf_many.rt 320 240 --out /tmp/bench_t065_after.png --quiet --threads 1","label":"t065-bvh-on","n":5,"warmup":1,"tool":"date +%s.%N","clock":"date +%s.%N","unit":"s","mean":0.320736,"stddev":0.012089,"min":0.311432,"max":0.335023,"times":[0.312173,0.335023,0.312178,0.311432,0.332875],"timestamp":"2026-10-09T10:34:13+03:00"}
+```
+### t065-bvh-off — 2026-10-09 10:32:37 EAT
+
+- **Commande** : `./rt scenes/perf_many.rt 320 240 --out /tmp/bench_t065_before.png --quiet --threads 1`
+- **Note** : T065 avant: recherche lineaire, 101 objets 320x240 spp2 (goulot intersections)
+- **Protocole** : 5 exécution(s) mesurée(s), 1 échauffement(s), outil `date +%s.%N`, horloge `date +%s.%N`
+- **Machine** : Linux 6.12.111+deb13-amd64 x86_64 · epsilon
+- **Commit au moment de la mesure** : `5f5e070`
+
+| runs | moyenne (s) | écart-type (s) | min (s) | max (s) | CV (%) |
+|---:|---:|---:|---:|---:|---:|
+| 5 | 3.759435 | 0.142151 | 3.570467 | 3.939661 | 3.78 |
+
+Détail brut :
+
+```json
+{"command":"./rt scenes/perf_many.rt 320 240 --out /tmp/bench_t065_before.png --quiet --threads 1","label":"t065-bvh-off","n":5,"warmup":1,"tool":"date +%s.%N","clock":"date +%s.%N","unit":"s","mean":3.759435,"stddev":0.142151,"min":3.570467,"max":3.939661,"times":[3.570467,3.806515,3.939661,3.670676,3.809858],"timestamp":"2026-10-09T10:32:37+03:00"}
+```
 ### t064-threads-8 — 2026-10-09 10:31:03 EAT
 
 - **Commande** : `./rt scenes/fig_vi1.rt 320 240 --out /tmp/bench_t064_8.png --quiet --threads 8`
@@ -206,3 +240,30 @@ Détail brut :
   `bvhBuilds`) affichés en fin de rendu sur `stderr` sauf `--quiet`
   (ex. `fig_vi1.rt` 160×120 spp2 : `rays=38400 … rays/s=425390`), prêts pour
   l'UI (T075).
+
+## T065 — Profiling et optimisation : boucle linéaire → BVH (un seul point)
+
+> `perf`/`callgrind` absents du poste (`sh scripts/check_env.sh`) :
+> profiling par instrumentation interne (`RenderStats` + `bench_bvh.sh` +
+> scaling objets). **Goulot réel** : les intersections — `fig_vi1.rt`
+> (5 objets, 160×120 spp2) rend en 90 ms quand `perf_many.rt` (101 objets,
+> même résolution/spp) prend 456 ms (×5 pour ×20 objets, quasi linéaire) ;
+> micro-bench T061 (`bench_bvh.sh`, 1000 sphères × 2000 rayons) : linéaire
+> 0.239 s → BVH 0.009 s (≈ 26×, mêmes 757 hits). **Un seul point optimisé** :
+> `render()` construit la BVH **une fois** par rendu (chemin froid, dans
+> `buildMs`) et `traceRay()` + `shadowTransmittance()` traversent au lieu de
+> boucler (`findClosestHit` avec `bvh`, repli linéaire si vide/échec ;
+> `TraceCtx::bvh`, `noexcept`, sans allocation). Aucune autre optimisation
+> (ni `pow`, ni `HitRecord`, ni tuiles — inchangés).
+> Commandes reproductibles :
+> `sh scripts/bench.sh scenes/perf_many.rt --args "320 240 --out /tmp/bench_t065_X.png --quiet --threads 1" --label t065-bvh-off/on --runs 5`.
+
+| variante | moyenne (s) | écart-type (s) | min / max (s) | pixels |
+|---|---:|---:|---:|---|
+| linéaire (`t065-bvh-off`) | 3.759435 | 0.142151 | 3.570 / 3.940 | référence |
+| BVH (`t065-bvh-on`) | 0.320736 | 0.012089 | 0.311 / 0.335 | **octet-identiques** (`perf_many.rt` 160×120 spp1 sha256 `2ea2609d` avant/après, `default.rt` 64×48 sha256 `0c585954` inchangé) |
+
+- **Gain mesuré** : 3.76 s → 0.32 s (≈ **11.7×**, variances disjointes :
+  3.57 min avant > 0.34 max après — DoD T065).
+- **Non-régression** : `rt_test [golden]` vert (4 cas, tolérance 5 pixels),
+  `rt_test [threads]` vert (1/2/4/8 identiques conservés avec BVH).

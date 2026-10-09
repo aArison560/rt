@@ -2,7 +2,7 @@
 
 // Boucle de rendu mono-thread (T032) + multi-objets (T046) + reflexion (T056)
 // + refraction (T057) + ombres transparentes et spot aveuglant (T058)
-// + tuiles multi-thread (T063) — sans SDL (R6).
+// + tuiles multi-thread (T063) + BVH (T065) — sans SDL (R6).
 // `render()` parcourt les pixels, genere le rayon via `Camera` (T031),
 // cherche l'intersection la plus proche parmi tous les objets (T046 : tri
 // par `t`, `tMax` resserre ; objets directs + groupes aplatis, 4 types en

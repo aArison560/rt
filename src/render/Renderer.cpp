@@ -34,6 +34,7 @@
 #include <vector>
 
 #include "rt/base/Rng.hpp"
+#include "rt/accel/Bvh.hpp"
 #include "rt/geometry/Cone.hpp"
 #include "rt/geometry/Cylinder.hpp"
 #include "rt/geometry/Plane.hpp"
@@ -311,10 +312,16 @@ void collectSceneObjects(const scene::Scene& scene,
 // T046 : plus proche parmi tous les objets (tri par `t`). `tMax` se
 // resserre au plus proche trouve : le gagnant est le `t` minimal dans
 // `[tMin, tMax]`. Plusieurs objets du meme type + coexistence des 4 types.
+// T065 : si `bvh` est fournie (construite une fois par rendu, T060-T062),
+// la traversal remplace la boucle lineaire (memes `t` a 1e-4, T061) ;
+// sinon repli lineaire (scene vide, echec de construction — defini).
 // `noexcept`, sans allocation (R2/R3) : `HitRecord` sur pile uniquement.
 [[nodiscard]] bool findClosestHit(const std::vector<std::unique_ptr<geometry::AObject>>& objs,
-                                  const Ray& ray, Real tMin, Real tMax,
+                                  const accel::Bvh* bvh, const Ray& ray, Real tMin, Real tMax,
                                   HitRecord& outRec) noexcept {
+	if (bvh != nullptr && !bvh->empty()) {
+		return bvh->traverse(ray, tMin, tMax, outRec, objs);
+	}
 	bool hit = false;
 	Real closest = tMax;
 	HitRecord tmp;
@@ -342,8 +349,10 @@ void collectSceneObjects(const scene::Scene& scene,
 // Opaque (`transparency == 0`) -> 0 immédiat (octet-identique à T052).
 // `tMax <= eps` / dégénéré -> 1 (pas d'ombre, défini). `noexcept`, sans
 // allocation (R2/R3, `HitRecord` sur pile).
+// T065 : l'occlusion passe par la BVH quand elle est fournie (comme le
+// primaire), sinon repli lineaire.
 [[nodiscard]] float shadowTransmittance(
-    const std::vector<std::unique_ptr<geometry::AObject>>& objs,
+    const std::vector<std::unique_ptr<geometry::AObject>>& objs, const accel::Bvh* bvh,
     const std::vector<shading::MaterialParams>* mats, Vec3 origin, Vec3 dir,
     Real tMax) noexcept {
 	if (!(tMax > kPrimaryTMin)) {
@@ -369,7 +378,7 @@ void collectSceneObjects(const scene::Scene& scene,
 			break;
 		}
 		HitRecord rec;
-		if (!findClosestHit(objs, Ray(curOrigin, dir), kPrimaryTMin, curTMax, rec)) {
+		if (!findClosestHit(objs, bvh, Ray(curOrigin, dir), kPrimaryTMin, curTMax, rec)) {
 			break;
 		}
 		float transp = 0.0F;
@@ -425,8 +434,10 @@ void collectSceneObjects(const scene::Scene& scene,
 // tableaux du chemin froid (aucune copie par rayon), ambiant + fond par
 // valeur (petits POD), `maxDepth` borne 0..32 (profondeur de recursion).
 // T058 ajoute `spots` (spots orientés, cône + aveuglement).
+// T065 ajoute `bvh` (traversal au lieu du lineaire, `nullptr` = repli).
 struct TraceCtx {
 	const std::vector<std::unique_ptr<geometry::AObject>>* objs = nullptr;
+	const accel::Bvh* bvh = nullptr;
 	const std::vector<shading::MaterialParams>* mats = nullptr;
 	const std::vector<shading::PointLightParams>* points = nullptr;
 	const std::vector<shading::DirectionalLightParams>* dirs = nullptr;
@@ -472,7 +483,8 @@ struct TraceCtx {
 		}
 		const Vec3 lightDir = toLight / dist;
 		const Real tMax = static_cast<Real>(dist) - kPrimaryTMin;
-		const float vis = shadowTransmittance(*ctx.objs, ctx.mats, shadowOrigin, lightDir, tMax);
+		const float vis =
+		    shadowTransmittance(*ctx.objs, ctx.bvh, ctx.mats, shadowOrigin, lightDir, tMax);
 		if (!(vis > 0.0F) || !std::isfinite(vis)) {
 			continue;
 		}
@@ -491,8 +503,8 @@ struct TraceCtx {
 		if (!std::isfinite(dirLight.intensity) || !(dirLight.intensity > 0.0F)) {
 			continue;
 		}
-		const float vis =
-		    shadowTransmittance(*ctx.objs, ctx.mats, shadowOrigin, lightDir, kInfinity);
+		const float vis = shadowTransmittance(*ctx.objs, ctx.bvh, ctx.mats, shadowOrigin, lightDir,
+		                                               kInfinity);
 		if (!(vis > 0.0F) || !std::isfinite(vis)) {
 			continue;
 		}
@@ -534,7 +546,8 @@ struct TraceCtx {
 		}
 		const Vec3 lightDir = toLight / dist;
 		const Real tMax = static_cast<Real>(dist) - kPrimaryTMin;
-		const float vis = shadowTransmittance(*ctx.objs, ctx.mats, shadowOrigin, lightDir, tMax);
+		const float vis =
+		    shadowTransmittance(*ctx.objs, ctx.bvh, ctx.mats, shadowOrigin, lightDir, tMax);
 		if (!(vis > 0.0F) || !std::isfinite(vis)) {
 			continue;
 		}
@@ -589,7 +602,7 @@ struct TraceCtx {
 // `shadeDirect`, aveuglement sur les manqués ci-dessous).
 [[nodiscard]] Vec3 traceRay(const Ray& ray, int depth, const TraceCtx& ctx) noexcept {
 	HitRecord rec;
-	if (!findClosestHit(*ctx.objs, ray, kPrimaryTMin, kInfinity, rec)) {
+	if (!findClosestHit(*ctx.objs, ctx.bvh, ray, kPrimaryTMin, kInfinity, rec)) {
 		// T058 (*Direct light*) : spot face à l'observateur qui aveugle.
 		// Le rayon manqué qui vise une source dont le cône éclaire
 		// l'observateur sature en blanc (mélange fond + source selon
@@ -816,6 +829,18 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	std::vector<shading::SpotLightParams> spotLights;
 	collectSpotLights(scene, spotLights);
 	const shading::AmbientParams ambient = toAmbientParams(scene);
+	// T065 (optimisation mesuree, un seul point) : la BVH remplace la boucle
+	// lineaire (T060-T062). Construite **une fois** par rendu (chemin froid,
+	// `reserve(2N)`, incluse dans `buildMs`) ; `traverse()` en boucle chaude
+	// (`noexcept`, pile fixe, sans allocation). Echec (impossible ici :
+	// `worldObjs` sans `nullptr`) -> repli lineaire defini (`bvhPtr` nul).
+	// Scenes a 101 objets : le goulot etait les intersections (T061 : 26×
+	// en micro-bench, 3.76s en rendu lineaire).
+	accel::Bvh bvh;
+	const accel::Bvh* bvhPtr = nullptr;
+	if (bvh.build(worldObjs).isOk() && !bvh.empty()) {
+		bvhPtr = &bvh;
+	}
 	// Boucle chaude : registres + pile uniquement (R3), batches externes (T036).
 	// Chaque echantillon `s` utilise `rngFor(x, y, s, seed)` (coordonnees
 	// absolues, T016) : jitter sous-pixel pour le rayon + dithering pour
@@ -827,12 +852,12 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 	// par `maxDepth`, `reflectivity` 0 = mat / 1 = miroir pur).
 	// T058 : + ombres continues + spots (cône + aveuglement).
 	const auto sceneSeed = static_cast<std::uint32_t>(params.seed);
-	const TraceCtx traceCtx{&worldObjs, &worldMats, &pointLights, &dirLights, &spotLights,
+	const TraceCtx traceCtx{&worldObjs, bvhPtr, &worldMats, &pointLights, &dirLights, &spotLights,
 	                        ambient, scene.background.color, params.maxDepth};
 	const auto buildEnd = std::chrono::steady_clock::now();
 	// T064 : remplissage des compteurs (sans atomique : calcule apres
-	// `waitIdle`, jamais dans la boucle chaude). `bvhBuilds` = 0 jusqu'en
-	// T065 (BVH non branchee au rendu : micro-bench `bench_bvh.sh` seul).
+	// `waitIdle`, jamais dans la boucle chaude). `bvhBuilds` = 1 par rendu
+	// (BVH locale T065 ; le `BvhCache` T062 servira l'interactif T076).
 	auto fillStats = [&](const std::chrono::steady_clock::time_point& renderStart,
 	                     const std::chrono::steady_clock::time_point& renderEnd) {
 		if (stats == nullptr) {
@@ -853,7 +878,7 @@ Status render(const scene::Scene& scene, Framebuffer& fb, const RenderParams& pa
 		stats->renderMs = renderMs;
 		stats->totalMs = buildMs + renderMs;
 		stats->raysPerSec = renderMs > 0.0 ? (static_cast<double>(rays) / (renderMs / 1000.0)) : 0.0;
-		stats->bvhBuilds = 0;
+		stats->bvhBuilds = bvhPtr != nullptr ? 1 : 0;
 	};
 	// T063 : mono-thread historique (octet par octet identique au T032-T058)
 	// ou tuiles paralleles (memes pixels via la graine absolue T016).

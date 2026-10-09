@@ -638,6 +638,16 @@ outils ») imposent une vraie surface d'interaction.
 > 0.252s (speedup 1.00/1.79/2.74/2.92 croissant, efficacité 1.00/0.89/0.69/
 > 0.36 < 1). Tests : `[t064]` (compteurs cohérents, `stats==nullptr` =
 > mêmes pixels).
+>
+> Implémenté (T065) : BVH branchée au rendu (**un seul point optimisé**,
+> profiling interne car `perf` absent : scaling 5→101 objets 90→456 ms +
+> micro-bench T061 26×) — `render()` construit `accel::Bvh` une fois par
+> rendu (froid, dans `buildMs`, `bvhBuilds`=1), `TraceCtx::bvh` + `traverse()`
+> pour le primaire et les ombres (`findClosestHit`/`shadowTransmittance`
+> avec repli linéaire, `noexcept`, sans allocation). Mesuré (`bench.sh`,
+> `docs/BENCH.md` `t065-bvh-off/on`) : `perf_many.rt` (101 objets) 320×240
+> spp2, 3.759 s ± 0.142 → 0.321 s ± 0.012 (≈ **11.7×**, pixels
+> octet-identiques) ; `rt_test [golden]` vert (DoD).
 
 ### 8.3 Rendu progressif (feedback utilisateur)
 
